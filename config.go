@@ -1,0 +1,49 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+
+	"github.com/urfave/cli"
+)
+
+type Config struct{}
+
+func (cmd *Config) Commands() cli.Command {
+	return cli.Command{
+		Name:   "config",
+		Usage:  "Echo the config to setup the Rig environment.  Run: eval \"$(rig config)\"",
+		Action: cmd.Run,
+	}
+}
+
+func (cmd *Config) Run(c *cli.Context) error {
+	// Darwin is installed via brew, so no need to muck with PATH
+	if runtime.GOOS != "darwin" {
+		// Add stuff to PATH only once
+		path := os.Getenv("PATH")
+		dir, _ := GetExecutableDir()
+		if !strings.Contains(path, dir) {
+			fmt.Printf("export PATH=%s%c$PATH\n", dir, os.PathListSeparator)
+		}
+	}
+
+	// Clear out any previous environment variables
+	if output, err := exec.Command("docker-machine", "env", "-u").Output(); err == nil {
+		os.Stdout.Write(output)
+	}
+
+	if machine.Exists() {
+		// Setup new values if machine is running
+		if output, err := exec.Command("docker-machine", "env", machine.Name).Output(); err == nil {
+			os.Stdout.Write(output)
+		}
+	} else {
+		out.Error.Fatalf("No machine named '%s' exists.", machine.Name)
+	}
+
+	return nil
+}
