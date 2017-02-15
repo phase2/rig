@@ -1,0 +1,15 @@
+#compdef rig
+#autoload
+
+bashcompinit
+
+_rig() {
+     local cur opts
+     reply=()
+     cur="${words[2]}"
+     opts=$( ${words[1]} --generate-bash-completion )
+     reply=( $(compgen -W "${opts}" -- ${cur}) )
+     return 0
+ }
+
+_rig "$@"

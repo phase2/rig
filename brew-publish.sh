@@ -34,11 +34,10 @@ fi
 echo "[INFO] Packaging rig ${VERSION} for publishing"
 mkdir -p $DIST_DIR
 cp ${BASE_DIR}/scripts/docker-machine-watch-rsync.sh $BIN_DIR/.
-#cp ${BASE_DIR}/scripts/bash_autocomplete $BIN_DIR/.
-#cp ${BASE_DIR}/scripts/zsh_autocomplete $BIN_DIR/.
+cp ${BASE_DIR}/scripts/bash_autocomplete $BIN_DIR/.
+cp ${BASE_DIR}/scripts/zsh_autocomplete $BIN_DIR/.
 pushd $BIN_DIR
-#tar czf $DIST rig docker-machine-watch-rsync.sh bash_autocomplete zsh_autocomplete
-tar czf $DIST rig docker-machine-watch-rsync.sh
+tar czf $DIST rig docker-machine-watch-rsync.sh bash_autocomplete zsh_autocomplete
 popd
 
 # Generate the checksum
@@ -77,8 +76,8 @@ class Rig < Formula
     bin.install "rig"
     bin.install "docker-machine-watch-rsync.sh"
 
-    #bash_completion.install "bash_autocomplete" => "rig"
-    #zsh_completion.install "zsh_autocomplete" => "_rig"
+    bash_completion.install "bash_autocomplete" => "rig"
+    zsh_completion.install "zsh_autocomplete" => "_rig"
   end
 
   test do
