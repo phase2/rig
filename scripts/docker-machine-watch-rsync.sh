@@ -36,9 +36,9 @@ Examples:
 
     > Watch for changes under ~/Projects/supercoolthing/app and rsync them into the Docker Machine named dev
 
-  $ docker-machine-watch-rsync -m dev -e .devtools-watch-ignore ~/Projects/supercoolthing/app
+  $ docker-machine-watch-rsync -m dev -e .rig-watch-ignore ~/Projects/supercoolthing/app
 
-    > Watch for changes under ~/Projects/supercoolthing/app excluding the patterns in .devtools-watch-ignore and rsync them into the Docker Machine named dev
+    > Watch for changes under ~/Projects/supercoolthing/app excluding the patterns in .rig-watch-ignore and rsync them into the Docker Machine named dev
 
 EOF
   exit 0

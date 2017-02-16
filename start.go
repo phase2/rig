@@ -108,7 +108,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	dash := Dashboard{}
 	dash.LaunchDashboard(machine)
 
-	out.Info.Println("Your Phase2 Dev Tools VM is ready to use")
+	out.Info.Println("Outrigger is ready to use")
 
 	return nil
 }
