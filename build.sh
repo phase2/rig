@@ -7,9 +7,24 @@ go get github.com/mitchellh/gox
 
 godep restore
 
-# Build for mac
+# Build for platforms
 gox -cgo -osarch="Darwin/amd64" -output="build/darwin/rig"
+gox -osarch="Linux/amd64" -output="build/linux/rig"
+gox -osarch="Windows/amd64" -output="build/windows/rig"
 
-# Build for windows and linux
-gox -osarch="Linux/amd64" -osarch="Windows/amd64" -output="build/{{.OS}}/rig"
+# Bundle for GitHub
 
+# Get version
+VERSION=`build/darwin/rig --version 2>&1 | grep 'rig version' | awk '{print $3}'`
+
+# Create archives for publishing to github
+cp scripts/docker-machine-watch-rsync.sh build/darwin/.
+pushd build/darwin
+tar czf ../rig-${VERSION}-darwin-amd64.tar.gz rig docker-machine-watch-rsync.sh
+popd
+pushd build/linux
+tar czf ../rig-${VERSION}-linux-amd64.tar.gz rig
+popd
+pushd build/windows
+zip ../rig-${VERSION}-windows-amd64.zip rig.exe
+popd
