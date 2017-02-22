@@ -43,7 +43,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	} else if apiConstraint.Check(clientApiVersion) {
 		out.Info.Printf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientApiVersion, constraintString, serverApiVersion, serverMinApiVersion)
 	} else {
-		out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s)", clientApiVersion, serverApiVersion, serverMinApiVersion)
+		out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientApiVersion, serverApiVersion, serverMinApiVersion)
 	}
 
 	// 2. Pull down the data from DNSDock. This will confirm we can resolve names as well
