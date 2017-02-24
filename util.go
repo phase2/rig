@@ -16,7 +16,7 @@ import (
 
 // Set up the output streams (and colors) to stream command output
 func StreamCommand(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = verboseWriter
 	cmd.Stderr = os.Stderr
 
 	color.Set(color.FgCyan)

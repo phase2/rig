@@ -47,13 +47,13 @@ func (cmd *Start) Commands() cli.Command {
 
 func (cmd *Start) Run(c *cli.Context) error {
 	out.Info.Printf("Starting '%s'", machine.Name)
-	out.Info.Println("Pre-flight check...")
+	out.Verbose.Println("Pre-flight check...")
 
 	if err := exec.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
 		out.Error.Fatal("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file")
 	}
 
-	out.Info.Println("Resetting Docker environment variables...")
+	out.Verbose.Println("Resetting Docker environment variables...")
 	machine.UnsetEnv()
 
 	// Does the docker-machine exist
@@ -80,12 +80,12 @@ func (cmd *Start) Run(c *cli.Context) error {
 	if nfsErr := StreamCommand(exec.Command("docker-machine-nfs", machine.Name)); nfsErr != nil {
 		out.Error.Printf("Error enabling NFS: %s", nfsErr)
 	}
-	out.Info.Println("NFS is ready to use")
+	out.Verbose.Println("NFS is ready to use")
 
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
 	machine.WaitForDev()
 
-	out.Info.Println("Setting up persistent /data volume...")
+	out.Verbose.Println("Setting up persistent /data volume...")
 	dataMountSetup := `if [ ! -d /mnt/sda1/data ];
     then echo '===> Creating /mnt/sda1/data directory';
     sudo mkdir /mnt/sda1/data;

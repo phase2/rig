@@ -110,7 +110,7 @@ func (m Machine) WaitForDev() {
 	for i := 1; i <= maxTries; i++ {
 		m.SetEnv()
 		if err := exec.Command("docker", "ps").Run(); err == nil {
-			out.Info.Printf("Machine '%s' has started", m.Name)
+			out.Verbose.Printf("Machine '%s' has started", m.Name)
 			return
 		} else {
 			out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
