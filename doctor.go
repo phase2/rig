@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/hashicorp/go-version"
 	"github.com/urfave/cli"
 	"os/exec"
 	"runtime"
-	"github.com/hashicorp/go-version"
-	"fmt"
 )
 
 type Doctor struct{}

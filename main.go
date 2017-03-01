@@ -1,46 +1,18 @@
 package main
 
 import (
-	"log"
 	"os"
-	"io"
-	"io/ioutil"
 
-	"github.com/fatih/color"
 	"github.com/urfave/cli"
 )
 
 const VERSION = "1.1.0"
 
-type RigLogger struct {
-	Info    *log.Logger
-	Warning *log.Logger
-	Error   *log.Logger
-	Verbose *log.Logger
-}
-
 type RigCommand interface {
 	Commands() cli.Command
 }
 
-var out RigLogger;
-var verboseWriter io.Writer;
-
 var machine Machine
-
-func LoggerInit(
-  infoHandle io.Writer,
-  warningHandle io.Writer,
-  errorHandle io.Writer,
-	verboseHandle io.Writer) {
-
-  out = RigLogger{
-		Info:    log.New(infoHandle, color.BlueString("[INFO] "), 0),
-		Warning: log.New(warningHandle, color.YellowString("[WARN] "), 0),
-		Error:   log.New(errorHandle, color.RedString("[ERROR] "), 0),
-		Verbose: log.New(verboseHandle, "[VERBOSE] ", 0),
-  }
-}
 
 // It all starts here
 func main() {
@@ -58,19 +30,14 @@ func main() {
 			EnvVar: "RIG_ACTIVE_MACHINE",
 		},
 		cli.BoolFlag{
-			Name: "verbose",
-			Usage: "Show verbose output. Learning Mode!",
+			Name:   "verbose",
+			Usage:  "Show verbose output. Learning Mode!",
 			EnvVar: "RIG_VERBOSE",
 		},
 	}
 
 	app.Before = func(c *cli.Context) error {
-		verboseWriter = ioutil.Discard
-		if c.GlobalBool("verbose"){
-			verboseWriter = os.Stdout
-		}
-		LoggerInit(os.Stdout, os.Stdout, os.Stderr, verboseWriter)
-
+		LoggerInit(c.GlobalBool("verbose"))
 		machine = Machine{Name: c.GlobalString("name")}
 		return nil
 	}
