@@ -21,7 +21,11 @@ func (cmd *Status) Run(c *cli.Context) error {
 		out.Error.Fatalf("No machine named '%s' exists.", machine.Name)
 	}
 
-	StreamCommand(exec.Command("docker-machine", "ls", "--filter", "name="+machine.Name))
+	if verboseMode {
+		StreamCommand(exec.Command("docker-machine", "ls", "--filter", "name="+machine.Name))
+	} else {
+		StreamCommandForce(exec.Command("docker-machine", "status", machine.Name))
+	}
 
 	return nil
 }

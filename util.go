@@ -14,15 +14,25 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Set up the output streams (and colors) to stream command output
-func StreamCommand(cmd *exec.Cmd) error {
-	cmd.Stdout = verboseWriter
-	cmd.Stderr = os.Stderr
-
+func RunCommand(cmd *exec.Cmd) error {
 	color.Set(color.FgCyan)
 	err := cmd.Run()
 	color.Unset()
 	return err
+}
+
+// Set up the output streams (and colors) to stream command output
+func StreamCommand(cmd *exec.Cmd) error {
+	cmd.Stdout = verboseWriter
+	cmd.Stderr = os.Stderr
+	return RunCommand(cmd)
+}
+
+// Like StreamCommand, but no verbosity suppression.
+func StreamCommandForce(cmd *exec.Cmd) error {
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return RunCommand(cmd)
 }
 
 // Get the directory of this binary
