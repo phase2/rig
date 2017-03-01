@@ -8,7 +8,7 @@ go get github.com/mitchellh/gox
 godep restore
 
 # Build for platforms
-gox -cgo -osarch="Darwin/amd64" -output="build/darwin/rig"
+gox -osarch="Darwin/amd64" -output="build/darwin/rig"
 gox -osarch="Linux/amd64" -output="build/linux/rig"
 gox -osarch="Windows/amd64" -output="build/windows/rig"
 
