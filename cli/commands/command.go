@@ -23,9 +23,9 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *BaseCommand) NewContext(parent *cli.Context) *cli.Context {
-	flagSet := flag.NewFlagSet(cmd.Commands().Name, flag.ContinueOnError)
-	for _, f := range cmd.Commands().Flags {
+func (cmd *BaseCommand) NewContext(name string, flags []cli.Flag, parent *cli.Context) *cli.Context {
+	flagSet := flag.NewFlagSet(name, flag.ContinueOnError)
+	for _, f := range flags {
 		f.Apply(flagSet)
 	}
 	return cli.NewContext(parent.App, flagSet, parent)

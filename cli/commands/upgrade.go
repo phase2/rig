@@ -58,12 +58,12 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	backup.Run(c)
 
 	remove := &Remove{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	removeCtx := remove.NewContext(c)
+	removeCtx := cmd.NewContext(remove.Commands().Name, remove.Commands().Flags, c)
 	cmd.SetContextFlag(removeCtx, "force", strconv.FormatBool(true))
 	remove.Run(removeCtx)
 
 	start := &Start{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	startCtx := start.NewContext(c)
+	startCtx := cmd.NewContext(start.Commands().Name, start.Commands().Flags, c)
 	cmd.SetContextFlag(startCtx, "driver", cmd.machine.GetDriver())
 	cmd.SetContextFlag(startCtx, "cpu-count", strconv.FormatInt(int64(cmd.machine.GetCPU()), 10))
 	cmd.SetContextFlag(startCtx, "memory-size", strconv.FormatInt(int64(cmd.machine.GetMemory()), 10))
@@ -71,7 +71,7 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	start.Run(startCtx)
 
 	restore := &DataRestore{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	restoreCtx := restore.NewContext(c)
+	restoreCtx := cmd.NewContext(restore.Commands().Name, restore.Commands().Flags, c)
 	cmd.SetContextFlag(restoreCtx, "data-dir", c.String("data-dir"))
 	backupFile := fmt.Sprintf("%s%c%s.tgz", c.String("backup-dir"), os.PathSeparator, cmd.machine.Name)
 	cmd.SetContextFlag(restoreCtx, "backup-file", backupFile)
