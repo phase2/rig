@@ -1,13 +1,16 @@
-package main
+package commands
 
 import (
 	"os/exec"
 	"strconv"
 
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
-type Start struct{}
+type Start struct{
+	BaseCommand
+}
 
 func (cmd *Start) Commands() cli.Command {
 	return cli.Command{
@@ -41,51 +44,52 @@ func (cmd *Start) Commands() cli.Command {
 				EnvVar: "RIG_NAMESERVERS",
 			},
 		},
+		Before: cmd.Before,
 		Action: cmd.Run,
 	}
 }
 
 func (cmd *Start) Run(c *cli.Context) error {
-	out.Info.Printf("Starting '%s'", machine.Name)
-	out.Info.Println("Pre-flight check...")
+	cmd.out.Info.Printf("Starting '%s'", cmd.machine.Name)
+	cmd.out.Info.Println("Pre-flight check...")
 
 	if err := exec.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
-		out.Error.Fatal("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file")
+		cmd.out.Error.Fatal("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file")
 	}
 
-	out.Info.Println("Resetting Docker environment variables...")
-	machine.UnsetEnv()
+	cmd.out.Info.Println("Resetting Docker environment variables...")
+	cmd.machine.UnsetEnv()
 
 	// Does the docker-machine exist
-	if !machine.Exists() {
-		out.Warning.Printf("No machine named '%s' exists", machine.Name)
+	if !cmd.machine.Exists() {
+		cmd.out.Warning.Printf("No machine named '%s' exists", cmd.machine.Name)
 
 		driver := c.String("driver")
 		diskSize := strconv.Itoa(c.Int("disk-size") * 1000)
 		memSize := strconv.Itoa(c.Int("memory-size"))
 		cpuCount := strconv.Itoa(c.Int("cpu-count"))
-		machine.Create(driver, cpuCount, memSize, diskSize)
+		cmd.machine.Create(driver, cpuCount, memSize, diskSize)
 	}
 
-	machine.Start()
+	cmd.machine.Start()
 
-	out.Info.Println("Configuring the local Docker environment")
-	machine.SetEnv()
+	cmd.out.Info.Println("Configuring the local Docker environment")
+	cmd.machine.SetEnv()
 
-	out.Info.Println("Setting up DNS...")
-	dns := Dns{}
-	dns.ConfigureDns(machine, c.String("nameservers"))
+	cmd.out.Info.Println("Setting up DNS...")
+	dns := Dns{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dns.ConfigureDns(cmd.machine, c.String("nameservers"))
 
-	out.Info.Println("Enabling NFS file sharing")
-	if nfsErr := StreamCommand(exec.Command("docker-machine-nfs", machine.Name)); nfsErr != nil {
-		out.Error.Printf("Error enabling NFS: %s", nfsErr)
+	cmd.out.Info.Println("Enabling NFS file sharing")
+	if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
+		cmd.out.Error.Printf("Error enabling NFS: %s", nfsErr)
 	}
-	out.Info.Println("NFS is ready to use")
+	cmd.out.Info.Println("NFS is ready to use")
 
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
-	machine.WaitForDev()
+	cmd.machine.WaitForDev()
 
-	out.Info.Println("Setting up persistent /data volume...")
+	cmd.out.Info.Println("Setting up persistent /data volume...")
 	dataMountSetup := `if [ ! -d /mnt/sda1/data ];
     then echo '===> Creating /mnt/sda1/data directory';
     sudo mkdir /mnt/sda1/data;
@@ -100,15 +104,15 @@ func (cmd *Start) Run(c *cli.Context) error {
     then echo '===> Creating symlink from /data to /mnt/sda1/data';
     sudo ln -s /mnt/sda1/data /data;
   fi;`
-	StreamCommand(exec.Command("docker-machine", "ssh", machine.Name, dataMountSetup))
+	util.StreamCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name, dataMountSetup))
 
-	dns.ConfigureRoutes(machine)
+	dns.ConfigureRoutes(cmd.machine)
 
-	out.Info.Println("Launching Dashboard...")
-	dash := Dashboard{}
-	dash.LaunchDashboard(machine)
+	cmd.out.Info.Println("Launching Dashboard...")
+	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dash.LaunchDashboard(cmd.machine)
 
-	out.Info.Println("Outrigger is ready to use")
+	cmd.out.Info.Println("Outrigger is ready to use")
 
 	return nil
 }

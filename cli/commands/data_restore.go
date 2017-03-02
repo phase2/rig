@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -10,7 +10,9 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DataRestore struct{}
+type DataRestore struct{
+	BaseCommand
+}
 
 func (cmd *DataRestore) Commands() cli.Command {
 	return cli.Command{
@@ -27,30 +29,31 @@ func (cmd *DataRestore) Commands() cli.Command {
 				Usage: "Specify the restore dir on the VM. Defaults to the entire /data volume.",
 			},
 		},
+		Before: cmd.Before,
 		Action: cmd.Run,
 	}
 }
 
 func (cmd *DataRestore) Run(c *cli.Context) error {
-	if !machine.Exists() {
-		out.Error.Fatalf("No machine named '%s' exists.", machine.Name)
+	if !cmd.machine.Exists() {
+		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
 	}
 
 	dataDir := c.String("data-dir")
 	backupFile := strings.TrimSpace(c.String("backup-file"))
 	if len(backupFile) == 0 {
-		backupFile = fmt.Sprintf("%s%c%s%c%s.tgz", os.Getenv("HOME"), os.PathSeparator, "rig-backups", os.PathSeparator, machine.Name)
+		backupFile = fmt.Sprintf("%s%c%s%c%s.tgz", os.Getenv("HOME"), os.PathSeparator, "rig-backups", os.PathSeparator, cmd.machine.Name)
 	}
 
 	if _, err := os.Stat(backupFile); err != nil {
-		out.Error.Fatalf("Backup archive %s doesn't exists.", backupFile)
+		cmd.out.Error.Fatalf("Backup archive %s doesn't exists.", backupFile)
 	}
 
-	out.Info.Printf("Restoring %s to %s on '%s'...", backupFile, dataDir, machine.Name)
+	cmd.out.Info.Printf("Restoring %s to %s on '%s'...", backupFile, dataDir, cmd.machine.Name)
 
 	// Send the archive via stdin and extract inline. Saves on disk & performance
-	extractCmd := fmt.Sprintf("cat %s | docker-machine ssh %s \"sudo tar xzf - -C %s\"", backupFile, machine.Name, dataDir)
-	out.Info.Printf(extractCmd)
+	extractCmd := fmt.Sprintf("cat %s | docker-machine ssh %s \"sudo tar xzf - -C %s\"", backupFile, cmd.machine.Name, dataDir)
+	cmd.out.Info.Printf(extractCmd)
 	backup := exec.Command("bash", "-c", extractCmd)
 	backup.Stderr = os.Stderr
 
@@ -59,7 +62,7 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 	color.Unset()
 
 	if err != nil {
-		out.Warning.Println("There may have been problems. See above for any errors")
+		cmd.out.Warning.Println("There may have been problems. See above for any errors")
 	}
 
 	return nil

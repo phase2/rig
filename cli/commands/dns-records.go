@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"errors"
@@ -12,12 +12,15 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DnsRecords struct{}
+type DnsRecords struct{
+	BaseCommand
+}
 
 func (cmd *DnsRecords) Commands() cli.Command {
 	return cli.Command{
 		Name:   "dns-records",
 		Usage:  "List all DNS records for running containers",
+		Before: cmd.Before,
 		Action: cmd.Run,
 	}
 }
@@ -26,7 +29,7 @@ func (cmd *DnsRecords) Run(c *cli.Context) error {
 
 	records, err := cmd.LoadRecords()
 	if err != nil {
-		out.Error.Fatalln(err)
+		cmd.out.Error.Fatalln(err)
 	}
 
 	for _, record := range records {
