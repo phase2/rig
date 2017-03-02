@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -8,14 +8,18 @@ import (
 	"strings"
 
 	"github.com/urfave/cli"
+	"github.com/phase2/rig/cli/util"
 )
 
-type Config struct{}
+type Config struct{
+	BaseCommand
+}
 
 func (cmd *Config) Commands() cli.Command {
 	return cli.Command{
 		Name:   "config",
 		Usage:  "Echo the config to setup the Rig environment.  Run: eval \"$(rig config)\"",
+		Before: cmd.Before,
 		Action: cmd.Run,
 	}
 }
@@ -25,7 +29,7 @@ func (cmd *Config) Run(c *cli.Context) error {
 	if runtime.GOOS != "darwin" {
 		// Add stuff to PATH only once
 		path := os.Getenv("PATH")
-		dir, _ := GetExecutableDir()
+		dir, _ := util.GetExecutableDir()
 		if !strings.Contains(path, dir) {
 			fmt.Printf("export PATH=%s%c$PATH\n", dir, os.PathListSeparator)
 		}
@@ -36,13 +40,13 @@ func (cmd *Config) Run(c *cli.Context) error {
 		os.Stdout.Write(output)
 	}
 
-	if machine.Exists() {
+	if cmd.machine.Exists() {
 		// Setup new values if machine is running
-		if output, err := exec.Command("docker-machine", "env", machine.Name).Output(); err == nil {
+		if output, err := exec.Command("docker-machine", "env", cmd.machine.Name).Output(); err == nil {
 			os.Stdout.Write(output)
 		}
 	} else {
-		out.Error.Fatalf("No machine named '%s' exists.", machine.Name)
+		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
 	}
 
 	return nil

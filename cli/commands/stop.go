@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"os/exec"
@@ -8,22 +8,25 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Stop struct{}
+type Stop struct{
+	BaseCommand
+}
 
 func (cmd *Stop) Commands() cli.Command {
 	return cli.Command{
 		Name:    "stop",
 		Aliases: []string{"halt"},
 		Usage:   "Stop the docker-machine",
+		Before:  cmd.Before,
 		Action:  cmd.Run,
 	}
 }
 
 func (cmd *Stop) Run(c *cli.Context) error {
-	out.Info.Printf("Stopping machine '%s'", machine.Name)
-	machine.Stop()
+	cmd.out.Info.Printf("Stopping machine '%s'", cmd.machine.Name)
+	cmd.machine.Stop()
 
-	out.Info.Println("Cleaning up local networking (may require your admin password)")
+	cmd.out.Info.Println("Cleaning up local networking (may require your admin password)")
 	if runtime.GOOS == "windows" {
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
