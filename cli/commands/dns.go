@@ -93,12 +93,12 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 
 		if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 			// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
-			cmd.out.Info.Println("Restarting discoveryutil to flush DNS caches")
+			cmd.out.Verbose.Println("Restarting discoveryutil to flush DNS caches")
 			util.StreamCommand(exec.Command("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
 			util.StreamCommand(exec.Command("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
 		} else {
 			// Reset DNS. We have seen this suddenly make /etc/resolver/vm work.
-			cmd.out.Info.Println("Restarting mDNSResponder to flush DNS caches")
+			cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
 			util.StreamCommand(exec.Command("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist"))
 			util.StreamCommand(exec.Command("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist"))
 		}

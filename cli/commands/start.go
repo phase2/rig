@@ -51,13 +51,13 @@ func (cmd *Start) Commands() cli.Command {
 
 func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Info.Printf("Starting '%s'", cmd.machine.Name)
-	cmd.out.Info.Println("Pre-flight check...")
+	cmd.out.Verbose.Println("Pre-flight check...")
 
 	if err := exec.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
 		cmd.out.Error.Fatal("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file")
 	}
 
-	cmd.out.Info.Println("Resetting Docker environment variables...")
+	cmd.out.Verbose.Println("Resetting Docker environment variables...")
 	cmd.machine.UnsetEnv()
 
 	// Does the docker-machine exist
@@ -73,23 +73,23 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	cmd.machine.Start()
 
-	cmd.out.Info.Println("Configuring the local Docker environment")
+	cmd.out.Verbose.Println("Configuring the local Docker environment")
 	cmd.machine.SetEnv()
 
 	cmd.out.Info.Println("Setting up DNS...")
 	dns := Dns{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	dns.ConfigureDns(cmd.machine, c.String("nameservers"))
 
-	cmd.out.Info.Println("Enabling NFS file sharing")
+	cmd.out.Verbose.Println("Enabling NFS file sharing")
 	if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
 		cmd.out.Error.Printf("Error enabling NFS: %s", nfsErr)
 	}
-	cmd.out.Info.Println("NFS is ready to use")
+	cmd.out.Verbose.Println("NFS is ready to use")
 
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
 	cmd.machine.WaitForDev()
 
-	cmd.out.Info.Println("Setting up persistent /data volume...")
+	cmd.out.Verbose.Println("Setting up persistent /data volume...")
 	dataMountSetup := `if [ ! -d /mnt/sda1/data ];
     then echo '===> Creating /mnt/sda1/data directory';
     sudo mkdir /mnt/sda1/data;
@@ -108,7 +108,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	dns.ConfigureRoutes(cmd.machine)
 
-	cmd.out.Info.Println("Launching Dashboard...")
+	cmd.out.Verbose.Println("Launching Dashboard...")
 	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	dash.LaunchDashboard(cmd.machine)
 

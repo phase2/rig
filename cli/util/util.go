@@ -10,12 +10,17 @@ import (
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
 	"github.com/kardianos/osext"
+	"io/ioutil"
 )
 
 // Set up the output streams (and colors) to stream command output
 func StreamCommand(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	if Logger().IsVerbose {
+		cmd.Stdout = os.Stdout
+	} else {
+		cmd.Stdout = ioutil.Discard
+	}
 
 	color.Set(color.FgCyan)
 	err := cmd.Run()
