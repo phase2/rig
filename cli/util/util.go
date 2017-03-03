@@ -1,7 +1,6 @@
-package main
+package util
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,13 +10,27 @@ import (
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
 	"github.com/kardianos/osext"
-	"github.com/urfave/cli"
+	"io/ioutil"
 )
 
-// Set up the output streams (and colors) to stream command output
+// Set up the output streams (and colors) to stream command output if verbose is configured
 func StreamCommand(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
+	return RunCommand(cmd, false)
+}
+
+// Set up the output streams (and colors) to stream command output regardless of verbosity
+func ForceStreamCommand(cmd *exec.Cmd) error {
+	return RunCommand(cmd, true)
+}
+
+// Run the command
+func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 	cmd.Stderr = os.Stderr
+	if Logger().IsVerbose || forceOutput {
+		cmd.Stdout = os.Stdout
+	} else {
+		cmd.Stdout = ioutil.Discard
+	}
 
 	color.Set(color.FgCyan)
 	err := cmd.Run()
@@ -49,20 +62,6 @@ func AskYesNo(question string) bool {
 
 }
 
-func NewContext(cmd RigCommand, parent *cli.Context) *cli.Context {
-	flagSet := flag.NewFlagSet(cmd.Commands().Name, flag.ContinueOnError)
-	for _, f := range cmd.Commands().Flags {
-		f.Apply(flagSet)
-	}
-	return cli.NewContext(parent.App, flagSet, parent)
-}
-
-func SetContextFlag(ctx *cli.Context, name string, value string) {
-	if err := ctx.Set(name, value); err != nil {
-		out.Error.Fatal(err)
-	}
-}
-
 func GetCurrentDockerVersion() *version.Version {
 	output, _ := exec.Command("docker", "--version").Output()
 	re := regexp.MustCompile("Docker version ([\\d|\\.]+)")
@@ -77,16 +76,16 @@ func GetDockerClientApiVersion() *version.Version {
 	return version.Must(version.NewVersion(versionNumber))
 }
 
-func GetDockerServerApiVersion() (*version.Version, error) {
-	output, err := exec.Command("docker-machine", "ssh", machine.Name, "docker version --format {{.Server.APIVersion}}").Output()
+func GetDockerServerApiVersion(name string) (*version.Version, error) {
+	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.APIVersion}}").Output()
 	if err != nil {
 		return nil, err
 	}
 	return version.Must(version.NewVersion(strings.TrimSpace(string(output)))), nil
 }
 
-func GetDockerServerMinApiVersion() (*version.Version, error) {
-	output, err := exec.Command("docker-machine", "ssh", machine.Name, "docker version --format {{.Server.MinAPIVersion}}").Output()
+func GetDockerServerMinApiVersion(name string) (*version.Version, error) {
+	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.MinAPIVersion}}").Output()
 	if err != nil {
 		return nil, err
 	}

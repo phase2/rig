@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+ - Added Docker-based development support
+ - Trimmed output and added a global verbose flag to get it all back
+ - Refactored the entire codebase for better design
+ - Deprecated code cleanup
+
 ## 1.1.0
 
  - Renamed from `devtools` to `rig`.

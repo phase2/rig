@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -11,17 +11,19 @@ import (
 	"errors"
 	"github.com/bitly/go-simplejson"
 	"github.com/hashicorp/go-version"
+	"github.com/phase2/rig/cli/util"
 )
 
 type Machine struct {
 	Name        string
+	out         *util.RigLogger
 	inspectData *simplejson.Json
 }
 
 func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) {
-	out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)", driver, m.Name, cpuCount, memSize, diskSize)
+	m.out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
-	boot2dockerUrl := "https://github.com/boot2docker/boot2docker/releases/download/v" + GetCurrentDockerVersion().String() + "/boot2docker.iso"
+	boot2dockerUrl := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetCurrentDockerVersion().String() + "/boot2docker.iso"
 
 	var create *exec.Cmd
 
@@ -63,31 +65,31 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 		)
 	}
 
-	if err := StreamCommand(create); err != nil {
-		out.Error.Fatalf("Error creating machine '%s': %s", m.Name, err)
+	if err := util.StreamCommand(create); err != nil {
+		m.out.Error.Fatalf("Error creating machine '%s': %s", m.Name, err)
 	}
 
-	out.Info.Printf("Created docker-machine named '%s'...", m.Name)
+	m.out.Info.Printf("Created docker-machine named '%s'...", m.Name)
 }
 
 func (m Machine) CheckXhyveRequirements() {
 	// Is xhyve installed locally
 	if err := exec.Command("which", "xhyve").Run(); err != nil {
-		out.Error.Fatal("xhyve is not installed. Install it with 'brew install xhyve'")
+		m.out.Error.Fatal("xhyve is not installed. Install it with 'brew install xhyve'")
 	}
 
 	// Is docker-machine-driver-xhyve installed locally
 	if err := exec.Command("which", "docker-machine-driver-xhyve").Run(); err != nil {
-		out.Error.Fatal("docker-machine-driver-xhyve is not installed. Install it with 'brew install docker-machine-driver-xhyve'")
+		m.out.Error.Fatal("docker-machine-driver-xhyve is not installed. Install it with 'brew install docker-machine-driver-xhyve'")
 	}
 }
 
 func (m Machine) Start() {
 	if !m.IsRunning() {
-		out.Info.Printf("The machine '%s' is not running, starting...", m.Name)
+		m.out.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
 
-		if err := StreamCommand(exec.Command("docker-machine", "start", m.Name)); err != nil {
-			out.Error.Fatalf("Error starting machine '%s': %s", m.Name, err)
+		if err := util.StreamCommand(exec.Command("docker-machine", "start", m.Name)); err != nil {
+			m.out.Error.Fatalf("Error starting machine '%s': %s", m.Name, err)
 		}
 
 		m.WaitForDev()
@@ -95,11 +97,11 @@ func (m Machine) Start() {
 }
 
 func (m Machine) Stop() {
-	StreamCommand(exec.Command("docker-machine", "stop", m.Name))
+	util.StreamCommand(exec.Command("docker-machine", "stop", m.Name))
 }
 
 func (m Machine) Remove() {
-	StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
+	util.StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
 }
 
 // Wait a period of time for communication with the docker daemon to be established
@@ -110,14 +112,14 @@ func (m Machine) WaitForDev() {
 	for i := 1; i <= maxTries; i++ {
 		m.SetEnv()
 		if err := exec.Command("docker", "ps").Run(); err == nil {
-			out.Info.Printf("Machine '%s' has started", m.Name)
+			m.out.Verbose.Printf("Machine '%s' has started", m.Name)
 			return
 		} else {
-			out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
+			m.out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
 			time.Sleep(time.Duration(sleepSecs) * time.Second)
 		}
 	}
-	out.Error.Fatal("Docker daemon failed to start!")
+	m.out.Error.Fatal("Docker daemon failed to start!")
 }
 
 // Set the Docker proxy variables that determine which machine the docker command communicates
@@ -166,7 +168,7 @@ func (m *Machine) GetData() *simplejson.Json {
 
 	if inspect, inspectErr := exec.Command("docker-machine", "inspect", m.Name).Output(); inspectErr == nil {
 		if js, jsonErr := simplejson.NewJson(inspect); jsonErr != nil {
-			out.Error.Fatalf("Failed to parse '%s' JSON: %s", m.Name, jsonErr)
+			m.out.Error.Fatalf("Failed to parse '%s' JSON: %s", m.Name, jsonErr)
 		} else {
 			m.inspectData = js
 			return m.inspectData

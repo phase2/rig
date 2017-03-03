@@ -1,5 +1,9 @@
 # Rig - Outrigger CLI
 
+> A CLI for managing the Outrigger container-driven development stack.
+
+See the [documentation for more details](http://docs.outrigger.sh).
+
 Use this readme when you want to develop the Outrigger CLI.
 
 Setup
@@ -68,6 +72,19 @@ NOTE: the `-cgo` in the above command is only relevant for building on OSX as th
 to use the OSX DNS Resolver instead of the built in Go resolver. This is needed in order to resolve DNS names
 that end in things like *.vm*  Using `-cgo` for Linux and Windows architectures will result in a failed build.
 
+Developing Rig with Docker [Experimental]
+-----------------------------------------
+
+You can use the Docker integration within this repository to facilitate development in lieu of setting up a
+local golang environment. Using docker-compose, run the following commands:
+
+```bash
+docker-compose run --rm install
+docker-compose run --rm build
+```
+
+This will produce a working OSX binary with partially limited functionality at `build/darwin/rig`.
+
 Deploy to Homebrew
 ------------------
 
@@ -81,8 +98,3 @@ perform the following operations.
  - Prepare a new `brew` version via `brew-publish.sh`
     - Part of this will write a new formula into homebrew-outrigger
  - Commit & push the updated formula to publish the new version
-
-
-
-
-

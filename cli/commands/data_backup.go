@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -9,7 +9,9 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DataBackup struct{}
+type DataBackup struct {
+	BaseCommand
+}
 
 func (cmd *DataBackup) Commands() cli.Command {
 	return cli.Command{
@@ -27,35 +29,36 @@ func (cmd *DataBackup) Commands() cli.Command {
 				Usage: "Specify the local directory to store the backup zip.",
 			},
 		},
+		Before: cmd.Before,
 		Action: cmd.Run,
 	}
 }
 
 func (cmd *DataBackup) Run(c *cli.Context) error {
-	if !machine.Exists() {
-		out.Error.Fatalf("No machine named '%s' exists.", machine.Name)
+	if !cmd.machine.Exists() {
+		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
 	}
 
 	dataDir := c.String("data-dir")
 	backupDir := c.String("backup-dir")
-	backupFile := fmt.Sprintf("%s%c%s.tgz", backupDir, os.PathSeparator, machine.Name)
+	backupFile := fmt.Sprintf("%s%c%s.tgz", backupDir, os.PathSeparator, cmd.machine.Name)
 	if _, err := os.Stat(backupDir); err != nil {
-		out.Info.Printf("Creating backup directory: %s...", backupDir)
+		cmd.out.Info.Printf("Creating backup directory: %s...", backupDir)
 		if mkdirErr := exec.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
-			out.Error.Println(mkdirErr)
-			out.Error.Fatalf("Could not create backup directory %s", backupDir)
+			cmd.out.Error.Println(mkdirErr)
+			cmd.out.Error.Fatalf("Could not create backup directory %s", backupDir)
 		}
 	} else if _, err := os.Stat(backupFile); err == nil {
 		// If the backup dir already exists, make sure the backup file does not exist.
-		out.Error.Fatalf("Backup archive %s already exists.", backupFile)
+		cmd.out.Error.Fatalf("Backup archive %s already exists.", backupFile)
 	}
 
-	out.Info.Printf("Backing up %s on '%s' to %s...", dataDir, machine.Name, backupFile)
+	cmd.out.Info.Printf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile)
 
 	// Stream the archive to stdout and capture it in a local file so we don't waste
 	// space storing an archive on the VM filesystem. There may not be enough space.
 	archiveCmd := fmt.Sprintf("sudo tar czf - -C %s .", dataDir)
-	backup := exec.Command("docker-machine", "ssh", machine.Name, archiveCmd, ">", backupFile)
+	backup := exec.Command("docker-machine", "ssh", cmd.machine.Name, archiveCmd, ">", backupFile)
 	backup.Stderr = os.Stderr
 
 	color.Set(color.FgCyan)
@@ -63,7 +66,7 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	color.Unset()
 
 	if err != nil {
-		out.Warning.Println("There may have been problems. See above for any errors")
+		cmd.out.Warning.Println("There may have been problems. See above for any errors")
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -6,39 +6,43 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
-type Dashboard struct{}
+type Dashboard struct {
+	BaseCommand
+}
 
 func (cmd *Dashboard) Commands() cli.Command {
 	return cli.Command{
 		Name:   "dashboard",
 		Usage:  "Start Dashboard services on the docker-machine",
+		Before: cmd.Before,
 		Action: cmd.Run,
 	}
 }
 
 func (cmd *Dashboard) Run(c *cli.Context) error {
-	if machine.IsRunning() {
-		out.Info.Println("Launching Dashboard")
-		cmd.LaunchDashboard(machine)
+	if cmd.machine.IsRunning() {
+		cmd.out.Info.Println("Launching Dashboard")
+		cmd.LaunchDashboard(cmd.machine)
 	} else {
-		out.Error.Fatalf("Machine '%s' is not running.", machine.Name)
+		cmd.out.Error.Fatalf("Machine '%s' is not running.", cmd.machine.Name)
 	}
 
 	return nil
 }
 
-func (cmd Dashboard) LaunchDashboard(machine Machine) {
+func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 	machine.SetEnv()
 
 	home := os.Getenv("HOME")
 
-	StreamCommand(exec.Command("docker", "stop", "outrigger-dashboard"))
-	StreamCommand(exec.Command("docker", "rm", "outrigger-dashboard"))
+	exec.Command("docker", "stop", "outrigger-dashboard").Run()
+	exec.Command("docker", "rm", "outrigger-dashboard").Run()
 
-	dockerApiVersion, _ := GetDockerServerApiVersion()
+	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
 
 	args := []string{
 		"run",
@@ -53,13 +57,13 @@ func (cmd Dashboard) LaunchDashboard(machine Machine) {
 		"outrigger/dashboard:latest",
 	}
 
-	StreamCommand(exec.Command("docker", args...))
+	util.ForceStreamCommand(exec.Command("docker", args...))
 
 	if runtime.GOOS == "darwin" {
-		StreamCommand(exec.Command("open", "http://dashboard.outrigger.vm"))
+		exec.Command("open", "http://dashboard.outrigger.vm").Run()
 	} else if runtime.GOOS == "windows" {
-		StreamCommand(exec.Command("start", "http://dashboard.outrigger.vm"))
+		exec.Command("start", "http://dashboard.outrigger.vm").Run()
 	} else {
-		out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
+		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
 }

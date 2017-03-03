@@ -1,0 +1,32 @@
+version: '2.1'
+
+services:
+
+  # Build rig, dropping off a working binary in build/darwin/rig.
+  compile:
+    extends: base
+    command: gox -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
+
+  # Install project dependencies.
+  install:
+    extends: base
+    command: godep restore -v
+
+  # Foundational service to run commands within the container.
+  base:
+    build: .
+    command: /usr/bin/env sh
+    network_mode: bridge
+    environment:
+      # /go is the default GOPATH in the Docker image.
+      GOPATH: ${OUTRIGGER_GOPATH:-/go}
+    volumes:
+      # rig dependencies are not in a tidy sub-directory, so all global golang
+      # packages are found in the same directory. This volume mount persists
+      # them in general as a sort of cache.
+      #
+      # This does not address version mismatches between packages, so is a
+      # temporary/brittle workaround.
+      - /data/golang/cache:${OUTRIGGER_GOPATH:-/go}/src
+      - .:${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig
+    working_dir: ${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig
