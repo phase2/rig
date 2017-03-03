@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DataBackup struct{
+type DataBackup struct {
 	BaseCommand
 }
 

@@ -5,7 +5,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Remove struct{
+type Remove struct {
 	BaseCommand
 }
 

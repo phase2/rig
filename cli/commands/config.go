@@ -7,11 +7,11 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/urfave/cli"
 	"github.com/phase2/rig/cli/util"
+	"github.com/urfave/cli"
 )
 
-type Config struct{
+type Config struct {
 	BaseCommand
 }
 

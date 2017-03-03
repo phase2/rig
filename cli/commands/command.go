@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"github.com/urfave/cli"
-	"github.com/phase2/rig/cli/util"
 	"flag"
+	"github.com/phase2/rig/cli/util"
+	"github.com/urfave/cli"
 )
 
 type RigCommand interface {
@@ -12,7 +12,7 @@ type RigCommand interface {
 
 type BaseCommand struct {
 	RigCommand
-	out *util.RigLogger
+	out     *util.RigLogger
 	machine Machine
 }
 
@@ -36,4 +36,3 @@ func (cmd *BaseCommand) SetContextFlag(ctx *cli.Context, name string, value stri
 		cmd.out.Error.Fatal(err)
 	}
 }
-

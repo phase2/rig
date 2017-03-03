@@ -21,7 +21,7 @@ type Machine struct {
 }
 
 func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) {
-	m.out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)", driver, m.Name, cpuCount, memSize, diskSize)
+	m.out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
 	boot2dockerUrl := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetCurrentDockerVersion().String() + "/boot2docker.iso"
 
@@ -86,7 +86,7 @@ func (m Machine) CheckXhyveRequirements() {
 
 func (m Machine) Start() {
 	if !m.IsRunning() {
-		m.out.Info.Printf("The machine '%s' is not running, starting...", m.Name)
+		m.out.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
 
 		if err := util.StreamCommand(exec.Command("docker-machine", "start", m.Name)); err != nil {
 			m.out.Error.Fatalf("Error starting machine '%s': %s", m.Name, err)
@@ -112,7 +112,7 @@ func (m Machine) WaitForDev() {
 	for i := 1; i <= maxTries; i++ {
 		m.SetEnv()
 		if err := exec.Command("docker", "ps").Run(); err == nil {
-			m.out.Info.Printf("Machine '%s' has started", m.Name)
+			m.out.Verbose.Printf("Machine '%s' has started", m.Name)
 			return
 		} else {
 			m.out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)

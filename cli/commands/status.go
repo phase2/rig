@@ -5,9 +5,10 @@ import (
 
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
+	"os"
 )
 
-type Status struct{
+type Status struct {
 	BaseCommand
 }
 
@@ -25,7 +26,12 @@ func (cmd *Status) Run(c *cli.Context) error {
 		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
 	}
 
-	util.StreamCommand(exec.Command("docker-machine", "ls", "--filter", "name="+cmd.machine.Name))
+	if cmd.out.IsVerbose {
+		util.StreamCommand(exec.Command("docker-machine", "ls", "--filter", "name="+cmd.machine.Name))
+	} else {
+		output, _ := exec.Command("docker-machine", "status", cmd.machine.Name).CombinedOutput()
+		os.Stdout.Write(output)
+	}
 
 	return nil
 }

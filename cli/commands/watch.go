@@ -6,11 +6,11 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/urfave/cli"
 	"github.com/phase2/rig/cli/util"
+	"github.com/urfave/cli"
 )
 
-type Watch struct{
+type Watch struct {
 	BaseCommand
 }
 

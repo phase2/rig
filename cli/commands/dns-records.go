@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DnsRecords struct{
+type DnsRecords struct {
 	BaseCommand
 }
 

@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Kill struct{
+type Kill struct {
 	BaseCommand
 }
 

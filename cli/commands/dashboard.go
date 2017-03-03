@@ -6,11 +6,11 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/urfave/cli"
 	"github.com/phase2/rig/cli/util"
+	"github.com/urfave/cli"
 )
 
-type Dashboard struct{
+type Dashboard struct {
 	BaseCommand
 }
 
@@ -39,8 +39,8 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 
 	home := os.Getenv("HOME")
 
-	util.StreamCommand(exec.Command("docker", "stop", "outrigger-dashboard"))
-	util.StreamCommand(exec.Command("docker", "rm", "outrigger-dashboard"))
+	exec.Command("docker", "stop", "outrigger-dashboard").Run()
+	exec.Command("docker", "rm", "outrigger-dashboard").Run()
 
 	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
 
@@ -57,12 +57,12 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 		"outrigger/dashboard:latest",
 	}
 
-	util.StreamCommand(exec.Command("docker", args...))
+	util.ForceStreamCommand(exec.Command("docker", args...))
 
 	if runtime.GOOS == "darwin" {
-		util.StreamCommand(exec.Command("open", "http://dashboard.outrigger.vm"))
+		exec.Command("open", "http://dashboard.outrigger.vm").Run()
 	} else if runtime.GOOS == "windows" {
-		util.StreamCommand(exec.Command("start", "http://dashboard.outrigger.vm"))
+		exec.Command("start", "http://dashboard.outrigger.vm").Run()
 	} else {
 		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}

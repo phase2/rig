@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/phase2/rig/cli/commands"
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
@@ -24,6 +25,16 @@ func main() {
 			Usage:  "Name of the VM.",
 			EnvVar: "RIG_ACTIVE_MACHINE",
 		},
+		cli.BoolFlag{
+			Name:   "verbose",
+			Usage:  "Show verbose output. Learning Mode!",
+			EnvVar: "RIG_VERBOSE",
+		},
+	}
+
+	app.Before = func(c *cli.Context) error {
+		util.LoggerInit(c.GlobalBool("verbose"))
+		return nil
 	}
 
 	app.Commands = []cli.Command{}
