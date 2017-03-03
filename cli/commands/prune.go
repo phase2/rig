@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Prune struct{
+type Prune struct {
 	BaseCommand
 }
 

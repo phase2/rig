@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Upgrade struct{
+type Upgrade struct {
 	BaseCommand
 }
 

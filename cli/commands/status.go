@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-type Status struct{
+type Status struct {
 	BaseCommand
 }
 

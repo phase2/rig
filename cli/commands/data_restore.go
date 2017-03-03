@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DataRestore struct{
+type DataRestore struct {
 	BaseCommand
 }
 

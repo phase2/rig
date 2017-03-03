@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Doctor struct{
+type Doctor struct {
 	BaseCommand
 }
 

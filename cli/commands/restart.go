@@ -6,7 +6,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Restart struct{
+type Restart struct {
 	BaseCommand
 }
 

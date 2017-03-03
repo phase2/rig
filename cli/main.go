@@ -26,8 +26,8 @@ func main() {
 			EnvVar: "RIG_ACTIVE_MACHINE",
 		},
 		cli.BoolFlag{
-			Name: "verbose",
-			Usage: "Show verbose output. Learning Mode!",
+			Name:   "verbose",
+			Usage:  "Show verbose output. Learning Mode!",
 			EnvVar: "RIG_VERBOSE",
 		},
 	}
@@ -36,7 +36,6 @@ func main() {
 		util.LoggerInit(c.GlobalBool("verbose"))
 		return nil
 	}
-
 
 	app.Commands = []cli.Command{}
 	app.Commands = append(app.Commands, (&commands.Start{}).Commands())

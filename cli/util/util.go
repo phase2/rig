@@ -13,10 +13,20 @@ import (
 	"io/ioutil"
 )
 
-// Set up the output streams (and colors) to stream command output
+// Set up the output streams (and colors) to stream command output if verbose is configured
 func StreamCommand(cmd *exec.Cmd) error {
+	return RunCommand(cmd, false)
+}
+
+// Set up the output streams (and colors) to stream command output regardless of verbosity
+func ForceStreamCommand(cmd *exec.Cmd) error {
+	return RunCommand(cmd, true)
+}
+
+// Run the command
+func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 	cmd.Stderr = os.Stderr
-	if Logger().IsVerbose {
+	if Logger().IsVerbose || forceOutput {
 		cmd.Stdout = os.Stdout
 	} else {
 		cmd.Stdout = ioutil.Discard

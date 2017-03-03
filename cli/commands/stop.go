@@ -8,7 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Stop struct{
+type Stop struct {
 	BaseCommand
 }
 
