@@ -76,9 +76,6 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 	if runtime.GOOS == "windows" {
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		util.StreamCommand(exec.Command("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machineIp))
-
-		// Delete this in version > 0.4.x
-		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
 	} else {
 		if machine.IsXhyve() {
 			cmd.RemoveHostFilter(machine.GetIP())
@@ -87,9 +84,6 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 		exec.Command("bash", "-c", "echo \"nameserver "+bridgeIp+"\" | sudo tee /etc/resolver/vm").Run()
 		exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
 		util.StreamCommand(exec.Command("sudo", "route", "-n", "add", "172.17.0.0/16", machineIp))
-
-		// Delete this in version > 0.4.x
-		exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
 
 		if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 			// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
