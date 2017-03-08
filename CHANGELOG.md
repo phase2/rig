@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+ - Support the Docker version numbering change
+
 ## 1.2.0
 
  - Added Docker-based development support

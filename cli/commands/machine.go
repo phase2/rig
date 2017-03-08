@@ -23,7 +23,7 @@ type Machine struct {
 func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) {
 	m.out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
-	boot2dockerUrl := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetCurrentDockerVersion().String() + "/boot2docker.iso"
+	boot2dockerUrl := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
 
 	var create *exec.Cmd
 
