@@ -62,10 +62,14 @@ func AskYesNo(question string) bool {
 
 }
 
-func GetCurrentDockerVersion() *version.Version {
+func GetRawCurrentDockerVersion() string {
 	output, _ := exec.Command("docker", "--version").Output()
-	re := regexp.MustCompile("Docker version ([\\d|\\.]+)")
-	versionNumber := re.FindAllStringSubmatch(string(output), -1)[0][1]
+	re := regexp.MustCompile("Docker version (.*),")
+	return re.FindAllStringSubmatch(string(output), -1)[0][1]
+}
+
+func GetCurrentDockerVersion() *version.Version {
+	versionNumber := GetRawCurrentDockerVersion()
 	return version.Must(version.NewVersion(versionNumber))
 }
 
