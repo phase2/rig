@@ -42,7 +42,7 @@ godep restore
 Code
 ----
 
-We make use a few key libraries to do all the fancy stuff that the `rig` CLI will do.
+We make use of a few key libraries to do all the fancy stuff that the `rig` CLI will do.
  
  * https://github.com/urfave/cli
      * The entire CLI framework from helps text to flags. This was an easy cli to build b/c of this library 
