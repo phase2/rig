@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+ - Removed the $HOME volume mount for the Dashboard
+ 
 ## 1.2.1
 
  - Support the Docker version numbering change
