@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 
@@ -37,8 +36,6 @@ func (cmd *Dashboard) Run(c *cli.Context) error {
 func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 	machine.SetEnv()
 
-	home := os.Getenv("HOME")
-
 	exec.Command("docker", "stop", "outrigger-dashboard").Run()
 	exec.Command("docker", "rm", "outrigger-dashboard").Run()
 
@@ -48,7 +45,6 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 		"run",
 		"-d",
 		"--restart=always",
-		"-v", fmt.Sprintf("%s:%s:ro", home, home),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-l", "com.dnsdock.name=dashboard",
 		"-l", "com.dnsdock.image=outrigger",
