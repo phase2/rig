@@ -48,7 +48,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 		"run",
 		"-d",
 		"--restart=always",
-		"-v", fmt.Sprintf("%s:%s", home, home),
+		"-v", fmt.Sprintf("%s:%s:ro", home, home),
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-l", "com.dnsdock.name=dashboard",
 		"-l", "com.dnsdock.image=outrigger",
