@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+ - Updated mDNSResponder restart to avoid System Integrity Protections 
+
 ## 1.2.2
 
  - Removed the $HOME volume mount for the Dashboard
