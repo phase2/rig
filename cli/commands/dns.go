@@ -91,10 +91,9 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 			util.StreamCommand(exec.Command("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
 			util.StreamCommand(exec.Command("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
 		} else {
-			// Reset DNS. We have seen this suddenly make /etc/resolver/vm work.
+			// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
 			cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
-			util.StreamCommand(exec.Command("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist"))
-			util.StreamCommand(exec.Command("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist"))
+			util.StreamCommand(exec.Command("sudo", "killall", "-HUP", "mDNSResponder"))
 		}
 	}
 }
