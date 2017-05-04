@@ -53,6 +53,7 @@ func main() {
 	app.Commands = append(app.Commands, (&commands.Kill{}).Commands())
 	app.Commands = append(app.Commands, (&commands.Remove{}).Commands())
 	app.Commands = append(app.Commands, (&commands.Watch{}).Commands())
+	app.Commands = append(app.Commands, (&commands.Project{}).Commands())
 	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands())
 
 	app.Run(os.Args)
