@@ -19,6 +19,7 @@ func (cmd *Watch) Commands() cli.Command {
 		Name:      "watch",
 		Usage:     "Watch a host directory for changes and forward the event into a Docker Machine",
 		ArgsUsage: "<path to watch>",
+		Category: "Development",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "ignorefile",
