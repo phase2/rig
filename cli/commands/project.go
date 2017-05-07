@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 )
 
 type Project struct {
@@ -27,10 +27,6 @@ scripts:
   clean: "./cleanup.sh"
 ```
 */
-type P struct {
-	Scripts map[string]string
-	Version string
-}
 
 func (cmd *Project) Commands() cli.Command {
 	flags := []cli.Flag{
@@ -74,23 +70,12 @@ func (cmd *Project) Run(c *cli.Context) error {
 	}	else {
 		if val, ok := scripts[alias]; ok {
 		  cmd.out.Verbose.Printf("Executing '%s' as '%s'", alias, val)
-
-			var (
-				sysShell      = "sh"
-				sysCommandArg = "-c"
-			)
-
-			shellCmd := exec.Command(sysShell, sysCommandArg, val)
+			shellCmd := cmd.GetCommand(val)
 			shellCmd.Dir = filepath.Dir(cmd.GetConfigPath(c))
-/*
-			shellCmd := exec.Cmd{
-				Path: sysShell,
-				Args: []string{sysCommandArg, val},
-				Dir: filepath.Dir(cmd.GetConfigPath(c)),
-			}
-*/
-			if err := util.StreamCommand(shellCmd); err != nil {
-				cmd.out.Error.Fatalf("Error running project script '%s': %s", alias, err)
+
+			if _, stderr, exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
+				cmd.out.Error.Fatalf("Error running project script '%s': %s", alias, stderr)
+				os.Exit(exitCode)
 			}
 		} else {
 			util.Logger().Error.Printf("Unrecognized script '%s'", alias)
@@ -98,6 +83,21 @@ func (cmd *Project) Run(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+// Construct a command to execute a configured script.
+// @see https://github.com/medhoover/gom/blob/staging/config/command.go
+func (cmd *Project) GetCommand(val string) *exec.Cmd {
+	var (
+		sysShell      = "sh"
+		sysCommandArg = "-c"
+	)
+	if runtime.GOOS == "windows" {
+		sysShell = "cmd"
+		sysCommandArg = "/c"
+	}
+
+	return exec.Command(sysShell, sysCommandArg, val)
 }
 
 // Load the scripts from the project-specific configuration.
@@ -111,18 +111,9 @@ func (cmd *Project) GetConfigPath(c *cli.Context) string {
 }
 
 // Load a project-specific rig configuration file from the current directory
-func (cmd *Project) GetProjectConfig(filename string) P {
-	yamlFile, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		util.Logger().Error.Fatalf("Project configuration file not found at '%s'", filename)
-	}
-
-	var config P
-	if err = yaml.Unmarshal(yamlFile, &config); err != nil {
-		util.Logger().Error.Printf("Error loading YAML project config file: '%s'", filename)
-		util.Logger().Error.Fatal(err)
-	}
+func (cmd *Project) GetProjectConfig(filename string) util.ProjectConfig {
+	var config util.ProjectConfig
+	config = util.LoadYamlFromFile(filename)
 
 	if len(config.Version) == 0 {
 		util.Logger().Error.Printf("No 'version' property detected for your configuration file '%s'", filename)
