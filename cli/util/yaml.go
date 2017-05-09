@@ -12,13 +12,13 @@ type ProjectConfig struct {
 }
 
 func LoadYamlFromFile(filename string) ProjectConfig {
-  yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := ioutil.ReadFile(filename)
 
 	if err != nil {
 		Logger().Error.Fatalf("Project configuration file not found at '%s'", filename)
 	}
 
-  return LoadYaml(yamlFile)
+	return LoadYaml(yamlFile)
 }
 
 // Set up the output streams (and colors) to stream command output if verbose is configured
@@ -29,5 +29,5 @@ func LoadYaml(in []byte) ProjectConfig {
 		Logger().Error.Fatal(err)
 	}
 
-  return config
+	return config
 }

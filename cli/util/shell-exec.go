@@ -1,11 +1,11 @@
 package util
 
 import (
-  "bytes"
-  "io/ioutil"
+	"bytes"
+	"io/ioutil"
 	"os"
 	"os/exec"
-  "syscall"
+	"syscall"
 
 	"github.com/fatih/color"
 )
@@ -38,35 +38,35 @@ func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 }
 
 func PassthruCommand(cmd *exec.Cmd) (stdout string, stderr string, exitCode int) {
-  var outbuf, errbuf bytes.Buffer
+	var outbuf, errbuf bytes.Buffer
 
-  cmd.Stderr = os.Stderr
-  cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 
-  err := cmd.Run()
-  stdout = outbuf.String()
-  stderr = errbuf.String()
+	err := cmd.Run()
+	stdout = outbuf.String()
+	stderr = errbuf.String()
 
-  if err != nil {
-      // Try to get the exit code.
-      if exitError, ok := err.(*exec.ExitError); ok {
-          ws := exitError.Sys().(syscall.WaitStatus)
-          exitCode = ws.ExitStatus()
-      } else {
-          // This will happen (in OSX) if `name` is not available in $PATH,
-          // in this situation, exit code could not be get, and stderr will be
-          // empty string very likely, so we use the default fail code, and format err
-          // to string and set to stderr
-          exitCode = defaultFailedCode
-          if stderr == "" {
-              stderr = err.Error()
-          }
-      }
-  } else {
-      // Success, exitCode should be 0.
-      ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
-      exitCode = ws.ExitStatus()
-  }
+	if err != nil {
+		// Try to get the exit code.
+		if exitError, ok := err.(*exec.ExitError); ok {
+			ws := exitError.Sys().(syscall.WaitStatus)
+			exitCode = ws.ExitStatus()
+		} else {
+			// This will happen (in OSX) if `name` is not available in $PATH,
+			// in this situation, exit code could not be get, and stderr will be
+			// empty string very likely, so we use the default fail code, and format err
+			// to string and set to stderr
+			exitCode = defaultFailedCode
+			if stderr == "" {
+				stderr = err.Error()
+			}
+		}
+	} else {
+		// Success, exitCode should be 0.
+		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
+		exitCode = ws.ExitStatus()
+	}
 
-  return
+	return
 }

@@ -39,21 +39,21 @@ func (cmd *Project) Commands() cli.Command {
 	}
 
 	command := cli.Command{
-		Name: "project",
-		Usage: "Project related commands",
-		Category: "Development",
+		Name:        "project",
+		Usage:       "Project related commands",
+		Category:    "Development",
 		Subcommands: []cli.Command{},
-		Before: cmd.Before,
+		Before:      cmd.Before,
 	}
 
 	command.Subcommands = append(command.Subcommands, cli.Command{
-		Name: "run",
-		Usage: "Run a configured script",
+		Name:      "run",
+		Usage:     "Run a configured script",
 		ArgsUsage: "<script to run>",
-		Flags: flags,
-		Before: cmd.Before,
-		Action: cmd.Run,
-	});
+		Flags:     flags,
+		Before:    cmd.Before,
+		Action:    cmd.Run,
+	})
 
 	return command
 }
@@ -61,15 +61,15 @@ func (cmd *Project) Commands() cli.Command {
 func (cmd *Project) Run(c *cli.Context) error {
 	var scripts = cmd.GetProjectScripts(cmd.GetConfigPath(c))
 
-	alias := c.Args().Get(0);
+	alias := c.Args().Get(0)
 	if len(alias) == 0 {
 		cmd.out.Info.Print("These are the local project scripts:")
 		for k := range scripts {
 			cmd.out.Info.Printf("\t - %s", k)
 		}
-	}	else {
+	} else {
 		if val, ok := scripts[alias]; ok {
-		  cmd.out.Verbose.Printf("Executing '%s' as '%s'", alias, val)
+			cmd.out.Verbose.Printf("Executing '%s' as '%s'", alias, val)
 			shellCmd := cmd.GetCommand(val)
 			shellCmd.Dir = filepath.Dir(cmd.GetConfigPath(c))
 
@@ -102,7 +102,7 @@ func (cmd *Project) GetCommand(val string) *exec.Cmd {
 
 // Load the scripts from the project-specific configuration.
 func (cmd *Project) GetProjectScripts(filename string) map[string]string {
-	return cmd.GetProjectConfig(filename).Scripts;
+	return cmd.GetProjectConfig(filename).Scripts
 }
 
 func (cmd *Project) GetConfigPath(c *cli.Context) string {
