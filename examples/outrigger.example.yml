@@ -1,0 +1,64 @@
+##
+# This file is an example of a Project configuration for use with Rig.
+#
+# To use a file like this, place it at the root of your repository.
+#
+# By default, rig looks for a file named '.outrigger.yml' in the current
+# directory.
+#
+# You can change this by running rig project --config=/path/to/file
+# or by using RIG_PROJECT_CONFIG_FILE environment variable.
+#
+# One of the main initial functions of this configuration file is to declare
+# scripts for which Rig will act as a task broker. Rig will execute all scripts
+# in the directory of the outrigger.yml file.
+##
+
+# This version key allows for breaking changes.
+version: 1.0
+
+# This namespace value is speculative and currently unused.
+# You might want to have a label on your docker containers to match under the
+# identifier 'sh.outrigger.project'.
+project: myproject
+
+# These are the scripts rig will run.
+# View the scripts via 'rig project'
+# Execute with 'rig project <id>' such as 'rig project ps'
+scripts:
+
+  # A simple script.
+  welcome:
+    # Aliases are not supported quite yet, but you will like them.
+    alias: hi
+    description: Output a simple welcome message.
+    run:
+      - echo "Welcome to my project!"
+
+  # A series of commands.
+  tour:
+    alias: series
+    description: A quick tour of the project.
+    run:
+      # This interrupts the current execution thread to shell out to rig project
+      # to run the welcome script.
+      - rig project welcome
+      - echo "Please review the README.md and CONTRIBUTING.md before getting started."
+      - echo "Run 'rig project' to see all available commands."
+
+  # Simply call a script.
+  clean:
+    alias: wipe
+    description: Run the clean up command.
+    run:
+      - ./bin/clean.sh
+
+  # Check out how failure is handled.
+  fail:
+    alias: error
+    description: This just fails, nevermind.
+    run:
+      # You should have access to this exit code in the terminal.
+      - exit 3
+      # Once a command ends on an error, further commands are not run.
+      - echo "You will never see this"

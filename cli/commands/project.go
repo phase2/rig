@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/phase2/rig/cli/commands/project"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -13,20 +14,6 @@ import (
 type Project struct {
 	BaseCommand
 }
-
-/*
-Here is a sample config file
-
-```
-version: 1.0
-namespace: project-name
-scripts:
-  build: "some build command && another build command"
-  start: "bin/start.sh"
-  stop:  "docker-compose stop"
-  clean: "./cleanup.sh"
-```
-*/
 
 func (cmd *Project) Commands() cli.Command {
 	flags := []cli.Flag{
@@ -39,46 +26,45 @@ func (cmd *Project) Commands() cli.Command {
 	}
 
 	command := cli.Command{
-		Name:        "project",
-		Usage:       "Project related commands",
-		Category:    "Development",
-		Subcommands: []cli.Command{},
-		Before:      cmd.Before,
-	}
-
-	command.Subcommands = append(command.Subcommands, cli.Command{
-		Name:      "run",
-		Usage:     "Run a configured script",
+		Name:      "project",
+		Usage:     "Run a configured project script",
 		ArgsUsage: "<script to run>",
+		Category:  "Development",
 		Flags:     flags,
 		Before:    cmd.Before,
 		Action:    cmd.Run,
-	})
+	}
 
 	return command
 }
 
+// Return the help for all the scripts.
 func (cmd *Project) Run(c *cli.Context) error {
 	var scripts = cmd.GetProjectScripts(cmd.GetConfigPath(c))
 
-	alias := c.Args().Get(0)
-	if len(alias) == 0 {
+	key := c.Args().Get(0)
+	if len(key) == 0 {
 		cmd.out.Info.Print("These are the local project scripts:")
-		for k := range scripts {
-			cmd.out.Info.Printf("\t - %s", k)
+		for k, v := range scripts {
+			cmd.out.Info.Printf("\t - %s [%s]:\t\t\t%s", k, v.Alias, v.Description)
 		}
 	} else {
-		if val, ok := scripts[alias]; ok {
-			cmd.out.Verbose.Printf("Executing '%s' as '%s'", alias, val)
-			shellCmd := cmd.GetCommand(val)
-			shellCmd.Dir = filepath.Dir(cmd.GetConfigPath(c))
+		if script, ok := scripts[key]; ok {
+			cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, script.Description)
+			dir := filepath.Dir(cmd.GetConfigPath(c))
+			for step, val := range script.Run {
+				cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, val)
+				shellCmd := cmd.GetCommand(val)
+				shellCmd.Dir = dir
 
-			if _, stderr, exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-				cmd.out.Error.Fatalf("Error running project script '%s': %s", alias, stderr)
-				os.Exit(exitCode)
+				if _, stderr, exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
+					cmd.out.Error.Printf("Error running project script '%s' on step %d: %s", key, step+1, stderr)
+					os.Exit(exitCode)
+				}
 			}
+
 		} else {
-			util.Logger().Error.Printf("Unrecognized script '%s'", alias)
+			util.Logger().Error.Printf("Unrecognized script '%s'", key)
 		}
 	}
 
@@ -101,27 +87,20 @@ func (cmd *Project) GetCommand(val string) *exec.Cmd {
 }
 
 // Load the scripts from the project-specific configuration.
-func (cmd *Project) GetProjectScripts(filename string) map[string]string {
-	return cmd.GetProjectConfig(filename).Scripts
+func (cmd *Project) GetProjectScripts(filename string) map[string]*project.ProjectScript {
+	scripts := project.GetProjectConfigFromFile(filename).Scripts
+
+	scripts["scripts"] = &project.ProjectScript{
+		Alias:       "h",
+		Description: "Information about the available project scripts.",
+		Run:         []string{"rig project"},
+	}
+
+	return scripts
 }
 
+// Get the absolute path to the configuration file.
 func (cmd *Project) GetConfigPath(c *cli.Context) string {
 	filename, _ := filepath.Abs(c.String("config"))
 	return filename
-}
-
-// Load a project-specific rig configuration file from the current directory
-func (cmd *Project) GetProjectConfig(filename string) util.ProjectConfig {
-	var config util.ProjectConfig
-	config = util.LoadYamlFromFile(filename)
-
-	if len(config.Version) == 0 {
-		util.Logger().Error.Printf("No 'version' property detected for your configuration file '%s'", filename)
-	}
-
-	if config.Version != "1.0" {
-		util.Logger().Error.Printf("Version '1.0' is the only supported value in '%s'", filename)
-	}
-
-	return config
 }
