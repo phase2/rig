@@ -22,7 +22,7 @@ func (cmd *Project) Commands() cli.Command {
 	command := cli.Command{
 		Name:        "project",
 		Usage:       "Run a project script from configuration.",
-		Description: "Configure scripts representing core operations of the project in a Rig configuration file. This Yaml file by default is ./.outrigger.yml. It can be overridden by setting an environment variable $RIG_PROJECT_CONFIG_FILE.",
+		Description: "Configure scripts representing core operations of the project in a Rig configuration file.\n\n\tThis Yaml file by default is ./.outrigger.yml. It can be overridden by setting an environment variable $RIG_PROJECT_CONFIG_FILE.",
 		Category:    "Development",
 		Before:      cmd.Before,
 		Subcommands: cmd.GetScriptsAsSubcommands(project.GetConfigPath()),
@@ -65,6 +65,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 	key := c.Command.Name
 	if script, ok := scripts[key]; ok {
 		cmd.out.Verbose.Printf("Executing '%s' for '%s'", key, script.Description)
+		cmd.addCommandPath(project.GetConfigPath())
 		dir := filepath.Dir(project.GetConfigPath())
 		for step, val := range script.Run {
 			cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, val)
@@ -108,4 +109,15 @@ func (cmd *Project) GetProjectScripts(filename string) map[string]*project.Proje
 	// We can hard-wire scripts here by assigning: scripts["name"] = &project.ProjectScript{}
 
 	return scripts
+}
+
+// Override the PATH environment variable for further shell executions.
+// This is used on POSIX systems for lookup of scripts.
+func (cmd *Project) addCommandPath(filename string) error {
+	binDir := project.GetProjectConfigFromFile(filename).Bin
+	cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)
+	path := os.Getenv("PATH")
+	os.Setenv("PATH", fmt.Sprintf("%s:%s", path, binDir))
+
+	return nil
 }

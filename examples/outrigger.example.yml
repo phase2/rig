@@ -17,6 +17,12 @@
 # This version key allows for breaking changes.
 version: 1.0
 
+# Path to project-specific scripts. Scripts in this directory can be referenced
+# without the preceding path. This path may be relative or absolute, and by
+# colon (:) delimiting paths you may specify multiple.
+# By default it is set to ./bin, so this example is boring.
+bin: './bin'
+
 # This namespace value is speculative and currently unused.
 # You might want to have a label on your docker containers to match under the
 # identifier 'sh.outrigger.project'.
@@ -51,7 +57,8 @@ scripts:
     alias: wipe
     description: Run the clean up command.
     run:
-      - ./bin/clean.sh
+      # This script is located in ./bin/clean.sh
+      - clean.sh
 
   # Check out how failure is handled.
   fail:

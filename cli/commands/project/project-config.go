@@ -22,7 +22,7 @@ type ProjectConfig struct {
 	Scripts   map[string]*ProjectScript
 	Namespace string
 	Version   string
-	Aliases   map[string]string
+	Bin       string
 }
 
 // Given a project configuration file will load YAML, validate it for purpose,
@@ -32,6 +32,10 @@ func GetProjectConfigFromFile(filename string) ProjectConfig {
 	if err := ValidateConfig(config); err != nil {
 		util.Logger().Error.Printf("Error in Project Config: %s", filename)
 		util.Logger().Error.Fatalf("%s", err)
+	}
+
+	if len(config.Bin) == 0 {
+		config.Bin = "./bin"
 	}
 
 	for id, script := range config.Scripts {
