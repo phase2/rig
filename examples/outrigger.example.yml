@@ -33,7 +33,7 @@ scripts:
     alias: hi
     description: Output a simple welcome message.
     run:
-      - echo "Welcome to my project!"
+      - echo "Welcome to My Project!"
 
   # A series of commands.
   tour:
@@ -62,3 +62,11 @@ scripts:
       - exit 3
       # Once a command ends on an error, further commands are not run.
       - echo "You will never see this"
+
+  # Does not currently work to open a standing "session".
+  # The shell execution technique is in development.
+  run:
+    alias: r
+    description: Run a command via the build container. For example, `rig project run cli "ls -l /root"`
+    run:
+      - docker-compose -f build.yml run --rm

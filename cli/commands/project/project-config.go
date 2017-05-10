@@ -3,10 +3,14 @@ package project
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/phase2/rig/cli/util"
 	"gopkg.in/yaml.v2"
 )
+
+var configFile string
 
 type ProjectScript struct {
 	Alias       string
@@ -25,17 +29,15 @@ type ProjectConfig struct {
 // and return a normalized object.
 func GetProjectConfigFromFile(filename string) ProjectConfig {
 	config := LoadYamlFromFile(filename)
-
 	if err := ValidateConfig(config); err != nil {
 		util.Logger().Error.Printf("Error in Project Config: %s", filename)
 		util.Logger().Error.Fatalf("%s", err)
 	}
 
 	for id, script := range config.Scripts {
-		if len(script.Alias) == 0 {
-			config.Scripts[id].Alias = id
+		if len(script.Description) == 0 {
+			config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
 		}
-		//config.Aliases[script.Alias] = id;
 	}
 
 	return config
@@ -75,4 +77,18 @@ func LoadYaml(in []byte) ProjectConfig {
 	}
 
 	return config
+}
+
+// Initialize the configuration system.
+func ConfigInit() {
+	configFile = os.Getenv("RIG_PROJECT_CONFIG_FILE")
+	if len(configFile) == 0 {
+		configFile = "./.outrigger.yml"
+	}
+}
+
+// Get the absolute path to the configuration file.
+func GetConfigPath() string {
+	filename, _ := filepath.Abs(configFile)
+	return filename
 }

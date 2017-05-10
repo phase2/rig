@@ -37,6 +37,12 @@ func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 	return err
 }
 
+// This is similar to ForceStreamCommand in that it will issue all output
+// regardless of verbose mode. Further, this version of the command captures the
+// exit status of any executed command. This function is intended to simulate
+// native execution of the command passed to it.
+//
+// @todo streaming the output instead of buffering until completion.
 func PassthruCommand(cmd *exec.Cmd) (stdout string, stderr string, exitCode int) {
 	var outbuf, errbuf bytes.Buffer
 
