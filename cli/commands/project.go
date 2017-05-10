@@ -68,7 +68,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 		cmd.addCommandPath(project.GetConfigPath())
 		dir := filepath.Dir(project.GetConfigPath())
 		for step, val := range script.Run {
-			cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, val)
+			cmd.out.Verbose.Printf("Step %d: Executing '%s' as '%s'", step+1, key, val)
 			// If this is the last step, append any further args to the end of the command.
 			if len(script.Run) == step+1 {
 				val = val + " " + strings.Join(c.Args(), " ")
