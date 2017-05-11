@@ -21,8 +21,9 @@ func (cmd *Project) Commands() cli.Command {
 	project.ConfigInit()
 	command := cli.Command{
 		Name:        "project",
-		Usage:       "Run a project script from configuration.",
-		Description: "Configure scripts representing core operations of the project in a Rig configuration file.\n\n\tThis Yaml file by default is ./.outrigger.yml. It can be overridden by setting an environment variable $RIG_PROJECT_CONFIG_FILE.",
+		Usage:       "Run project-specific commands.",
+		Description: "Run project-specific commands as part of development.\n\n\tConfigured scripts are driven by an Outrigger configuration file expected at your project root directory.\n\n\tBy default, this is a YAML file named '.outrigger.yml'. It can be overridden by setting an environment variable $RIG_PROJECT_CONFIG_FILE.",
+		Aliases:     []string{"run"},
 		Category:    "Development",
 		Before:      cmd.Before,
 		Subcommands: cmd.GetScriptsAsSubcommands(project.GetConfigPath()),
@@ -39,10 +40,11 @@ func (cmd *Project) GetScriptsAsSubcommands(filename string) []cli.Command {
 	for id, script := range scripts {
 		if len(script.Run) > 0 {
 			command := cli.Command{
-				Name:        id,
+				Name:        fmt.Sprintf("run:%s", id),
 				Usage:       script.Description,
 				Description: fmt.Sprintf("%s\n\n\tThis command was configured in %s\n\n\tThere are %d steps in this script and any 'extra' arguments will be appended to the final step.", script.Description, filename, len(script.Run)),
 				ArgsUsage:   "<args passed to last step>",
+				Category:    "Configured Scripts",
 				Before:      cmd.Before,
 				Action:      cmd.Run,
 			}
@@ -62,7 +64,7 @@ func (cmd *Project) GetScriptsAsSubcommands(filename string) []cli.Command {
 func (cmd *Project) Run(c *cli.Context) error {
 	var scripts = cmd.GetProjectScripts(project.GetConfigPath())
 
-	key := c.Command.Name
+	key := strings.TrimPrefix(c.Command.Name, "run:")
 	if script, ok := scripts[key]; ok {
 		cmd.out.Verbose.Printf("Executing '%s' for '%s'", key, script.Description)
 		cmd.addCommandPath(project.GetConfigPath())

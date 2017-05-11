@@ -76,4 +76,4 @@ scripts:
     alias: r
     description: Run a command via the build container. For example, `rig project run cli "ls -l /root"`
     run:
-      - docker-compose -f build.yml run --rm
+      - COMPOSE_FILE=$CWD/build.yml docker-compose run --rm
