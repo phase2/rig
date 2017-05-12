@@ -2,15 +2,17 @@ package commands
 
 import (
 	"fmt"
+  "io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/phase2/rig/cli/commands/project"
+  "github.com/phase2/rig/cli/commands/project"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
+  "gopkg.in/yaml.v2"
 )
 
 type Project struct {
@@ -27,6 +29,15 @@ func (cmd *Project) Commands() cli.Command {
 		Before:      cmd.Before,
 		Subcommands: cmd.GetScriptsAsSubcommands(project.GetConfigPath()),
 	}
+
+	syncStart := cli.Command{
+		Name:        "sync:start",
+		Usage:       "Start a unison sync on local project directory",
+		Before:      cmd.Before,
+		Action:      cmd.RunSyncStart,
+	}
+
+	command.Subcommands = append(command.Subcommands, syncStart)
 
 	return command
 }
@@ -121,3 +132,56 @@ func (cmd *Project) addCommandPath(filename string) error {
 
 	return nil
 }
+
+// Start the unison sync process
+func (cmd *Project) RunSyncStart(c *cli.Context) error {
+  project.ConfigInit();
+  //config := project.GetProjectConfigFromFile(project.GetConfigPath())
+
+  volume := cmd.GetVolumeName()
+  cmd.out.Info.Printf("Volume name: %s", volume)
+	return nil
+}
+
+func (cmd *Project) GetVolumeName() string {
+  // 1. Check for argument
+  // 2. Check for config
+  // 3. Parse compose file looking for an external volume named *-sync
+  if composeConfig, err := cmd.LoadComposeFile(); err == nil {
+    for name, volume := range composeConfig.Volumes {
+      cmd.out.Info.Printf("Name: %s", name);
+      cmd.out.Info.Printf("External: %t", volume.External);
+      if strings.HasSuffix(name, "-sync") && volume.External{
+        return name
+      }
+    }
+  }
+
+  // 4. Use local dir for the volume name
+  cmd.out.Error.Fatal("Use local dir name for volume")
+  return ""
+}
+
+type ComposeFile struct {
+  Volumes map[string]Volume
+}
+
+type Volume struct {
+  External bool
+}
+
+// Load the proper compose file
+func (cmd *Project) LoadComposeFile() (*ComposeFile, error) {
+  yamlFile, err := ioutil.ReadFile("./docker-compose.yml")
+
+  if err == nil {
+    var config ComposeFile
+    if err := yaml.Unmarshal(yamlFile, &config); err != nil {
+      cmd.out.Error.Fatalf("YAML Parsing Error: %s", err)
+    }
+    return &config, nil
+  }
+
+  return nil, err
+}
+
