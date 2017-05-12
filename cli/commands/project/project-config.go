@@ -18,8 +18,14 @@ type ProjectScript struct {
 	Run         []string
 }
 
+type ProjectSync struct {
+	Volume    string
+	Ignore 		string
+}
+
 type ProjectConfig struct {
 	Scripts   map[string]*ProjectScript
+	Sync   		*ProjectSync
 	Namespace string
 	Version   string
 	Bin       string
