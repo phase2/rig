@@ -33,8 +33,12 @@ type ProjectConfig struct {
 
 // Given a project configuration file will load YAML, validate it for purpose,
 // and return a normalized object.
-func GetProjectConfigFromFile(filename string) ProjectConfig {
-	config := LoadYamlFromFile(filename)
+func GetProjectConfigFromFile(filename string) (ProjectConfig, error) {
+	config, err := LoadYamlFromFile(filename)
+	if err != nil {
+		return ProjectConfig{}, err
+	}
+
 	if err := ValidateConfig(config); err != nil {
 		util.Logger().Error.Printf("Error in Project Config: %s", filename)
 		util.Logger().Error.Fatalf("%s", err)
@@ -50,7 +54,7 @@ func GetProjectConfigFromFile(filename string) ProjectConfig {
 		}
 	}
 
-	return config
+	return config, nil
 }
 
 // Ensures our configuration data structure conforms to our ad hoc schema.
@@ -68,14 +72,14 @@ func ValidateConfig(config ProjectConfig) error {
 }
 
 // Given a filename, ensures it exists and unmarshals the raw Yaml.
-func LoadYamlFromFile(filename string) ProjectConfig {
+func LoadYamlFromFile(filename string) (ProjectConfig, error) {
 	yamlFile, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		util.Logger().Error.Fatalf("Project configuration file not found at '%s'", filename)
+		return ProjectConfig{}, fmt.Errorf("Project configuration file not found at '%s'", filename)
 	}
 
-	return LoadYaml(yamlFile)
+	return LoadYaml(yamlFile), nil
 }
 
 // Set up the output streams (and colors) to stream command output if verbose is configured

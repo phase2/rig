@@ -37,7 +37,11 @@ func (cmd *Project) Commands() []cli.Command {
 
 // Processes script configuration into formal subcommands.
 func (cmd *Project) GetScriptsAsSubcommands(filename string) []cli.Command {
-	var scripts = cmd.GetProjectScripts(filename)
+	scripts, err := cmd.GetProjectScripts(filename)
+	if err != nil {
+		cmd.out.Verbose.Printf("%s", err)
+		return []cli.Command{}
+	}
 
 	var commands = []cli.Command{}
 	for id, script := range scripts {
@@ -65,7 +69,10 @@ func (cmd *Project) GetScriptsAsSubcommands(filename string) []cli.Command {
 
 // Return the help for all the scripts.
 func (cmd *Project) Run(c *cli.Context) error {
-	var scripts = cmd.GetProjectScripts(project.GetConfigPath())
+	scripts, err := cmd.GetProjectScripts(project.GetConfigPath())
+	if err != nil {
+		cmd.out.Error.Fatal(err)
+	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
 	if script, ok := scripts[key]; ok {
@@ -109,17 +116,22 @@ func (cmd *Project) GetCommand(val string) *exec.Cmd {
 }
 
 // Load the scripts from the project-specific configuration.
-func (cmd *Project) GetProjectScripts(filename string) map[string]*project.ProjectScript {
-	scripts := project.GetProjectConfigFromFile(filename).Scripts
+func (cmd *Project) GetProjectScripts(filename string) (map[string]*project.ProjectScript, error) {
+	config, err := project.GetProjectConfigFromFile(filename)
 	// We can hard-wire scripts here by assigning: scripts["name"] = &project.ProjectScript{}
+	// If we do it here, they will be set up as "configured" subcommands.
 
-	return scripts
+	return config.Scripts, err
 }
 
 // Override the PATH environment variable for further shell executions.
 // This is used on POSIX systems for lookup of scripts.
 func (cmd *Project) addCommandPath(filename string) error {
-	binDir := project.GetProjectConfigFromFile(filename).Bin
+	config, err := project.GetProjectConfigFromFile(filename)
+	if err != nil {
+		cmd.out.Error.Fatal(err)
+	}
+	binDir := config.Bin
 	cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)
 	path := os.Getenv("PATH")
 	os.Setenv("PATH", fmt.Sprintf("%s:%s", path, binDir))
