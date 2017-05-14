@@ -2,25 +2,15 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	containertypes 	"github.com/docker/docker/api/types/container"
-	volumetypes 		"github.com/docker/docker/api/types/volume"
-	"github.com/docker/docker/client"
   "github.com/phase2/rig/cli/commands/project"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
-	"golang.org/x/net/context"
-  "gopkg.in/yaml.v2"
-	"time"
-	"net"
-	"github.com/docker/docker/daemon/exec"
 )
 
 type Project struct {
@@ -38,15 +28,8 @@ func (cmd *Project) Commands() cli.Command {
 		Subcommands: cmd.GetScriptsAsSubcommands(project.GetConfigPath()),
 	}
 
-	syncStart := cli.Command{
-		Name:        "sync:start",
-		Usage:       "Start a unison sync on local project directory. Optionally provide a volume name. Volume name will be discovered in the following order: argument, outrigger project config, docker-compose file, current directory name",
-		ArgsUsage:   "[optional volume name]",
-		Before:      cmd.Before,
-		Action:      cmd.RunSyncStart,
-	}
-
-	command.Subcommands = append(command.Subcommands, syncStart)
+	syncStart := ProjectSyncStart{}
+	command.Subcommands = append(command.Subcommands, syncStart.Commands())
 
 	return command
 }
@@ -141,128 +124,3 @@ func (cmd *Project) addCommandPath(filename string) error {
 
 	return nil
 }
-
-/////////////////////////////////////////////////////////////////////////
-// Sync Commands
-/////////////////////////////////////////////////////////////////////////
-const UNISON_PORT = 5000
-
-// Start the unison sync process
-func (cmd *Project) RunSyncStart(ctx *cli.Context) error {
-  project.ConfigInit();
-  config := project.GetProjectConfigFromFile(project.GetConfigPath())
-  volumeName := cmd.GetVolumeName(ctx, config)
-
-	client, err := client.NewEnvClient()
-	if err != nil {
-		cmd.out.Error.Fatal("Unable to create Docker Client")
-	}
-
-	cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
-	client.VolumeCreate(context.Background(), volumetypes.VolumesCreateBody{ Name: volumeName })
-
-
-	cmd.out.Info.Println("Starting unison container")
-	hostConfig := &containertypes.HostConfig{
-		AutoRemove: true,
-		Binds: []string{fmt.Sprintf("%s:/unison", volumeName)},
-	}
-	containerConfig := &containertypes.Config{
-		Env: []string{"UNISON_DIR=/unison"},
-		Labels: map[string]string{
-			"com.dnsdock.name": volumeName,
-			"com.dnsdock.image": "volume.outrigger",
-		},
-		Image: "outrigger/unison:latest",
-	}
-	container, err := client.ContainerCreate(context.Background(), containerConfig, hostConfig, nil, volumeName)
-	if err != nil {
-		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
-	}
-
-	cmd.WaitForUnisonContainer(client, container.ID)
-
-	cmd.out.Info.Println("Initializing sync")
-
-	// Remove the log file, the existence of the log file will mean that sync is up and running
-	//exec.Command("rm", "-f", fmt.Sprintf("%s.log", volumeName)).Run()
-
-
-  cmd.out.Info.Printf("Volume name: %s", volumeName)
-	return nil
-}
-
-// Find the volume name through a variety of fall backs
-func (cmd *Project) GetVolumeName(ctx *cli.Context, config project.ProjectConfig) string {
-  // 1. Check for argument
-	if ctx.Args().Present() {
-		return ctx.Args().First()
-	}
-
-  // 2. Check for config
-	if config.Sync != nil && config.Sync.Volume != "" {
-		return config.Sync.Volume
-	}
-
-  // 3. Parse compose file looking for an external volume named *-sync
-  if composeConfig, err := cmd.LoadComposeFile(); err == nil {
-    for name, volume := range composeConfig.Volumes {
-      cmd.out.Verbose.Printf("Volume: Name: %s External: %t", name, volume.External);
-      if strings.HasSuffix(name, "-sync") && volume.External{
-        return name
-      }
-    }
-  }
-
-  // 4. Use local dir for the volume name
-	if dir, err := os.Getwd(); err == nil {
-		var _, folder = path.Split(dir)
-		return folder
-	} else {
-		cmd.out.Error.Println(err)
-	}
-
-  cmd.out.Error.Fatal("Unable to determine a name for the sync volume")
-  return ""
-}
-
-type ComposeFile struct {
-  Volumes map[string]Volume
-}
-
-type Volume struct {
-  External bool
-}
-
-// Load the proper compose file
-func (cmd *Project) LoadComposeFile() (*ComposeFile, error) {
-  yamlFile, err := ioutil.ReadFile("./docker-compose.yml")
-
-  if err == nil {
-    var config ComposeFile
-    if err := yaml.Unmarshal(yamlFile, &config); err != nil {
-      cmd.out.Error.Fatalf("YAML Parsing Error: %s", err)
-    }
-    return &config, nil
-  }
-
-  return nil, err
-}
-
-func (cmd *Project) WaitForUnisonContainer(client *client.Client, containerId string) {
-	cmd.out.Info.Println("Waiting for container to start")
-	containerData, err := client.ContainerInspect(context.Background(), containerId)
-	if err != nil {
-		cmd.out.Error.Fatalf("Error inspecting sync container %s: %v", containerId, err)
-	}
-	for i := 1; i <= 100; i++ {
-		//if err := exec.Command("nc", "-z", containerData.NetworkSettings.IPAddress, UNISON_PORT).Run(); err != nil {
-		if _, err := net.Dial("tcp", fmt.Sprintf("%s:%s", containerData.NetworkSettings.IPAddress, UNISON_PORT)); err == nil {
-			return
-		} else {
-			time.Sleep(time.Duration(100) * time.Millisecond)
-		}
-	}
-	cmd.out.Error.Fatal("Sync container failed to start!")
-}
-
