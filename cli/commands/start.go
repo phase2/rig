@@ -98,6 +98,7 @@ func (cmd *Start) Run(c *cli.Context) error {
     echo '===> Creating /var/lib/boot2docker/bootsync.sh';
     echo '#!/bin/sh' | sudo tee /var/lib/boot2docker/bootsync.sh > /dev/null;
     echo 'sudo ln -sf /mnt/sda1/data /data' | sudo tee -a /var/lib/boot2docker/bootsync.sh > /dev/null;
+    echo 'sudo sysctl fs.inotify.max_user_watches=100000' | sudo tee -a /var/lib/boot2docker/bootsync.sh > /dev/null;
     sudo chmod +x /var/lib/boot2docker/bootsync.sh;
   fi;
   if [ ! -L /data ];

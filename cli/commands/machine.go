@@ -240,3 +240,14 @@ func (m Machine) GetDisk() int {
 func (m Machine) GetDiskInGB() int {
 	return m.GetDisk() / 1000
 }
+
+func (m Machine) GetSysctlSetting(setting string) (string, error) {
+	//var command = fmt.Sprintf("sudo sysctl -n %s", setting)
+	//m.out.Info.Println(command)
+	if output, err := exec.Command("docker-machine", "ssh", m.Name, "sudo", "sysctl", "-n", setting).CombinedOutput(); err == nil {
+		return strings.TrimSpace(string(output)), nil
+	} else {
+		return "", err
+	}
+}
+
