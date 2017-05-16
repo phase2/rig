@@ -12,12 +12,14 @@ type Status struct {
 	BaseCommand
 }
 
-func (cmd *Status) Commands() cli.Command {
-	return cli.Command{
-		Name:   "status",
-		Usage:  "Status of the Docker Machine",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Status) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "status",
+			Usage:  "Status of the Docker Machine",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 

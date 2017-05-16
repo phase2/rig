@@ -17,7 +17,7 @@ type Project struct {
 	BaseCommand
 }
 
-func (cmd *Project) Commands() cli.Command {
+func (cmd *Project) Commands() []cli.Command {
 	project.ConfigInit()
 	command := cli.Command{
 		Name:        "project",
@@ -28,10 +28,10 @@ func (cmd *Project) Commands() cli.Command {
 		Subcommands: cmd.GetScriptsAsSubcommands(project.GetConfigPath()),
 	}
 
-	syncStart := ProjectSyncStart{}
-	command.Subcommands = append(command.Subcommands, syncStart.Commands())
+	syncStart := ProjectSync{}
+	command.Subcommands = append(command.Subcommands, syncStart.Commands()...)
 
-	return command
+	return []cli.Command{command}
 }
 
 // Processes script configuration into formal subcommands.

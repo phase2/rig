@@ -14,12 +14,14 @@ type Doctor struct {
 	BaseCommand
 }
 
-func (cmd *Doctor) Commands() cli.Command {
-	return cli.Command{
-		Name:   "doctor",
-		Usage:  "Troubleshoot the Rig environment",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Doctor) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "doctor",
+			Usage:  "Troubleshoot the Rig environment",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 
@@ -83,22 +85,6 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		} else {
 			cmd.out.Info.Println("Docker Machine NFS is installed.")
 		}
-	}
-
-	// 4. Verify that the fs.inotify.max_user_watches system configuration is setup on the VM
-	const NUM_WATCHES = "100000"
-	if value, err := cmd.machine.GetSysctlSetting("fs.inotify.max_user_watches"); err == nil {
-		if value == NUM_WATCHES {
-			cmd.out.Info.Println("Docker Machine filesystem settings are configured correctly")
-		} else {
-			cmd.out.Warning.Println("Docker Machine filesystem settings not configured correctly for use with the command 'project sync:start'")
-			cmd.out.Warning.Println("\t If you intend to use the 'project sync:start' command you should either:")
-			cmd.out.Warning.Printf("\t 1) Edit /var/lib/boot2docker/bootsync.sh and add 'sudo sysctl fs.inotify.max_user_watches=%s', or", NUM_WATCHES)
-			cmd.out.Warning.Println("\t 2) Remove and recreate your Docker Machine.")
-		}
-	} else {
-		cmd.out.Warning.Printf("An error occurred checking Docker Machine filesystem settings. %v", err)
-		cmd.out.Warning.Println(err)
 	}
 
 	return nil

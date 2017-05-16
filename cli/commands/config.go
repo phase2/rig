@@ -15,12 +15,14 @@ type Config struct {
 	BaseCommand
 }
 
-func (cmd *Config) Commands() cli.Command {
-	return cli.Command{
-		Name:   "config",
-		Usage:  "Echo the config to setup the Rig environment.  Run: eval \"$(rig config)\"",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Config) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "config",
+			Usage:  "Echo the config to setup the Rig environment.  Run: eval \"$(rig config)\"",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 

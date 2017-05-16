@@ -12,40 +12,42 @@ type Start struct {
 	BaseCommand
 }
 
-func (cmd *Start) Commands() cli.Command {
-	return cli.Command{
-		Name:  "start",
-		Usage: "Start the docker-machine and container services",
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "driver",
-				Value: "virtualbox",
-				Usage: "Which virtualization driver to use: virtualbox (default), vmwarefusion, xhyve. Only used if start needs to create a machine",
+func (cmd *Start) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:  "start",
+			Usage: "Start the docker-machine and container services",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "driver",
+					Value: "virtualbox",
+					Usage: "Which virtualization driver to use: virtualbox (default), vmwarefusion, xhyve. Only used if start needs to create a machine",
+				},
+				cli.IntFlag{
+					Name:  "disk-size",
+					Value: 40,
+					Usage: "Size of the VM disk in GB. Defaults to 40. Only used if start needs to create a machine.",
+				},
+				cli.IntFlag{
+					Name:  "memory-size",
+					Value: 4096,
+					Usage: "Amount of memory for the VM in MB. Defaults to 4096. Only used if start needs to create a machine.",
+				},
+				cli.IntFlag{
+					Name:  "cpu-count",
+					Value: 2,
+					Usage: "Number of CPU to allocate to the VM. Defaults to 2. Only used if start needs to create a machine.",
+				},
+				cli.StringFlag{
+					Name:   "nameservers",
+					Value:  "8.8.8.8:53",
+					Usage:  "Comma separated list of fallback names servers for DNS resolution.",
+					EnvVar: "RIG_NAMESERVERS",
+				},
 			},
-			cli.IntFlag{
-				Name:  "disk-size",
-				Value: 40,
-				Usage: "Size of the VM disk in GB. Defaults to 40. Only used if start needs to create a machine.",
-			},
-			cli.IntFlag{
-				Name:  "memory-size",
-				Value: 4096,
-				Usage: "Amount of memory for the VM in MB. Defaults to 4096. Only used if start needs to create a machine.",
-			},
-			cli.IntFlag{
-				Name:  "cpu-count",
-				Value: 2,
-				Usage: "Number of CPU to allocate to the VM. Defaults to 2. Only used if start needs to create a machine.",
-			},
-			cli.StringFlag{
-				Name:   "nameservers",
-				Value:  "8.8.8.8:53",
-				Usage:  "Comma separated list of fallback names servers for DNS resolution.",
-				EnvVar: "RIG_NAMESERVERS",
-			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 
@@ -98,7 +100,6 @@ func (cmd *Start) Run(c *cli.Context) error {
     echo '===> Creating /var/lib/boot2docker/bootsync.sh';
     echo '#!/bin/sh' | sudo tee /var/lib/boot2docker/bootsync.sh > /dev/null;
     echo 'sudo ln -sf /mnt/sda1/data /data' | sudo tee -a /var/lib/boot2docker/bootsync.sh > /dev/null;
-    echo 'sudo sysctl fs.inotify.max_user_watches=100000' | sudo tee -a /var/lib/boot2docker/bootsync.sh > /dev/null;
     sudo chmod +x /var/lib/boot2docker/bootsync.sh;
   fi;
   if [ ! -L /data ];

@@ -14,24 +14,28 @@ type Watch struct {
 	BaseCommand
 }
 
-func (cmd *Watch) Commands() cli.Command {
-	return cli.Command{
-		Name:      "watch",
-		Usage:     "Watch a host directory for changes and forward the event into a Docker Machine",
-		ArgsUsage: "<path to watch>",
-		Category:  "Development",
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "ignorefile",
-				Usage: "File to use for watch ignores. One ignore per line using the regex format for the fswatch command. If not specified it will look for a file named .rig-watch-ignore in the current working directory and all parent dirs",
+func (cmd *Watch) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:      "watch",
+			Usage:     "Watch a host directory for changes and forward the event into a Docker Machine",
+			ArgsUsage: "<path to watch>",
+			Category:  "Development",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "ignorefile",
+					Usage: "File to use for watch ignores. One ignore per line using the regex format for the fswatch command. If not specified it will look for a file named .rig-watch-ignore in the current working directory and all parent dirs",
+				},
 			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 
 func (cmd *Watch) Run(c *cli.Context) error {
+	cmd.out.Warning.Println("THIS COMMAND IS DEPRECATED. Please use the command: project sync:start.")
+
 	if len(c.Args()) == 0 {
 		cmd.out.Error.Fatal("Path to watch was not specified.")
 	}

@@ -11,12 +11,14 @@ type Prune struct {
 	BaseCommand
 }
 
-func (cmd *Prune) Commands() cli.Command {
-	return cli.Command{
-		Name:   "prune",
-		Usage:  "Cleanup docker dangling images and exited containers",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Prune) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "prune",
+			Usage:  "Cleanup docker dangling images and exited containers",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 
