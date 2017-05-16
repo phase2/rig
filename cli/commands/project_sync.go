@@ -8,6 +8,7 @@ import (
   "os/exec"
   "path"
   "strings"
+  "syscall"
   "time"
 
   "github.com/phase2/rig/cli/commands/project"
@@ -15,7 +16,7 @@ import (
   "gopkg.in/yaml.v2"
 )
 
-type ProjectSyncStart struct {
+type ProjectSync struct {
   BaseCommand
 }
 
@@ -28,34 +29,49 @@ type Volume struct {
   External bool
 }
 
-const UNISON_PORT = 5000
+const UNISON_PORT=5000
+const MAX_WATCHES=100000
 
-func (cmd *ProjectSyncStart) Commands() cli.Command {
-  command := cli.Command{
+func (cmd *ProjectSync) Commands() []cli.Command {
+  start := cli.Command{
     Name:        "sync:start",
     Usage:       "Start a unison sync on local project directory. Optionally provide a volume name.",
     ArgsUsage:   "[optional volume name]",
     Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
     Before:      cmd.Before,
-    Action:      cmd.Run,
+    Action:      cmd.RunStart,
+  }
+  stop := cli.Command{
+    Name:        "sync:stop",
+    Usage:       "Stops a unison sync on local project directory. Optionally provide a volume name.",
+    ArgsUsage:   "[optional volume name]",
+    Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
+    Before:      cmd.Before,
+    Action:      cmd.RunStop,
   }
 
-  return command
+  return []cli.Command{start, stop}
 }
 
 // Start the unison sync process
-func (cmd *ProjectSyncStart) Run(ctx *cli.Context) error {
+func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
   project.ConfigInit()
   config := project.GetProjectConfigFromFile(project.GetConfigPath())
   volumeName := cmd.GetVolumeName(ctx, config)
-  cmd.out.Verbose.Printf("Sync with volume: %s", volumeName)
+  cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
+
+  // Ensure the processes can handle a large number of watches
+  cmd.machine.SetSysctl("fs.inotify.max_user_watches", string(MAX_WATCHES))
+  exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfilesperproc=%d", MAX_WATCHES)).Run()
+  exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfiles=%d", MAX_WATCHES)).Run()
+  exec.Command("ulimit","-n", string(MAX_WATCHES)).Run()
 
   cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
   exec.Command("docker","volume", "create", volumeName).Run()
 
   cmd.out.Info.Println("Starting unison container")
-  exec.Command("docker","stop", volumeName).Run()
-  err := exec.Command("docker","run", "--detach", "--rm",
+  exec.Command("docker","container", "stop", volumeName).Run()
+  err := exec.Command("docker","container", "run", "--detach", "--rm",
     "-v", fmt.Sprintf("%s:/unison", volumeName),
     "-e", "UNISON_DIR=/unison",
     "-l", fmt.Sprintf("com.dnsdock.name=%s", volumeName),
@@ -76,16 +92,24 @@ func (cmd *ProjectSyncStart) Run(ctx *cli.Context) error {
   exec.Command("rm", "-f", logFile).Run()
 
   // Start unison local process
-  err = exec.Command("unison",
+  var rLimit syscall.Rlimit
+  rLimit.Max = MAX_WATCHES
+  rLimit.Cur = MAX_WATCHES
+  err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+  if err != nil {
+    fmt.Println("Error Setting Rlimit ", err)
+  }
+
+  unisonCmd := exec.Command("unison",
     ".",
     fmt.Sprintf("socket://%s:%d/", ip, UNISON_PORT),
     "-auto", "-batch", "-silent", "-contactquietly",
-    "-repeat watch",
-    "-prefer .",
-    fmt.Sprintf("-ignore 'Name %s'", logFile),
-    fmt.Sprintf("-logfile %s", logFile),
-  ).Start()
-  if err != nil {
+    "-repeat", "watch",
+    "-prefer", ".",
+    "-ignore", fmt.Sprintf("'Name %s'", logFile),
+    "-logfile", logFile,
+  )
+  if err = unisonCmd.Start(); err != nil {
     cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
   }
 
@@ -94,8 +118,22 @@ func (cmd *ProjectSyncStart) Run(ctx *cli.Context) error {
   return nil
 }
 
+// Start the unison sync process
+func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
+  project.ConfigInit()
+  config := project.GetProjectConfigFromFile(project.GetConfigPath())
+  volumeName := cmd.GetVolumeName(ctx, config)
+  cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
+
+  cmd.out.Info.Println("Stopping unison container")
+  exec.Command("docker","container", "stop", volumeName).Run()
+
+  return nil
+}
+
+
 // Find the volume name through a variety of fall backs
-func (cmd *ProjectSyncStart) GetVolumeName(ctx *cli.Context, config project.ProjectConfig) string {
+func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config project.ProjectConfig) string {
   // 1. Check for argument
   if ctx.Args().Present() {
     return ctx.Args().First()
@@ -129,7 +167,7 @@ func (cmd *ProjectSyncStart) GetVolumeName(ctx *cli.Context, config project.Proj
 }
 
 // Load the proper compose file
-func (cmd *ProjectSyncStart) LoadComposeFile() (*ComposeFile, error) {
+func (cmd *ProjectSync) LoadComposeFile() (*ComposeFile, error) {
   yamlFile, err := ioutil.ReadFile("./docker-compose.yml")
 
   if err == nil {
@@ -148,7 +186,7 @@ func (cmd *ProjectSyncStart) LoadComposeFile() (*ComposeFile, error) {
 // we need to discover the IP address of the container instead of using the DNS name
 // when compiled without -cgo this executable will not use the native mac dns resolution
 // which is how we have configured dnsdock to provide names for containers.
-func (cmd *ProjectSyncStart) WaitForUnisonContainer(containerName string) string {
+func (cmd *ProjectSync) WaitForUnisonContainer(containerName string) string {
   cmd.out.Info.Println("Waiting for container to start")
 
   output, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName).Output()
@@ -172,7 +210,7 @@ func (cmd *ProjectSyncStart) WaitForUnisonContainer(containerName string) string
 }
 
 // The local unison process is finished initializing when the log file exists
-func (cmd *ProjectSyncStart) WaitForSyncInit(logFile string) {
+func (cmd *ProjectSync) WaitForSyncInit(logFile string) {
   cmd.out.Info.Print("Waiting for initial sync to finish...")
 
   var tempFile = fmt.Sprintf(".%s.tmp", logFile)
@@ -182,7 +220,9 @@ func (cmd *ProjectSyncStart) WaitForSyncInit(logFile string) {
 
   // Lets check for 60 seconds, while waiting for initial sync to complete
   for i := 1; i <= 600; i++ {
-    os.Stdout.WriteString(".")
+    if i % 10 == 0 {
+      os.Stdout.WriteString(".")
+    }
     if _, err := os.Stat(logFile); err == nil {
       // Remove the temp file now that we are running
       os.Stdout.WriteString("done\n")
