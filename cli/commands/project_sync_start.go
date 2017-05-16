@@ -10,12 +10,8 @@ import (
   "strings"
   "time"
 
-  containertypes 	"github.com/docker/docker/api/types/container"
-  volumetypes 		"github.com/docker/docker/api/types/volume"
-  "github.com/docker/docker/client"
   "github.com/phase2/rig/cli/commands/project"
   "github.com/urfave/cli"
-  "golang.org/x/net/context"
   "gopkg.in/yaml.v2"
 )
 
@@ -34,14 +30,12 @@ type Volume struct {
 
 const UNISON_PORT = 5000
 
-// TODO: In Start we need to "sudo sysctl fs.inotify.max_user_watches=100000" add it to /etc/boot2docker/bootsync.sh
-// TODO: Check for the fs.inotify.max_user_watches configuration in doctor command "sudo sysctl fs.inotify.max_user_watches"
-
 func (cmd *ProjectSyncStart) Commands() cli.Command {
   command := cli.Command{
     Name:        "sync:start",
-    Usage:       "Start a unison sync on local project directory. Optionally provide a volume name. Volume name will be discovered in the following order: argument, outrigger project config, docker-compose file, current directory name",
+    Usage:       "Start a unison sync on local project directory. Optionally provide a volume name.",
     ArgsUsage:   "[optional volume name]",
+    Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
     Before:      cmd.Before,
     Action:      cmd.Run,
   }
@@ -56,34 +50,24 @@ func (cmd *ProjectSyncStart) Run(ctx *cli.Context) error {
   volumeName := cmd.GetVolumeName(ctx, config)
   cmd.out.Verbose.Printf("Sync with volume: %s", volumeName)
 
-  docker, err := client.NewEnvClient()
-  if err != nil {
-  	cmd.out.Error.Fatal("Unable to create Docker Client")
-  }
-
   cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
-  docker.VolumeCreate(context.Background(), volumetypes.VolumesCreateBody{ Name: volumeName })
-
+  exec.Command("docker","volume", "create", volumeName).Run()
 
   cmd.out.Info.Println("Starting unison container")
-  hostConfig := &containertypes.HostConfig{
-  	AutoRemove: true,
-  	Binds: []string{fmt.Sprintf("%s:/unison", volumeName)},
-  }
-  containerConfig := &containertypes.Config{
-  	Env: []string{"UNISON_DIR=/unison"},
-  	Labels: map[string]string{
-  		"com.dnsdock.name": volumeName,
-  		"com.dnsdock.image": "volume.outrigger",
-  	},
-  	Image: "outrigger/unison:latest",
-  }
-  container, err := docker.ContainerCreate(context.Background(), containerConfig, hostConfig, nil, volumeName)
+  exec.Command("docker","stop", volumeName).Run()
+  err := exec.Command("docker","run", "--detach", "--rm",
+    "-v", fmt.Sprintf("%s:/unison", volumeName),
+    "-e", "UNISON_DIR=/unison",
+    "-l", fmt.Sprintf("com.dnsdock.name=%s", volumeName),
+    "-l", "com.dnsdock.image=volume.outrigger",
+    "--name", volumeName,
+    "outrigger/unison:latest",
+  ).Run()
   if err != nil {
   	cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
   }
 
-  cmd.WaitForUnisonContainer(docker, container.ID)
+  var ip = cmd.WaitForUnisonContainer(volumeName)
 
   cmd.out.Info.Println("Initializing sync")
 
@@ -92,15 +76,18 @@ func (cmd *ProjectSyncStart) Run(ctx *cli.Context) error {
   exec.Command("rm", "-f", logFile).Run()
 
   // Start unison local process
-  exec.Command("unison",
+  err = exec.Command("unison",
     ".",
-    fmt.Sprintf("socket://%s.volume.outrigger.vm:%d/", volumeName, UNISON_PORT),
+    fmt.Sprintf("socket://%s:%d/", ip, UNISON_PORT),
     "-auto", "-batch", "-silent", "-contactquietly",
     "-repeat watch",
     "-prefer .",
     fmt.Sprintf("-ignore 'Name %s'", logFile),
     fmt.Sprintf("-logfile %s", logFile),
   ).Start()
+  if err != nil {
+    cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
+  }
 
   cmd.WaitForSyncInit(logFile)
 
@@ -161,21 +148,27 @@ func (cmd *ProjectSyncStart) LoadComposeFile() (*ComposeFile, error) {
 // we need to discover the IP address of the container instead of using the DNS name
 // when compiled without -cgo this executable will not use the native mac dns resolution
 // which is how we have configured dnsdock to provide names for containers.
-func (cmd *ProjectSyncStart) WaitForUnisonContainer(client *client.Client, containerId string) {
+func (cmd *ProjectSyncStart) WaitForUnisonContainer(containerName string) string {
   cmd.out.Info.Println("Waiting for container to start")
-  containerData, err := client.ContainerInspect(context.Background(), containerId)
+
+  output, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName).Output()
   if err != nil {
-    cmd.out.Error.Fatalf("Error inspecting sync container %s: %v", containerId, err)
+    cmd.out.Error.Fatalf("Error inspecting sync container %s: %v", containerName, err)
   }
+  ip := strings.Trim(string(output), "\n")
+
+  cmd.out.Verbose.Printf("Checking for unison network connection on %s %d", ip, UNISON_PORT)
   for i := 1; i <= 100; i++ {
-    //if err := exec.Command("nc", "-z", containerData.NetworkSettings.IPAddress, UNISON_PORT).Run(); err != nil {
-    if _, err := net.Dial("tcp", fmt.Sprintf("%s:%s", containerData.NetworkSettings.IPAddress, UNISON_PORT)); err == nil {
-      return
+    if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UNISON_PORT)); err == nil {
+      defer conn.Close()
+      return ip
     } else {
+      cmd.out.Info.Printf("Error: %v", err)
       time.Sleep(time.Duration(100) * time.Millisecond)
     }
   }
   cmd.out.Error.Fatal("Sync container failed to start!")
+  return ""
 }
 
 // The local unison process is finished initializing when the log file exists
