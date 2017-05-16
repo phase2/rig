@@ -20,7 +20,7 @@ type ProjectScript struct {
 
 type ProjectSync struct {
 	Volume    string
-	Ignore 		string
+	Ignore 		[]string
 }
 
 type ProjectConfig struct {
