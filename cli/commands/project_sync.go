@@ -8,13 +8,11 @@ import (
   "os/exec"
   "path"
   "strings"
-  "syscall"
   "time"
 
   "github.com/phase2/rig/cli/commands/project"
   "github.com/urfave/cli"
   "gopkg.in/yaml.v2"
-  "runtime"
 )
 
 type ProjectSync struct {
@@ -31,7 +29,7 @@ type Volume struct {
 }
 
 const UNISON_PORT=5000
-const MAX_WATCHES=100000
+const MAX_WATCHES="100000"
 
 func (cmd *ProjectSync) Commands() []cli.Command {
   start := cli.Command{
@@ -62,12 +60,8 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
   cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
 
   // Ensure the processes can handle a large number of watches
-  cmd.machine.SetSysctl("fs.inotify.max_user_watches", string(MAX_WATCHES))
-
-  if runtime.GOOS == "darwin" {
-    exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfilesperproc=%d", MAX_WATCHES)).Run()
-    exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfiles=%d", MAX_WATCHES)).Run()
-    exec.Command("sudo","launchctl", "limit", "maxfiles", string(MAX_WATCHES), string(MAX_WATCHES)).Run()
+  if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", MAX_WATCHES); err != nil {
+    cmd.out.Error.Fatalf("Error configuring watches on Docker Machine: %v", err)
   }
 
   cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
@@ -95,31 +89,23 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
   var logFile = fmt.Sprintf("%s.log", volumeName)
   exec.Command("rm", "-f", logFile).Run()
 
-  // Start unison local process
-  var rLimit syscall.Rlimit
-  rLimit.Max = MAX_WATCHES
-  rLimit.Cur = MAX_WATCHES
-  err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-  if err != nil {
-    fmt.Println("Error Setting Rlimit ", err)
-  }
-
-  unisonCmd := []string{
-    "unison",
+  unisonArgs := []string{
     ".",
     fmt.Sprintf("socket://%s:%d/", ip, UNISON_PORT),
     "-auto", "-batch", "-silent", "-contactquietly",
     "-repeat", "watch",
     "-prefer", ".",
     "-logfile", logFile,
-    "-ignore", fmt.Sprintf("'Name %s'", logFile),
+    "-ignore", "Name .git",
+    "-ignore", fmt.Sprintf("Name %s", logFile),
   }
   // Append ProjectConfig ignores here
+  for _, ignore := range config.Sync.Ignore {
+    unisonArgs = append(unisonArgs, "-ignore", ignore)
+  }
 
-  //ulimitUnison := fmt.Sprintf("ulimit -n %d; %s", MAX_WATCHES, strings.Join(unisonCmd[:]," "))
-  ulimitUnison := strings.Join(unisonCmd[:]," ")
-  cmd.out.Verbose.Printf("Unison Command: %s", ulimitUnison)
-  if err = exec.Command("/bin/sh", "-c", ulimitUnison).Start(); err != nil {
+  cmd.out.Verbose.Printf("Unison Args: %s", strings.Join(unisonArgs[:]," "))
+  if err = exec.Command("unison", unisonArgs...).Start(); err != nil {
     cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
   }
 
@@ -157,7 +143,6 @@ func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config project.ProjectCo
   // 3. Parse compose file looking for an external volume named *-sync
   if composeConfig, err := cmd.LoadComposeFile(); err == nil {
     for name, volume := range composeConfig.Volumes {
-      cmd.out.Verbose.Printf("Volume: Name: %s External: %t", name, volume.External);
       if strings.HasSuffix(name, "-sync") && volume.External{
         return name
       }
