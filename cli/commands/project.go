@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-  "github.com/phase2/rig/cli/commands/project"
+	"github.com/phase2/rig/cli/commands/project"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
