@@ -34,6 +34,7 @@ const MAX_WATCHES="100000"
 func (cmd *ProjectSync) Commands() []cli.Command {
   start := cli.Command{
     Name:        "sync:start",
+    Aliases:     []string{"sync"},
     Usage:       "Start a unison sync on local project directory. Optionally provide a volume name.",
     ArgsUsage:   "[optional volume name]",
     Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
