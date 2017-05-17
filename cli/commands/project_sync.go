@@ -7,9 +7,11 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-version"
 	"github.com/phase2/rig/cli/commands/project"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
@@ -69,6 +71,8 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	exec.Command("docker", "volume", "create", volumeName).Run()
 
 	cmd.out.Info.Println("Starting unison container")
+	unisonMinorVersion := cmd.GetUnisonMinorVersion()
+	cmd.out.Verbose.Printf("Local unison version for compatibilty: %s", unisonMinorVersion)
 	exec.Command("docker", "container", "stop", volumeName).Run()
 	err := exec.Command("docker", "container", "run", "--detach", "--rm",
 		"-v", fmt.Sprintf("%s:/unison", volumeName),
@@ -76,7 +80,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		"-l", fmt.Sprintf("com.dnsdock.name=%s", volumeName),
 		"-l", "com.dnsdock.image=volume.outrigger",
 		"--name", volumeName,
-		"outrigger/unison:latest",
+		fmt.Sprintf("outrigger/unison:%s", unisonMinorVersion),
 	).Run()
 	if err != nil {
 		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
@@ -231,4 +235,15 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string) {
 	// The log file was not created, the sync has not started yet
 	exec.Command("rm", "-f", tempFile).Run()
 	cmd.out.Error.Fatal("Sync container failed to start!")
+}
+
+// Get the local Unison version to try to load a compatible unison image
+// This function discovers a semver like 2.48.4 and return 2.48
+func (cmd *ProjectSync) GetUnisonMinorVersion() string {
+	output, _ := exec.Command("unison", "-version").Output()
+	re := regexp.MustCompile("unison version (\\d+\\.\\d+\\.\\d+)")
+	rawVersion := re.FindAllStringSubmatch(string(output), -1)[0][1]
+	version := version.Must(version.NewVersion(rawVersion))
+	segments := version.Segments()
+	return fmt.Sprintf("%d.%d", segments[0], segments[1])
 }
