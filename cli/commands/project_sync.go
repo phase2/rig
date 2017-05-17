@@ -101,7 +101,6 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		"-repeat", "watch",
 		"-prefer", ".",
 		"-logfile", logFile,
-		"-ignore", "Name .git",
 		"-ignore", fmt.Sprintf("Name %s", logFile),
 	}
 	// Append ProjectConfig ignores here
