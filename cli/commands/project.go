@@ -28,8 +28,8 @@ func (cmd *Project) Commands() []cli.Command {
 		Subcommands: cmd.GetScriptsAsSubcommands(project.GetConfigPath()),
 	}
 
-	syncStart := ProjectSync{}
-	command.Subcommands = append(command.Subcommands, syncStart.Commands()...)
+	sync := ProjectSync{}
+	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
 	return []cli.Command{command}
 }
