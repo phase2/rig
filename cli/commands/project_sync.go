@@ -14,6 +14,7 @@ import (
   "github.com/phase2/rig/cli/commands/project"
   "github.com/urfave/cli"
   "gopkg.in/yaml.v2"
+  "runtime"
 )
 
 type ProjectSync struct {
@@ -62,9 +63,12 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
   // Ensure the processes can handle a large number of watches
   cmd.machine.SetSysctl("fs.inotify.max_user_watches", string(MAX_WATCHES))
-  exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfilesperproc=%d", MAX_WATCHES)).Run()
-  exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfiles=%d", MAX_WATCHES)).Run()
-  exec.Command("ulimit","-n", string(MAX_WATCHES)).Run()
+
+  if runtime.GOOS == "darwin" {
+    exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfilesperproc=%d", MAX_WATCHES)).Run()
+    exec.Command("sudo","sysctl", fmt.Sprintf("kern.maxfiles=%d", MAX_WATCHES)).Run()
+    exec.Command("sudo","launchctl", "limit", "maxfiles", string(MAX_WATCHES), string(MAX_WATCHES)).Run()
+  }
 
   cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
   exec.Command("docker","volume", "create", volumeName).Run()
@@ -100,16 +104,22 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
     fmt.Println("Error Setting Rlimit ", err)
   }
 
-  unisonCmd := exec.Command("unison",
+  unisonCmd := []string{
+    "unison",
     ".",
     fmt.Sprintf("socket://%s:%d/", ip, UNISON_PORT),
     "-auto", "-batch", "-silent", "-contactquietly",
     "-repeat", "watch",
     "-prefer", ".",
-    "-ignore", fmt.Sprintf("'Name %s'", logFile),
     "-logfile", logFile,
-  )
-  if err = unisonCmd.Start(); err != nil {
+    "-ignore", fmt.Sprintf("'Name %s'", logFile),
+  }
+  // Append ProjectConfig ignores here
+
+  //ulimitUnison := fmt.Sprintf("ulimit -n %d; %s", MAX_WATCHES, strings.Join(unisonCmd[:]," "))
+  ulimitUnison := strings.Join(unisonCmd[:]," ")
+  cmd.out.Verbose.Printf("Unison Command: %s", ulimitUnison)
+  if err = exec.Command("/bin/sh", "-c", ulimitUnison).Start(); err != nil {
     cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
   }
 
