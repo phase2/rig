@@ -64,7 +64,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 	// Ensure the processes can handle a large number of watches
 	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", MAX_WATCHES); err != nil {
-		cmd.out.Error.Fatalf("Error configuring watches on Docker Machine: %v", err)
+		cmd.out.Error.Fatalf("Error configuring file watches on Docker Machine: %v", err)
 	}
 
 	cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
