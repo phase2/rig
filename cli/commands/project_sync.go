@@ -156,7 +156,7 @@ func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config project.ProjectCo
 	// 4. Use local dir for the volume name
 	if dir, err := os.Getwd(); err == nil {
 		var _, folder = path.Split(dir)
-		return folder
+		return fmt.Sprintf("%s-sync", folder)
 	} else {
 		cmd.out.Error.Println(err)
 	}
