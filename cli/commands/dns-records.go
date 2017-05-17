@@ -16,12 +16,14 @@ type DnsRecords struct {
 	BaseCommand
 }
 
-func (cmd *DnsRecords) Commands() cli.Command {
-	return cli.Command{
-		Name:   "dns-records",
-		Usage:  "List all DNS records for running containers",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *DnsRecords) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "dns-records",
+			Usage:  "List all DNS records for running containers",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 

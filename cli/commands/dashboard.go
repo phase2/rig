@@ -13,12 +13,14 @@ type Dashboard struct {
 	BaseCommand
 }
 
-func (cmd *Dashboard) Commands() cli.Command {
-	return cli.Command{
-		Name:   "dashboard",
-		Usage:  "Start Dashboard services on the docker-machine",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Dashboard) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "dashboard",
+			Usage:  "Start Dashboard services on the docker-machine",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 

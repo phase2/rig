@@ -10,12 +10,14 @@ type Restart struct {
 	BaseCommand
 }
 
-func (cmd *Restart) Commands() cli.Command {
-	return cli.Command{
-		Name:   "restart",
-		Usage:  "Restart the docker-machine",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Restart) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "restart",
+			Usage:  "Restart the docker-machine",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 

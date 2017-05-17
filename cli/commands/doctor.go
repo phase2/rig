@@ -14,12 +14,14 @@ type Doctor struct {
 	BaseCommand
 }
 
-func (cmd *Doctor) Commands() cli.Command {
-	return cli.Command{
-		Name:   "doctor",
-		Usage:  "Troubleshoot the Rig environment",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Doctor) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "doctor",
+			Usage:  "Troubleshoot the Rig environment",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 
