@@ -90,5 +90,13 @@ func ValidateProjectConfig(config *ProjectConfig) error {
 		return fmt.Errorf("Version '1.0' is the only supported value, found '%s'.", config.Version)
 	}
 
+	if config.Scripts != nil {
+		for id, script := range config.Scripts {
+			if len(script.Run) > 10 {
+				util.Logger().Warning.Printf("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run))
+			}
+		}
+	}
+
 	return nil
 }
