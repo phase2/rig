@@ -16,8 +16,7 @@ matrix:
   allow_failures:
   - go: tip
 
-install:
-  - cd cli && godep restore -v
+before_install: cd cli
 
 script:
-  - ./bin/test-go-fmt.sh
+  - ../bin/test-go-fmt.sh
