@@ -77,3 +77,15 @@ scripts:
     description: Run a command via the build container. For example, `rig project run cli "ls -l /root"`
     run:
       - COMPOSE_FILE=$CWD/build.yml docker-compose run --rm
+
+# This controls configuration for the `project sync:start` command.
+sync:
+  # This is the name of the external volume to use. This is one of a few places that rig can discover the volume name
+  volume: project-sync
+  # This configured the ignores that are provided to unison. One ignore per line following the format laid out in docs:
+  #    http://www.cis.upenn.edu/~bcpierce/unison/download/releases/stable/unison-manual.html#ignore
+  ignores:
+    - "Name crazy-big-file.log"
+    - "Path vendor/"
+    - "Path build/logs"
+    - "Regex build/backups/.*\.sql"
