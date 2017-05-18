@@ -78,25 +78,23 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
 	if script, ok := config.Scripts[key]; ok {
-		cmd.out.Verbose.Printf("Executing '%s' for '%s'", key, script.Description)
+		cmd.out.Verbose.Printf("Executing '%s': %s", key, script.Description)
 		cmd.addCommandPath(config)
 		dir := filepath.Dir(config.Path)
-		for step, val := range script.Run {
-			cmd.out.Verbose.Printf("Step %d: Executing '%s' as '%s'", step+1, key, val)
-			// If this is the last step, append any further args to the end of the command.
-			if len(script.Run) == step+1 {
-				val = val + " " + strings.Join(c.Args(), " ")
-			}
-			shellCmd := cmd.GetCommand(val)
-			shellCmd.Dir = dir
 
-			if _, stderr, exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-				cmd.out.Error.Printf("Error running project script '%s' on step %d: %s", key, step+1, stderr)
-				os.Exit(exitCode)
-			}
+		// Concat the commands together adding the args to this command as args to the last step
+		scriptCommands := strings.Join(script.Run, cmd.GetCommandSeparator()) + " " + strings.Join(c.Args(), " ")
+
+		shellCmd := cmd.GetCommand(scriptCommands)
+		shellCmd.Dir = dir
+
+		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, scriptCommands)
+		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
+			cmd.out.Error.Printf("Error running project script '%s': %d", key, exitCode)
+			os.Exit(exitCode)
 		}
 	} else {
-		util.Logger().Error.Printf("Unrecognized script '%s'", key)
+		cmd.out.Error.Printf("Unrecognized script '%s'", key)
 	}
 
 	return nil
@@ -105,16 +103,20 @@ func (cmd *Project) Run(c *cli.Context) error {
 // Construct a command to execute a configured script.
 // @see https://github.com/medhoover/gom/blob/staging/config/command.go
 func (cmd *Project) GetCommand(val string) *exec.Cmd {
-	var (
-		sysShell      = "sh"
-		sysCommandArg = "-c"
-	)
 	if runtime.GOOS == "windows" {
-		sysShell = "cmd"
-		sysCommandArg = "/c"
+		return exec.Command("cmd", "/c", val)
 	}
 
-	return exec.Command(sysShell, sysCommandArg, val)
+	return exec.Command("sh", "-c", val)
+}
+
+// Get command separator based on platform.
+func (cmd *Project) GetCommandSeparator() string {
+	if runtime.GOOS == "windows" {
+		return " & "
+	}
+
+	return " && "
 }
 
 // Override the PATH environment variable for further shell executions.
