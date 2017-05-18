@@ -14,9 +14,12 @@ import (
 
 type Project struct {
 	BaseCommand
+	Config *ProjectConfig
 }
 
 func (cmd *Project) Commands() []cli.Command {
+	cmd.Config = NewProjectConfig()
+
 	command := cli.Command{
 		Name:        "project",
 		Usage:       "Run project-specific commands.",
@@ -38,19 +41,18 @@ func (cmd *Project) Commands() []cli.Command {
 
 // Processes script configuration into formal subcommands.
 func (cmd *Project) GetScriptsAsSubcommands() []cli.Command {
-	config := NewProjectConfig()
 
-	if config.Scripts == nil {
+	if cmd.Config.Scripts == nil {
 		return nil
 	}
 
 	var commands = []cli.Command{}
-	for id, script := range config.Scripts {
+	for id, script := range cmd.Config.Scripts {
 		if len(script.Run) > 0 {
 			command := cli.Command{
 				Name:        fmt.Sprintf("run:%s", id),
 				Usage:       script.Description,
-				Description: fmt.Sprintf("%s\n\n\tThis command was configured in %s\n\n\tThere are %d steps in this script and any 'extra' arguments will be appended to the final step.", script.Description, config.File, len(script.Run)),
+				Description: fmt.Sprintf("%s\n\n\tThis command was configured in %s\n\n\tThere are %d steps in this script and any 'extra' arguments will be appended to the final step.", script.Description, cmd.Config.File, len(script.Run)),
 				ArgsUsage:   "<args passed to last step>",
 				Category:    "Configured Scripts",
 				Before:      cmd.Before,
@@ -70,17 +72,16 @@ func (cmd *Project) GetScriptsAsSubcommands() []cli.Command {
 
 // Return the help for all the scripts.
 func (cmd *Project) Run(c *cli.Context) error {
-	config := NewProjectConfig()
 
-	if config.Scripts == nil {
-		cmd.out.Error.Fatal("There are no scripts discovered in: %s", config.File)
+	if cmd.Config.Scripts == nil {
+		cmd.out.Error.Fatal("There are no scripts discovered in: %s", cmd.Config.File)
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
-	if script, ok := config.Scripts[key]; ok {
+	if script, ok := cmd.Config.Scripts[key]; ok {
 		cmd.out.Verbose.Printf("Executing '%s': %s", key, script.Description)
-		cmd.addCommandPath(config)
-		dir := filepath.Dir(config.Path)
+		cmd.addCommandPath()
+		dir := filepath.Dir(cmd.Config.Path)
 
 		// Concat the commands together adding the args to this command as args to the last step
 		scriptCommands := strings.Join(script.Run, cmd.GetCommandSeparator()) + " " + strings.Join(c.Args(), " ")
@@ -121,9 +122,9 @@ func (cmd *Project) GetCommandSeparator() string {
 
 // Override the PATH environment variable for further shell executions.
 // This is used on POSIX systems for lookup of scripts.
-func (cmd *Project) addCommandPath(config *ProjectConfig) {
-	if config.Bin != "" {
-		binDir := config.Bin
+func (cmd *Project) addCommandPath() {
+	binDir := cmd.Config.Bin
+	if binDir != "" {
 		cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)
 		path := os.Getenv("PATH")
 		os.Setenv("PATH", fmt.Sprintf("%s:%s", path, binDir))
