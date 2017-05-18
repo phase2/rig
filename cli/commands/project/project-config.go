@@ -10,8 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var configFile string
-
 type ProjectScript struct {
 	Alias       string
 	Description string
@@ -24,6 +22,9 @@ type ProjectSync struct {
 }
 
 type ProjectConfig struct {
+	File string
+	Path string
+
 	Scripts   map[string]*ProjectScript
 	Sync   		*ProjectSync
 	Namespace string
@@ -31,13 +32,37 @@ type ProjectConfig struct {
 	Bin       string
 }
 
-// Given a project configuration file will load YAML, validate it for purpose,
-// and return a normalized object.
-func GetProjectConfigFromFile(filename string) ProjectConfig {
-	config := LoadYamlFromFile(filename)
-	if err := ValidateConfig(config); err != nil {
-		util.Logger().Error.Printf("Error in Project Config: %s", filename)
-		util.Logger().Error.Fatalf("%s", err)
+// Create a new ProjectConfig using configured or default locations
+func NewProjectConfig() *ProjectConfig {
+	projectConfigFile := os.Getenv("RIG_PROJECT_CONFIG_FILE")
+	if projectConfigFile == "" {
+		projectConfigFile = "./.outrigger.yml"
+	}
+	return NewProjectConfigFromFile(projectConfigFile)
+}
+
+// Create a new ProjectConfig from the specified file
+func NewProjectConfigFromFile(filename string) *ProjectConfig {
+	logger := util.Logger()
+
+	filepath, _ := filepath.Abs(filename)
+	config := &ProjectConfig{
+		File: filename,
+		Path: filepath,
+	}
+
+	yamlFile, err := ioutil.ReadFile(config.File)
+	if err != nil {
+		logger.Verbose.Printf("No project configuration file found at: %s", config.File)
+		return config
+	}
+
+	if err := yaml.Unmarshal(yamlFile, config); err != nil {
+		logger.Error.Fatalf("Error parsing YAML config: %v", err)
+	}
+
+	if err := ValidateProjectConfig(config); err != nil {
+		logger.Error.Fatalf("Error in %s: %s", filename, err)
 	}
 
 	if len(config.Bin) == 0 {
@@ -53,9 +78,10 @@ func GetProjectConfigFromFile(filename string) ProjectConfig {
 	return config
 }
 
+
 // Ensures our configuration data structure conforms to our ad hoc schema.
 // @todo do this in a more formal way. See docker/libcompose for an example.
-func ValidateConfig(config ProjectConfig) error {
+func ValidateProjectConfig(config *ProjectConfig) error {
 	if len(config.Version) == 0 {
 		return fmt.Errorf("No 'version' property detected.")
 	}
@@ -65,40 +91,4 @@ func ValidateConfig(config ProjectConfig) error {
 	}
 
 	return nil
-}
-
-// Given a filename, ensures it exists and unmarshals the raw Yaml.
-func LoadYamlFromFile(filename string) ProjectConfig {
-	yamlFile, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		util.Logger().Error.Fatalf("Project configuration file not found at '%s'", filename)
-	}
-
-	return LoadYaml(yamlFile)
-}
-
-// Set up the output streams (and colors) to stream command output if verbose is configured
-func LoadYaml(in []byte) ProjectConfig {
-	var config ProjectConfig
-	if err := yaml.Unmarshal(in, &config); err != nil {
-		util.Logger().Error.Printf("YAML Parsing Error")
-		util.Logger().Error.Fatal(err)
-	}
-
-	return config
-}
-
-// Initialize the configuration system.
-func ConfigInit() {
-	configFile = os.Getenv("RIG_PROJECT_CONFIG_FILE")
-	if len(configFile) == 0 {
-		configFile = "./.outrigger.yml"
-	}
-}
-
-// Get the absolute path to the configuration file.
-func GetConfigPath() string {
-	filename, _ := filepath.Abs(configFile)
-	return filename
 }

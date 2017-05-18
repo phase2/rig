@@ -57,8 +57,7 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 
 // Start the unison sync process
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
-	project.ConfigInit()
-	config := project.GetProjectConfigFromFile(project.GetConfigPath())
+	config := project.NewProjectConfig()
 	volumeName := cmd.GetVolumeName(ctx, config)
 	cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
 
@@ -120,8 +119,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 // Start the unison sync process
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
-	project.ConfigInit()
-	config := project.GetProjectConfigFromFile(project.GetConfigPath())
+	config := project.NewProjectConfig()
 	volumeName := cmd.GetVolumeName(ctx, config)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 
@@ -132,7 +130,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 }
 
 // Find the volume name through a variety of fall backs
-func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config project.ProjectConfig) string {
+func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config *project.ProjectConfig) string {
 	// 1. Check for argument
 	if ctx.Args().Present() {
 		return ctx.Args().First()
@@ -242,7 +240,7 @@ func (cmd *ProjectSync) GetUnisonMinorVersion() string {
 	output, _ := exec.Command("unison", "-version").Output()
 	re := regexp.MustCompile("unison version (\\d+\\.\\d+\\.\\d+)")
 	rawVersion := re.FindAllStringSubmatch(string(output), -1)[0][1]
-	version := version.Must(version.NewVersion(rawVersion))
-	segments := version.Segments()
+	v := version.Must(version.NewVersion(rawVersion))
+	segments := v.Segments()
 	return fmt.Sprintf("%d.%d", segments[0], segments[1])
 }
