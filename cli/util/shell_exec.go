@@ -1,7 +1,6 @@
 package util
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -42,17 +41,13 @@ func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 // exit status of any executed command. This function is intended to simulate
 // native execution of the command passed to it.
 //
-// @todo streaming the output instead of buffering until completion.
-func PassthruCommand(cmd *exec.Cmd) (stdout string, stderr string, exitCode int) {
-	var outbuf, errbuf bytes.Buffer
-
+// Derived from: http://stackoverflow.com/a/40770011/38408
+func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 
 	err := cmd.Run()
-	stdout = outbuf.String()
-	stderr = errbuf.String()
 
 	if err != nil {
 		// Try to get the exit code.
@@ -65,9 +60,6 @@ func PassthruCommand(cmd *exec.Cmd) (stdout string, stderr string, exitCode int)
 			// empty string very likely, so we use the default fail code, and format err
 			// to string and set to stderr
 			exitCode = defaultFailedCode
-			if stderr == "" {
-				stderr = err.Error()
-			}
 		}
 	} else {
 		// Success, exitCode should be 0.
