@@ -14,9 +14,13 @@ matrix:
       os: osx
   fast_finish: true
   allow_failures:
-  - go: tip
+    - go: tip
+
+env:
+  # Disable go1.5 vendoring so Godep handling is used.
+  - GO15VENDOREXPERIMENT="0"
 
 before_install: cd cli
 
 script:
-  - ../bin/test-go-fmt.sh
+  - ./scripts/test-go-fmt.sh
