@@ -48,7 +48,7 @@ func PassthruCommand(cmd *exec.Cmd) (stdout string, stderr string, exitCode int)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-        cmd.Stdin = os.Stdin
+	cmd.Stdin = os.Stdin
 
 	err := cmd.Run()
 	stdout = outbuf.String()

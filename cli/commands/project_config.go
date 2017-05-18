@@ -17,8 +17,8 @@ type ProjectScript struct {
 }
 
 type Sync struct {
-	Volume    string
-	Ignore 		[]string
+	Volume string
+	Ignore []string
 }
 
 type ProjectConfig struct {
@@ -26,7 +26,7 @@ type ProjectConfig struct {
 	Path string
 
 	Scripts   map[string]*ProjectScript
-	Sync   		*Sync
+	Sync      *Sync
 	Namespace string
 	Version   string
 	Bin       string
@@ -77,7 +77,6 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 
 	return config
 }
-
 
 // Ensures our configuration data structure conforms to our ad hoc schema.
 // @TODO do this in a more formal way. See docker/libcompose for an example.
