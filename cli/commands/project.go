@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/phase2/rig/cli/commands/project"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -39,7 +38,7 @@ func (cmd *Project) Commands() []cli.Command {
 
 // Processes script configuration into formal subcommands.
 func (cmd *Project) GetScriptsAsSubcommands() []cli.Command {
-	config := project.NewProjectConfig()
+	config := NewProjectConfig()
 
 	if config.Scripts == nil {
 		return nil
@@ -71,7 +70,7 @@ func (cmd *Project) GetScriptsAsSubcommands() []cli.Command {
 
 // Return the help for all the scripts.
 func (cmd *Project) Run(c *cli.Context) error {
-	config := project.NewProjectConfig()
+	config := NewProjectConfig()
 
 	if config.Scripts == nil {
 		cmd.out.Error.Fatal("There are no scripts discovered in: %s", config.File)
@@ -120,7 +119,7 @@ func (cmd *Project) GetCommand(val string) *exec.Cmd {
 
 // Override the PATH environment variable for further shell executions.
 // This is used on POSIX systems for lookup of scripts.
-func (cmd *Project) addCommandPath(config *project.ProjectConfig) {
+func (cmd *Project) addCommandPath(config *ProjectConfig) {
 	if config.Bin != "" {
 		binDir := config.Bin
 		cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)

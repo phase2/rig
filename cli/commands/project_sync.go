@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-version"
-	"github.com/phase2/rig/cli/commands/project"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
@@ -57,7 +56,7 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 
 // Start the unison sync process
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
-	config := project.NewProjectConfig()
+	config := NewProjectConfig()
 	volumeName := cmd.GetVolumeName(ctx, config)
 	cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
 
@@ -103,8 +102,10 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		"-ignore", fmt.Sprintf("Name %s", logFile),
 	}
 	// Append ProjectConfig ignores here
-	for _, ignore := range config.Sync.Ignore {
-		unisonArgs = append(unisonArgs, "-ignore", ignore)
+	if config.Sync != nil {
+		for _, ignore := range config.Sync.Ignore {
+			unisonArgs = append(unisonArgs, "-ignore", ignore)
+		}
 	}
 
 	cmd.out.Verbose.Printf("Unison Args: %s", strings.Join(unisonArgs[:], " "))
@@ -119,7 +120,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 // Start the unison sync process
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
-	config := project.NewProjectConfig()
+	config := NewProjectConfig()
 	volumeName := cmd.GetVolumeName(ctx, config)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 
@@ -130,7 +131,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 }
 
 // Find the volume name through a variety of fall backs
-func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config *project.ProjectConfig) string {
+func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config *ProjectConfig) string {
 	// 1. Check for argument
 	if ctx.Args().Present() {
 		return ctx.Args().First()
@@ -194,7 +195,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string) string {
 	cmd.out.Verbose.Printf("Checking for unison network connection on %s %d", ip, UNISON_PORT)
 	for i := 1; i <= 100; i++ {
 		if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UNISON_PORT)); err == nil {
-			defer conn.Close()
+			conn.Close()
 			return ip
 		} else {
 			cmd.out.Info.Printf("Error: %v", err)

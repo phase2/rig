@@ -1,4 +1,4 @@
-package project
+package commands
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ type ProjectScript struct {
 	Run         []string
 }
 
-type ProjectSync struct {
+type Sync struct {
 	Volume    string
 	Ignore 		[]string
 }
@@ -26,7 +26,7 @@ type ProjectConfig struct {
 	Path string
 
 	Scripts   map[string]*ProjectScript
-	Sync   		*ProjectSync
+	Sync   		*Sync
 	Namespace string
 	Version   string
 	Bin       string
@@ -80,7 +80,7 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 
 
 // Ensures our configuration data structure conforms to our ad hoc schema.
-// @todo do this in a more formal way. See docker/libcompose for an example.
+// @TODO do this in a more formal way. See docker/libcompose for an example.
 func ValidateProjectConfig(config *ProjectConfig) error {
 	if len(config.Version) == 0 {
 		return fmt.Errorf("No 'version' property detected.")
