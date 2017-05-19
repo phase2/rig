@@ -5,7 +5,7 @@ services:
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
-    command: gox -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
+    command: gox -osarch="Darwin/amd64" -output="../build/{{.OS}}/rig"
 
   # Install project dependencies.
   install:
@@ -29,4 +29,4 @@ services:
       # temporary/brittle workaround.
       - /data/golang/cache:${OUTRIGGER_GOPATH:-/go}/src
       - .:${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig
-    working_dir: ${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig
+    working_dir: ${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig/cli
