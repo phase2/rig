@@ -18,7 +18,7 @@ func (cmd *ProjectCreate) Commands() []cli.Command {
 	create := cli.Command{
 		Name:        "create",
 		Aliases:     []string{},
-		Usage:       "Run a yeoman generator in a container to create project configuration files",
+		Usage:       "Run a code generator to generate scaffolding for a new project.",
 		ArgsUsage:   "[optional type] [optional args]",
 		Description: "The type is the generator to run with args passed to that generator. If using flag arguments use -- before specifying type and arguments.",
 		Flags: []cli.Flag{
@@ -57,13 +57,13 @@ func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 		"-it",
 		"-v", fmt.Sprintf("%s:/generated", cwd),
 		image,
-		"yo", "--no-insight",
 	}
+
 	args = append(args, ctx.Args()...)
 
 	shellCmd := exec.Command("docker", args...)
 	if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-		cmd.out.Error.Printf("Error running generator '%s %s': %d", image, strings.Join(ctx.Args(), " "), exitCode)
+		cmd.out.Error.Printf("Error running generator %s %s: %d", image, strings.Join(ctx.Args(), " "), exitCode)
 		os.Exit(exitCode)
 	}
 
