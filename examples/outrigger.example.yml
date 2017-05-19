@@ -88,4 +88,4 @@ sync:
     - "Name crazy-big-file.log"
     - "Path vendor/"
     - "Path build/logs"
-    - "Regex build/backups/.*\.sql"
+    - "Regex build/backups/.*\\.sql"
