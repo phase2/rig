@@ -127,6 +127,6 @@ func (cmd *Project) addCommandPath() {
 	if binDir != "" {
 		cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)
 		path := os.Getenv("PATH")
-		os.Setenv("PATH", fmt.Sprintf("%s:%s", path, binDir))
+		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path))
 	}
 }
