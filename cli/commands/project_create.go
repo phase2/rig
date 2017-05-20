@@ -47,11 +47,16 @@ func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 		os.Exit(1)
 	}
 
-	cmd.out.Verbose.Printf("Executing container %s with arguments %s", image, strings.Join(ctx.Args(), " "))
+	argsMessage := " with no arguments"
+	if (ctx.Args().Present()) {
+		argsMessage = fmt.Sprintf(" with arguments: %s", strings.Join(ctx.Args(), " "));
+	}
+	cmd.out.Verbose.Printf("Executing container %s%s", image, argsMessage)
 
 	// keep passed in args as distinct elements or they will be treated as
 	// a single argument containing spaces when the container gets them
 	args := []string{
+		"container",
 		"run",
 		"--rm",
 		"-it",
