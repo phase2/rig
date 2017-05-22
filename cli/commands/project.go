@@ -33,11 +33,11 @@ func (cmd *Project) Commands() []cli.Command {
 		command.Subcommands = subcommands
 	}
 
-	sync := ProjectSync{}
-	command.Subcommands = append(command.Subcommands, sync.Commands()...)
-
 	create := ProjectCreate{}
 	command.Subcommands = append(command.Subcommands, create.Commands()...)
+
+	sync := ProjectSync{}
+	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
 	return []cli.Command{command}
 }
