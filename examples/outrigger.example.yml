@@ -1,0 +1,91 @@
+##
+# This file is an example of a Project configuration for use with Rig.
+#
+# To use a file like this, place it at the root of your repository.
+#
+# By default, rig looks for a file named '.outrigger.yml' in the current
+# directory.
+#
+# You can change this by running rig project --config=/path/to/file
+# or by using RIG_PROJECT_CONFIG_FILE environment variable.
+#
+# One of the main initial functions of this configuration file is to declare
+# scripts for which Rig will act as a task broker. Rig will execute all scripts
+# in the directory of the outrigger.yml file.
+##
+
+# This version key allows for breaking changes.
+version: 1.0
+
+# Path to project-specific scripts. Scripts in this directory can be referenced
+# without the preceding path. This path may be relative or absolute, and by
+# colon (:) delimiting paths you may specify multiple.
+# By default it is set to ./bin, so this example is boring.
+bin: './bin'
+
+# This namespace value is speculative and currently unused.
+# You might want to have a label on your docker containers to match under the
+# identifier 'sh.outrigger.project'.
+project: myproject
+
+# These are the scripts rig will run.
+# View the scripts via 'rig project'
+# Execute with 'rig project <id>' such as 'rig project ps'
+scripts:
+
+  # A simple script.
+  welcome:
+    # Aliases are not supported quite yet, but you will like them.
+    alias: hi
+    description: Output a simple welcome message.
+    run:
+      - echo "Welcome to My Project!"
+
+  # A series of commands.
+  tour:
+    alias: series
+    description: A quick tour of the project.
+    run:
+      # This interrupts the current execution thread to shell out to rig project
+      # to run the welcome script.
+      - rig project welcome
+      - echo "Please review the README.md and CONTRIBUTING.md before getting started."
+      - echo "Run 'rig project' to see all available commands."
+
+  # Simply call a script.
+  clean:
+    alias: wipe
+    description: Run the clean up command.
+    run:
+      # This script is located in ./bin/clean.sh
+      - clean.sh
+
+  # Check out how failure is handled.
+  fail:
+    alias: error
+    description: This just fails, nevermind.
+    run:
+      # You should have access to this exit code in the terminal.
+      - exit 3
+      # Once a command ends on an error, further commands are not run.
+      - echo "You will never see this"
+
+  # Does not currently work to open a standing "session".
+  # The shell execution technique is in development.
+  run:
+    alias: r
+    description: Run a command via the build container. For example, `rig project run cli "ls -l /root"`
+    run:
+      - COMPOSE_FILE=$CWD/build.yml docker-compose run --rm
+
+# This controls configuration for the `project sync:start` command.
+sync:
+  # This is the name of the external volume to use. This is one of a few places that rig can discover the volume name
+  volume: project-sync
+  # This configured the ignores that are provided to unison. One ignore per line following the format laid out in docs:
+  #    http://www.cis.upenn.edu/~bcpierce/unison/download/releases/stable/unison-manual.html#ignore
+  ignores:
+    - "Name crazy-big-file.log"
+    - "Path vendor/"
+    - "Path build/logs"
+    - "Regex build/backups/.*\\.sql"

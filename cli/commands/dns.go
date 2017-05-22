@@ -15,20 +15,22 @@ type Dns struct {
 	BaseCommand
 }
 
-func (cmd *Dns) Commands() cli.Command {
-	return cli.Command{
-		Name:  "dns",
-		Usage: "Start DNS services on the docker-machine",
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:   "nameservers",
-				Value:  "8.8.8.8:53",
-				Usage:  "Comma separated list of fallback names servers.",
-				EnvVar: "RIG_NAMESERVERS",
+func (cmd *Dns) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:  "dns",
+			Usage: "Start DNS services on the docker-machine",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "nameservers",
+					Value:  "8.8.8.8:53",
+					Usage:  "Comma separated list of fallback names servers.",
+					EnvVar: "RIG_NAMESERVERS",
+				},
 			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 

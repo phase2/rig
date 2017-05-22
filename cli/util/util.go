@@ -2,41 +2,13 @@ package util
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
 	"github.com/kardianos/osext"
-	"io/ioutil"
 )
-
-// Set up the output streams (and colors) to stream command output if verbose is configured
-func StreamCommand(cmd *exec.Cmd) error {
-	return RunCommand(cmd, false)
-}
-
-// Set up the output streams (and colors) to stream command output regardless of verbosity
-func ForceStreamCommand(cmd *exec.Cmd) error {
-	return RunCommand(cmd, true)
-}
-
-// Run the command
-func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
-	cmd.Stderr = os.Stderr
-	if Logger().IsVerbose || forceOutput {
-		cmd.Stdout = os.Stdout
-	} else {
-		cmd.Stdout = ioutil.Discard
-	}
-
-	color.Set(color.FgCyan)
-	err := cmd.Run()
-	color.Unset()
-	return err
-}
 
 // Get the directory of this binary
 func GetExecutableDir() (string, error) {
@@ -59,7 +31,6 @@ func AskYesNo(question string) bool {
 		}
 	}
 	return false
-
 }
 
 func GetRawCurrentDockerVersion() string {
