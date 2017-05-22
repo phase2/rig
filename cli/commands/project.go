@@ -36,6 +36,9 @@ func (cmd *Project) Commands() []cli.Command {
 	sync := ProjectSync{}
 	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
+	create := ProjectCreate{}
+	command.Subcommands = append(command.Subcommands, create.Commands()...)
+
 	return []cli.Command{command}
 }
 
