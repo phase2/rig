@@ -2,3 +2,4 @@ dist
 build
 vendor
 .idea
+.outrigger.yml
