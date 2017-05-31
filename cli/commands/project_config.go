@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/phase2/rig/cli/util"
+	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
@@ -61,7 +62,7 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 		logger.Error.Fatalf("Error parsing YAML config: %v", err)
 	}
 
-	if err := ValidateProjectConfig(config); err != nil {
+	if err := config.ValidateConfigVersion(); err != nil {
 		logger.Error.Fatalf("Error in %s: %s", filename, err)
 	}
 
@@ -70,7 +71,7 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 	}
 
 	for id, script := range config.Scripts {
-		if len(script.Description) == 0 {
+		if script != nil && script.Description == "" {
 			config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
 		}
 	}
@@ -80,22 +81,55 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 
 // Ensures our configuration data structure conforms to our ad hoc schema.
 // @TODO do this in a more formal way. See docker/libcompose for an example.
-func ValidateProjectConfig(config *ProjectConfig) error {
-	if len(config.Version) == 0 {
+func (c *ProjectConfig) ValidateConfigVersion() error {
+	if len(c.Version) == 0 {
 		return fmt.Errorf("No 'version' property detected.")
 	}
 
-	if config.Version != "1.0" {
-		return fmt.Errorf("Version '1.0' is the only supported value, found '%s'.", config.Version)
+	if c.Version != "1.0" {
+		return fmt.Errorf("Version '1.0' is the only supported value, found '%s'.", c.Version)
 	}
 
-	if config.Scripts != nil {
-		for id, script := range config.Scripts {
-			if len(script.Run) > 10 {
-				util.Logger().Warning.Printf("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run))
+	return nil
+}
+
+// Validate the config scripts against a set of rules/norms
+func (c *ProjectConfig) ValidateProjectScripts(subcommands []cli.Command) {
+	logger := util.Logger()
+
+	if c.Scripts != nil {
+		for id, script := range c.Scripts {
+
+			// Check for an empty script
+			if script == nil {
+				logger.Error.Fatalf("Project script '%s' has no configuration", id)
+			}
+
+			// Check for scripts with conflicting aliases with existing subcommands or subcommand aliases
+			for _, subcommand := range subcommands {
+				if id == subcommand.Name {
+					logger.Error.Fatalf("Project script name '%s' conflicts with command name '%s'. Please choose a different script name", id, subcommand.Name)
+				} else if script.Alias == subcommand.Name {
+					logger.Error.Fatalf("Project script alias '%s' on script '%s' conflicts with command name '%s'. Please choose a different script alias", script.Alias, id, subcommand.Name)
+				} else if subcommand.Aliases != nil {
+					for _, alias := range subcommand.Aliases {
+						if id == alias {
+							logger.Error.Fatalf("Project script name '%s' conflicts with command alias '%s' on command '%s'. Please choose a different script name", id, alias, subcommand.Name)
+						} else if script.Alias == alias {
+							logger.Error.Fatalf("Project script alias '%s' on script '%s' conflicts with command alias '%s' on command '%s'. Please choose a different script alias", script.Alias, id, alias, subcommand.Name)
+						}
+					}
+				}
+			}
+
+			// Check for scripts with no run commands
+			if script.Run == nil || len(script.Run) == 0 {
+				logger.Error.Fatalf("Project script '%s' does not have any run commands.", id)
+			} else if len(script.Run) > 10 {
+				// Check for scripts with more than 10 run commands
+				logger.Warning.Printf("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run))
 			}
 		}
 	}
 
-	return nil
 }

@@ -29,21 +29,23 @@ func (cmd *Project) Commands() []cli.Command {
 		Before:      cmd.Before,
 	}
 
-	if subcommands := cmd.GetScriptsAsSubcommands(); subcommands != nil {
-		command.Subcommands = subcommands
-	}
-
 	create := ProjectCreate{}
 	command.Subcommands = append(command.Subcommands, create.Commands()...)
 
 	sync := ProjectSync{}
 	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
+	if subcommands := cmd.GetScriptsAsSubcommands(command.Subcommands); subcommands != nil {
+		command.Subcommands = subcommands
+	}
+
 	return []cli.Command{command}
 }
 
 // Processes script configuration into formal subcommands.
-func (cmd *Project) GetScriptsAsSubcommands() []cli.Command {
+func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cli.Command {
+
+	cmd.Config.ValidateProjectScripts(otherSubcommands)
 
 	if cmd.Config.Scripts == nil {
 		return nil
