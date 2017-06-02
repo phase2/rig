@@ -3,7 +3,6 @@ sudo: false
 os: linux
 
 language: go
-
 go:
   - 1.7
   - tip
@@ -14,10 +13,13 @@ matrix:
     - go: tip
 
 env:
-  # Disable go1.5 vendoring so Godep handling is used.
   - GO15VENDOREXPERIMENT="0"
 
 before_install: cd cli
 
 script:
-  - ../scripts/test-go-fmt.sh
+  - "../scripts/test-go-fmt.sh"
+
+notifications:
+  flowdock:
+    secure: HnC3CX2Wn7sSVPMtm34B3N6BWIhWh2sZpunfg9YImjSKG6iFqVWPdIfCBioWnHQ4rLgbHtoQDrVmxcZP1UtO6wqD5399ZAX+tTLWmJf+ct83s3ISwpBJHqQFhBK6Oo3Kv9gK7ncFHmCdxN8s9cOETIGVMYHFpaY/UkN65uC/G7nuaAwnJLCp08OslzRl5ioptWy2R3IRWxfH66XZh16VOOs65rJUgFX4s/pp1m6N9BSnGXNI/UA1h4zLh+AHpqnBzTx2e64eEyQTYlndj9DUWCVQ4zvbPBXbC3eKhXgubnFVLWXIAJOXwgoqFlXmQaJnpFFZsl39FrYE9aTQguigNYl4L50Ix6xWSkfFOyFtDjMmBu8ZkKrsLs2+WdbDV1d/A30FAcX+IS9YYbG8mPwQNGRgNKsHMFkkQfjfQGbVmXsQhRH72zjKHe9J5JJfgbvqS9IHEHUMgGNDBsMJ6HTnCmKgZOGT15637IvMKVvJXu0Ns08dGKs0zGzv7vj1oGM0wb9FH+naYqjX3vcJuu7/APamKRzVDj8S6F2UtU6pyAr6gGJ5Ild5uwIDaXj8AWIynur1wu0CqZTGqgbn7heyBI+7qnXSmlY9Wa1Yl0f2lmd/lhpbgNJlkMZa2ktW4AHcLSo865Xlx7a83sgcx5IPkC8x5OaKKMFVWoZA8lpsqa8=
