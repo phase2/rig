@@ -1,17 +1,14 @@
 sudo: false
 
+os: linux
+
 language: go
 
+go:
+  - 1.7
+  - tip
+
 matrix:
-  include:
-    - go: 1.7
-      os: linux
-    - go: 1.7
-      os: osx
-    - go: tip
-      os: linux
-    - go: tip
-      os: osx
   fast_finish: true
   allow_failures:
     - go: tip
