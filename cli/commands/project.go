@@ -36,7 +36,7 @@ func (cmd *Project) Commands() []cli.Command {
 	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
 	if subcommands := cmd.GetScriptsAsSubcommands(command.Subcommands); subcommands != nil {
-		command.Subcommands = subcommands
+		command.Subcommands = append(command.Subcommands, subcommands...)
 	}
 
 	return []cli.Command{command}
