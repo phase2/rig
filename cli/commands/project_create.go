@@ -27,8 +27,8 @@ func (cmd *ProjectCreate) Commands() []cli.Command {
 				Usage: "Docker image to use if default outrigger/generator is not desired",
 			},
 		},
-		Before:      cmd.Before,
-		Action:      cmd.Create,
+		Before: cmd.Before,
+		Action: cmd.Create,
 	}
 
 	return []cli.Command{create}
@@ -37,19 +37,19 @@ func (cmd *ProjectCreate) Commands() []cli.Command {
 // Run a docker image to execute the desired generator
 func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 	image := ctx.String("image")
-	if (image == "") {
+	if image == "" {
 		image = "outrigger/generator"
 	}
 
-	cwd, err := os.Getwd();
-	if (err != nil) {
+	cwd, err := os.Getwd()
+	if err != nil {
 		cmd.out.Error.Printf("Couldn't determine current working directory: %s", err)
 		os.Exit(1)
 	}
 
 	argsMessage := " with no arguments"
-	if (ctx.Args().Present()) {
-		argsMessage = fmt.Sprintf(" with arguments: %s", strings.Join(ctx.Args(), " "));
+	if ctx.Args().Present() {
+		argsMessage = fmt.Sprintf(" with arguments: %s", strings.Join(ctx.Args(), " "))
 	}
 	cmd.out.Verbose.Printf("Executing container %s%s", image, argsMessage)
 
