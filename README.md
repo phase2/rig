@@ -15,14 +15,14 @@ Install go from homebrew using the flag to include common cross-compiler targets
 brew install go --with-cc-common
 ```
 
-Setup `$GOPATH` and `$PATH` in your favorite shell (`~/.bashrc` or `~/.zshrc`) This assumes you have your code within your `$GOPATH`.
+Setup `$GOPATH` and `$PATH` in your favorite shell (`~/.bashrc` or `~/.zshrc`)
 
 ```bash
 export GOPATH=$HOME/Projects
 export PATH=$PATH:$GOPATH/bin
 ```
 
-Checkout the code into your $GOPATH, likely in `$GOPATH/src/github.com/phase2/rig`
+Checkout the code into your `$GOPATH` in `$GOPATH/src/github.com/phase2/rig`
 
 Get all the dependencies
 
