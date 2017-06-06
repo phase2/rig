@@ -14,23 +14,25 @@ type DataRestore struct {
 	BaseCommand
 }
 
-func (cmd *DataRestore) Commands() cli.Command {
-	return cli.Command{
-		Name:  "data-restore",
-		Usage: "Restore a local backup to the /data volume of a docker machine",
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "backup-file",
-				Usage: "Specify the local archive to restore to the VM. Defaults to a file named $HOME/rig-backups/<machinename>.tgz",
+func (cmd *DataRestore) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:  "data-restore",
+			Usage: "Restore a local backup to the /data volume of a docker machine",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "backup-file",
+					Usage: "Specify the local archive to restore to the VM. Defaults to a file named $HOME/rig-backups/<machinename>.tgz",
+				},
+				cli.StringFlag{
+					Name:  "data-dir",
+					Value: "/mnt/sda1/data",
+					Usage: "Specify the restore dir on the VM. Defaults to the entire /data volume.",
+				},
 			},
-			cli.StringFlag{
-				Name:  "data-dir",
-				Value: "/mnt/sda1/data",
-				Usage: "Specify the restore dir on the VM. Defaults to the entire /data volume.",
-			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 

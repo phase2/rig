@@ -9,18 +9,20 @@ type Remove struct {
 	BaseCommand
 }
 
-func (cmd *Remove) Commands() cli.Command {
-	return cli.Command{
-		Name:  "remove",
-		Usage: "Remove the docker-machine",
-		Flags: []cli.Flag{
-			cli.BoolFlag{
-				Name:  "force, f",
-				Usage: "Force removal. Don't prompt to backup /data",
+func (cmd *Remove) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:  "remove",
+			Usage: "Remove the docker-machine",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "force, f",
+					Usage: "Force removal. Don't prompt to backup /data",
+				},
 			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 

@@ -13,24 +13,26 @@ type Upgrade struct {
 	BaseCommand
 }
 
-func (cmd *Upgrade) Commands() cli.Command {
-	return cli.Command{
-		Name:  "upgrade",
-		Usage: "Upgrade the Docker Machine to a newer/compatible version",
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "data-dir",
-				Value: "/mnt/sda1/data",
-				Usage: "Specify the directory on the Docker Machine to backup. Defaults to the entire /data volume.",
+func (cmd *Upgrade) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:  "upgrade",
+			Usage: "Upgrade the Docker Machine to a newer/compatible version",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "data-dir",
+					Value: "/mnt/sda1/data",
+					Usage: "Specify the directory on the Docker Machine to backup. Defaults to the entire /data volume.",
+				},
+				cli.StringFlag{
+					Name:  "backup-dir",
+					Value: fmt.Sprintf("%s%c%s%c%s", os.Getenv("HOME"), os.PathSeparator, "rig-backups", os.PathSeparator, "upgrade"),
+					Usage: "Specify the local directory to store the backup zip.",
+				},
 			},
-			cli.StringFlag{
-				Name:  "backup-dir",
-				Value: fmt.Sprintf("%s%c%s%c%s", os.Getenv("HOME"), os.PathSeparator, "rig-backups", os.PathSeparator, "upgrade"),
-				Usage: "Specify the local directory to store the backup zip.",
-			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 
@@ -58,12 +60,12 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	backup.Run(c)
 
 	remove := &Remove{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	removeCtx := cmd.NewContext(remove.Commands().Name, remove.Commands().Flags, c)
+	removeCtx := cmd.NewContext(remove.Commands()[0].Name, remove.Commands()[0].Flags, c)
 	cmd.SetContextFlag(removeCtx, "force", strconv.FormatBool(true))
 	remove.Run(removeCtx)
 
 	start := &Start{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	startCtx := cmd.NewContext(start.Commands().Name, start.Commands().Flags, c)
+	startCtx := cmd.NewContext(start.Commands()[0].Name, start.Commands()[0].Flags, c)
 	cmd.SetContextFlag(startCtx, "driver", cmd.machine.GetDriver())
 	cmd.SetContextFlag(startCtx, "cpu-count", strconv.FormatInt(int64(cmd.machine.GetCPU()), 10))
 	cmd.SetContextFlag(startCtx, "memory-size", strconv.FormatInt(int64(cmd.machine.GetMemory()), 10))
@@ -71,7 +73,7 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	start.Run(startCtx)
 
 	restore := &DataRestore{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	restoreCtx := cmd.NewContext(restore.Commands().Name, restore.Commands().Flags, c)
+	restoreCtx := cmd.NewContext(restore.Commands()[0].Name, restore.Commands()[0].Flags, c)
 	cmd.SetContextFlag(restoreCtx, "data-dir", c.String("data-dir"))
 	backupFile := fmt.Sprintf("%s%c%s.tgz", c.String("backup-dir"), os.PathSeparator, cmd.machine.Name)
 	cmd.SetContextFlag(restoreCtx, "backup-file", backupFile)

@@ -1,0 +1,25 @@
+sudo: false
+
+os: linux
+
+language: go
+go:
+  - 1.7
+  - tip
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - go: tip
+
+env:
+  - GO15VENDOREXPERIMENT="0"
+
+before_install: cd cli
+
+script:
+  - "../scripts/test-go-fmt.sh"
+
+notifications:
+  flowdock:
+    secure: "R+oCTutMLINYW1LZpZK14JjkU0Tt2UTc47q+MXKRruDwCp3ntx4RL9GtSp9cg0EHIXPvQ8yesBKIgpZjw3eelAORXzG8FTgvjPH0mu3m1lU20cE3XKHE4+kH0hNLpXQ2V20vj4XnMGmCPizG2GXDBl/LZcAUPoAZy6j+++cTvQRcIkGede9aUCsI5hBRLwdKVqD2lGC+Qr32VZNAcHsNaVHkhR6WustetRIMx3vQSlZWvd8SOaGvWkaBw8nBpPlfnG4bl28kWH9aoJyILyAuNZtz42C5JDCkcq0XjvUOWtXwwGEutKJX5OF77l5lccpRVDYoW+L1xXMrBaYje1+gs0lEUrrJj14yIVLw6gOlumYsmKWNdKob2lDCAL9w3IeQ4VfrAWXYY6M6WTIA6/3SANokgrXwtsV4/rYbtiNsyZA5QB1w32XH+GSjTYRTbMboIoB6kvABN7Y/saX/ShdZn4UgShTkYxckQNytsgvZWAZVdR0QpGzm7CLT2fLNLcb6Z1WdcNJAmSMlR417BwCG8aHUEeCDAGhn1p0mYcE+UiBizYOa9o0HkfcznXyl0YZhybtWj/ZFlX8TTS5fKhYYkTqcGdEYMBFxGAH7mL0Pu2D1j9oclXWeYIEXGpOFRhs0d7X6e5GA9O7rW/mDiirff3FI+4ts6aq1xY+z6hkTayY="

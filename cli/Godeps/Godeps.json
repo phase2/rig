@@ -1,10 +1,7 @@
 {
-	"ImportPath": "github.com/phase2/rig",
+	"ImportPath": "github.com/phase2/rig/cli",
 	"GoVersion": "go1.7",
 	"GodepVersion": "v79",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/bitly/go-simplejson",
@@ -40,6 +37,10 @@
 		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
 		}
 	]
 }

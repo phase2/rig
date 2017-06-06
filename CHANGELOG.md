@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+ - `Commands()` function now returns an array of cli.Command structs instead of a single struct 
+ - Added support for `project` based commands
+   - Added support for `.outrigger.yml` file in project folders to support custom configuration and scripts
+   - Added `project run:[script]` command to run commands defined in project config files
+   - Added `project sync:start` and `project sync:stop` to support Unison based sync volumes for faster in container builds
+   - Added `project create` that will run a generator image to create default project scaffolding and configuration
+
 ## 1.2.3
 
  - Updated mDNSResponder restart to avoid System Integrity Protections 

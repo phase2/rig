@@ -13,24 +13,26 @@ type DataBackup struct {
 	BaseCommand
 }
 
-func (cmd *DataBackup) Commands() cli.Command {
-	return cli.Command{
-		Name:  "data-backup",
-		Usage: "Backup the contents of the /data volume of a docker machine",
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "data-dir",
-				Value: "/mnt/sda1/data",
-				Usage: "Specify the directory on the Docker Machine to backup. Defaults to the entire /data volume.",
+func (cmd *DataBackup) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:  "data-backup",
+			Usage: "Backup the contents of the /data volume of a docker machine",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "data-dir",
+					Value: "/mnt/sda1/data",
+					Usage: "Specify the directory on the Docker Machine to backup. Defaults to the entire /data volume.",
+				},
+				cli.StringFlag{
+					Name:  "backup-dir",
+					Value: fmt.Sprintf("%s%c%s", os.Getenv("HOME"), os.PathSeparator, "rig-backups"),
+					Usage: "Specify the local directory to store the backup zip.",
+				},
 			},
-			cli.StringFlag{
-				Name:  "backup-dir",
-				Value: fmt.Sprintf("%s%c%s", os.Getenv("HOME"), os.PathSeparator, "rig-backups"),
-				Usage: "Specify the local directory to store the backup zip.",
-			},
+			Before: cmd.Before,
+			Action: cmd.Run,
 		},
-		Before: cmd.Before,
-		Action: cmd.Run,
 	}
 }
 

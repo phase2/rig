@@ -1,4 +1,4 @@
-# Rig - Outrigger CLI
+# Rig - Outrigger CLI [![Build Status](https://travis-ci.org/phase2/rig.svg?branch=develop)](https://travis-ci.org/phase2/rig)
 
 > A CLI for managing the Outrigger container-driven development stack.
 
@@ -15,15 +15,14 @@ Install go from homebrew using the flag to include common cross-compiler targets
 brew install go --with-cc-common
 ```
 
-Setup GOPATH and PATH in your favorite shell (`~/.bashrc` or `~/.zshrc`)
-This assumes you use `~/Projects` for your code, adjust accordingly.
+Setup `$GOPATH` and `$PATH` in your favorite shell (`~/.bashrc` or `~/.zshrc`)
 
 ```bash
 export GOPATH=$HOME/Projects
 export PATH=$PATH:$GOPATH/bin
 ```
 
-Checkout the code into your $GOPATH, likely in `$GOPATH/src/github.com/phase2/rig`
+Checkout the code into your `$GOPATH` in `$GOPATH/src/github.com/phase2/rig`
 
 Get all the dependencies
 
@@ -35,7 +34,7 @@ go get github.com/tools/godep
 go get github.com/mitchellh/gox
 
 # Install the project dependencies into $GOPATH
-cd $GOPATH/src/github.com/phase2/rig
+cd $GOPATH/src/github.com/phase2/rig/cli
 godep restore
 ```
 
@@ -50,6 +49,8 @@ We make use of a few key libraries to do all the fancy stuff that the `rig` CLI 
      * All the fancy terminal color output
  * https://github.com/bitly/go-simplejson
      * The JSON parse and access library used primarily with the output of `docker-machine inspect` 
+ * https://gopkg.in/yaml.v2
+     * The YAML library for parsing/reading YAML files 
 
 Build
 -----
@@ -62,15 +63,11 @@ For development, sometimes you will just want to build for your target platform 
 do that, simply run the following command.
 
 ```bash
-gox -cgo -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
+gox -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
 ```
    
 This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `bin/`
 directory for the appropriate OS with the name `rig`.  
-
-NOTE: the `-cgo` in the above command is only relevant for building on OSX as this will allow the go binary
-to use the OSX DNS Resolver instead of the built in Go resolver. This is needed in order to resolve DNS names
-that end in things like *.vm*  Using `-cgo` for Linux and Windows architectures will result in a failed build.
 
 Developing Rig with Docker [Experimental]
 -----------------------------------------
@@ -83,7 +80,7 @@ docker-compose run --rm install
 docker-compose run --rm build
 ```
 
-This will produce a working OSX binary with partially limited functionality at `build/darwin/rig`.
+This will produce a working OSX binary at `build/darwin/rig`.
 
 Deploy to Homebrew
 ------------------

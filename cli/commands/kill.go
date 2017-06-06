@@ -11,12 +11,14 @@ type Kill struct {
 	BaseCommand
 }
 
-func (cmd *Kill) Commands() cli.Command {
-	return cli.Command{
-		Name:   "kill",
-		Usage:  "Kill the docker-machine",
-		Before: cmd.Before,
-		Action: cmd.Run,
+func (cmd *Kill) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:   "kill",
+			Usage:  "Kill the docker-machine",
+			Before: cmd.Before,
+			Action: cmd.Run,
+		},
 	}
 }
 

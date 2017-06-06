@@ -7,7 +7,7 @@ import (
 )
 
 type RigCommand interface {
-	Commands() cli.Command
+	Commands() []cli.Command
 }
 
 type BaseCommand struct {

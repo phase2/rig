@@ -12,13 +12,15 @@ type Stop struct {
 	BaseCommand
 }
 
-func (cmd *Stop) Commands() cli.Command {
-	return cli.Command{
-		Name:    "stop",
-		Aliases: []string{"halt"},
-		Usage:   "Stop the docker-machine",
-		Before:  cmd.Before,
-		Action:  cmd.Run,
+func (cmd *Stop) Commands() []cli.Command {
+	return []cli.Command{
+		{
+			Name:    "stop",
+			Aliases: []string{"halt"},
+			Usage:   "Stop the docker-machine",
+			Before:  cmd.Before,
+			Action:  cmd.Run,
+		},
 	}
 }
 

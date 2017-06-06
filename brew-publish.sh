@@ -72,6 +72,8 @@ class Rig < Formula
   depends_on "docker-machine"
   depends_on "docker-compose"
   depends_on "docker-machine-nfs"
+  depends_on "unison"
+  depends_on "eugenmayer/dockersync/unox"
 
   def install
     bin.install "rig"

@@ -8,7 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-const VERSION = "1.2.3"
+const VERSION = "1.3.0"
 
 // It all starts here
 func main() {
@@ -38,22 +38,23 @@ func main() {
 	}
 
 	app.Commands = []cli.Command{}
-	app.Commands = append(app.Commands, (&commands.Start{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Stop{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Restart{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Upgrade{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Status{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Config{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Dns{}).Commands())
-	app.Commands = append(app.Commands, (&commands.DnsRecords{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Dashboard{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Prune{}).Commands())
-	app.Commands = append(app.Commands, (&commands.DataBackup{}).Commands())
-	app.Commands = append(app.Commands, (&commands.DataRestore{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Kill{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Remove{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Watch{}).Commands())
-	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands())
+	app.Commands = append(app.Commands, (&commands.Start{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Stop{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Restart{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Upgrade{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Status{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Config{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Dns{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.DnsRecords{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Dashboard{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Prune{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.DataBackup{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.DataRestore{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Kill{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Remove{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Watch{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Project{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands()...)
 
 	app.Run(os.Args)
 }
