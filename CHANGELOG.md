@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Version
+## 1.3.0
 
  - `Commands()` function now returns an array of cli.Command structs instead of a single struct 
  - Added support for `project` based commands
