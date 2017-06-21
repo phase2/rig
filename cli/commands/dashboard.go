@@ -16,18 +16,25 @@ type Dashboard struct {
 func (cmd *Dashboard) Commands() []cli.Command {
 	return []cli.Command{
 		{
-			Name:   "dashboard",
-			Usage:  "Start Dashboard services on the docker-machine",
+			Name:  "dashboard",
+			Usage: "Start Dashboard services on the docker-machine",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:   "no-update",
+					Usage:  "Prevent automatic update of dashboard.",
+					EnvVar: "RIG_DASHBOARD_NO_UPDATE",
+				},
+			},
 			Before: cmd.Before,
 			Action: cmd.Run,
 		},
 	}
 }
 
-func (cmd *Dashboard) Run(c *cli.Context) error {
+func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() {
 		cmd.out.Info.Println("Launching Dashboard")
-		cmd.LaunchDashboard(cmd.machine)
+		cmd.LaunchDashboard(cmd.machine, ctx.Bool("no-update"))
 	} else {
 		cmd.out.Error.Fatalf("Machine '%s' is not running.", cmd.machine.Name)
 	}
@@ -35,14 +42,32 @@ func (cmd *Dashboard) Run(c *cli.Context) error {
 	return nil
 }
 
-func (cmd *Dashboard) LaunchDashboard(machine Machine) {
+func (cmd *Dashboard) LaunchDashboard(machine Machine, update bool) {
 	machine.SetEnv()
 
 	exec.Command("docker", "stop", "outrigger-dashboard").Run()
 	exec.Command("docker", "rm", "outrigger-dashboard").Run()
 
-	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
+	image := "outrigger/dashboard:latest"
 
+	// The check for whether the image is older than 30 days is not currently used.
+	_, seconds, err := util.ImageOlderThan(image, 86400*30)
+	if err == nil {
+		cmd.out.Verbose.Printf("Local copy of the image '%s' was originally published %0.2f days ago.", image, seconds/86400)
+	}
+
+	// If there was an error it implies no previous instance of the image is available
+	// or that docker operations failed and things will likely go wrong anyway.
+	if err == nil && !update {
+		cmd.out.Verbose.Printf("Attempting to update %s", image)
+		if err := util.StreamCommand(exec.Command("docker", "pull", image)); err != nil {
+			cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
+		}
+	} else if err == nil && update {
+		cmd.out.Verbose.Printf("Automatic dashboard image update suppressed by --no-update option.")
+	}
+
+	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
 	args := []string{
 		"run",
 		"-d",
