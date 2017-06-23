@@ -34,7 +34,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() {
 		cmd.out.Info.Println("Launching Dashboard")
-		cmd.LaunchDashboard(cmd.machine, ctx.Bool("no-update"))
+		cmd.LaunchDashboard(cmd.machine, !ctx.Bool("no-update"))
 	} else {
 		cmd.out.Error.Fatalf("Machine '%s' is not running.", cmd.machine.Name)
 	}
@@ -58,13 +58,13 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine, update bool) {
 
 	// If there was an error it implies no previous instance of the image is available
 	// or that docker operations failed and things will likely go wrong anyway.
-	if err == nil && !update {
+	if err == nil && update {
 		cmd.out.Verbose.Printf("Attempting to update %s", image)
 		if err := util.StreamCommand(exec.Command("docker", "pull", image)); err != nil {
 			cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 		}
-	} else if err == nil && update {
-		cmd.out.Verbose.Printf("Automatic dashboard image update suppressed by --no-update option.")
+	} else if err == nil && !update {
+		cmd.out.Verbose.Printf("Automatic dashboard image update skipped.")
 	}
 
 	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
