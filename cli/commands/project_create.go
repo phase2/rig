@@ -10,8 +10,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-const generator_container_name = "run-outrigger-generator"
-
 type ProjectCreate struct {
 	BaseCommand
 }
@@ -98,8 +96,6 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 		"--rm",
 		"-it",
 		"-v", fmt.Sprintf("%s:/generated", cwd),
-		"--name",
-		generator_container_name,
 		image,
 	}
 
