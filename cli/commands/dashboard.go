@@ -16,8 +16,8 @@ type Dashboard struct {
 func (cmd *Dashboard) Commands() []cli.Command {
 	return []cli.Command{
 		{
-			Name:  "dashboard",
-			Usage: "Start Dashboard services on the docker-machine",
+			Name:   "dashboard",
+			Usage:  "Start Dashboard services on the docker-machine",
 			Before: cmd.Before,
 			Action: cmd.Run,
 		},
@@ -49,13 +49,9 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 		cmd.out.Verbose.Printf("Local copy of the image '%s' was originally published %0.2f days ago.", image, seconds/86400)
 	}
 
-	// If there was an error it implies no previous instance of the image is available
-	// or that docker operations failed and things will likely go wrong anyway.
-	if err == nil {
-		cmd.out.Verbose.Printf("Attempting to update %s", image)
-		if err := util.StreamCommand(exec.Command("docker", "pull", image)); err != nil {
-			cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
-		}
+	cmd.out.Verbose.Printf("Attempting to update %s", image)
+	if err := util.StreamCommand(exec.Command("docker", "pull", image)); err != nil {
+		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 	}
 
 	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
