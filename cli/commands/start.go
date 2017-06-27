@@ -112,7 +112,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	cmd.out.Verbose.Println("Launching Dashboard...")
 	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	dash.LaunchDashboard(cmd.machine, true)
+	dash.LaunchDashboard(cmd.machine)
 
 	cmd.out.Info.Println("Outrigger is ready to use")
 
