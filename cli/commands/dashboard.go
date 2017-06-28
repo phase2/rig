@@ -24,7 +24,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 	}
 }
 
-func (cmd *Dashboard) Run(c *cli.Context) error {
+func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() {
 		cmd.out.Info.Println("Launching Dashboard")
 		cmd.LaunchDashboard(cmd.machine)
@@ -41,8 +41,20 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) {
 	exec.Command("docker", "stop", "outrigger-dashboard").Run()
 	exec.Command("docker", "rm", "outrigger-dashboard").Run()
 
-	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
+	image := "outrigger/dashboard:latest"
 
+	// The check for whether the image is older than 30 days is not currently used.
+	_, seconds, err := util.ImageOlderThan(image, 86400*30)
+	if err == nil {
+		cmd.out.Verbose.Printf("Local copy of the image '%s' was originally published %0.2f days ago.", image, seconds/86400)
+	}
+
+	cmd.out.Verbose.Printf("Attempting to update %s", image)
+	if err := util.StreamCommand(exec.Command("docker", "pull", image)); err != nil {
+		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
+	}
+
+	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
 	args := []string{
 		"run",
 		"-d",
