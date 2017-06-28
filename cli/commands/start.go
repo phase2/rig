@@ -2,6 +2,7 @@ package commands
 
 import (
 	"os/exec"
+        "runtime"
 	"strconv"
 
 	"github.com/phase2/rig/cli/util"
@@ -82,11 +83,14 @@ func (cmd *Start) Run(c *cli.Context) error {
 	dns := Dns{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	dns.ConfigureDns(cmd.machine, c.String("nameservers"))
 
-	cmd.out.Verbose.Println("Enabling NFS file sharing")
-	if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
-		cmd.out.Error.Printf("Error enabling NFS: %s", nfsErr)
+        // NFS mounts are Mac-only.
+        if runtime.GOOS == "darwin" {
+                cmd.out.Verbose.Println("Enabling NFS file sharing")
+                if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
+                        cmd.out.Error.Printf("Error enabling NFS: %s", nfsErr)
+                }
+                cmd.out.Verbose.Println("NFS is ready to use")
 	}
-	cmd.out.Verbose.Println("NFS is ready to use")
 
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
 	cmd.machine.WaitForDev()
