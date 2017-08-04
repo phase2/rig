@@ -41,18 +41,18 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			cli.IntFlag{
-				Name:   "initial-sync-timeout",
+				Name:  "initial-sync-timeout",
 				Value: 60,
-				Usage:  "Maximum amount of time in seconds to allow for detection of successful initial sync.",
+				Usage: "Maximum amount of time in seconds to allow for detection of successful initial sync.",
 			},
 			cli.IntFlag{
-				Name:   "container-start-timeout",
+				Name:  "container-start-timeout",
 				Value: 10,
-				Usage:  "Maximum amount of time in seconds to wait for the unison container to start",
+				Usage: "Maximum amount of time in seconds to wait for the unison container to start",
 			},
 		},
-		Before:      cmd.Before,
-		Action:      cmd.RunStart,
+		Before: cmd.Before,
+		Action: cmd.RunStart,
 	}
 	stop := cli.Command{
 		Name:        "sync:stop",
