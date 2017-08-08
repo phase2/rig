@@ -39,8 +39,20 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Usage:       "Start a unison sync on local project directory. Optionally provide a volume name.",
 		ArgsUsage:   "[optional volume name]",
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
-		Before:      cmd.Before,
-		Action:      cmd.RunStart,
+		Flags: []cli.Flag{
+			cli.IntFlag{
+				Name:  "initial-sync-timeout",
+				Value: 60,
+				Usage: "Maximum amount of time in seconds to allow for detection of successful initial sync.",
+			},
+			cli.IntFlag{
+				Name:  "container-start-timeout",
+				Value: 10,
+				Usage: "Maximum amount of time in seconds to wait for the unison container to start",
+			},
+		},
+		Before: cmd.Before,
+		Action: cmd.RunStart,
 	}
 	stop := cli.Command{
 		Name:        "sync:stop",
@@ -84,7 +96,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
 	}
 
-	var ip = cmd.WaitForUnisonContainer(volumeName)
+	var ip = cmd.WaitForUnisonContainer(volumeName, ctx.Int("container-start-timeout"))
 
 	cmd.out.Info.Println("Initializing sync")
 
@@ -113,7 +125,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
 	}
 
-	cmd.WaitForSyncInit(logFile)
+	cmd.WaitForSyncInit(logFile, ctx.Int("initial-sync-timeout"))
 
 	return nil
 }
@@ -183,8 +195,12 @@ func (cmd *ProjectSync) LoadComposeFile() (*ComposeFile, error) {
 // we need to discover the IP address of the container instead of using the DNS name
 // when compiled without -cgo this executable will not use the native mac dns resolution
 // which is how we have configured dnsdock to provide names for containers.
-func (cmd *ProjectSync) WaitForUnisonContainer(containerName string) string {
+func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeconds int) string {
 	cmd.out.Info.Println("Waiting for container to start")
+
+	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
+	// * 10 here because we loop once every 100 ms and we want to get to seconds
+	var timeoutLoops = timeoutSeconds * 10
 
 	output, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName).Output()
 	if err != nil {
@@ -193,13 +209,13 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string) string {
 	ip := strings.Trim(string(output), "\n")
 
 	cmd.out.Verbose.Printf("Checking for unison network connection on %s %d", ip, UNISON_PORT)
-	for i := 1; i <= 100; i++ {
+	for i := 1; i <= timeoutLoops; i++ {
 		if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UNISON_PORT)); err == nil {
 			conn.Close()
 			return ip
 		} else {
 			cmd.out.Info.Printf("Error: %v", err)
-			time.Sleep(time.Duration(100) * time.Millisecond)
+			time.Sleep(timeoutLoopSleep)
 		}
 	}
 	cmd.out.Error.Fatal("Sync container failed to start!")
@@ -207,16 +223,18 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string) string {
 }
 
 // The local unison process is finished initializing when the log file exists
-func (cmd *ProjectSync) WaitForSyncInit(logFile string) {
+func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int) {
 	cmd.out.Info.Print("Waiting for initial sync to finish...")
 
 	var tempFile = fmt.Sprintf(".%s.tmp", logFile)
+	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
+	// * 10 here because we loop once every 100 ms and we want to get to seconds
+	var timeoutLoops = timeoutSeconds * 10
 
 	// Create a temp file to cause a sync action
 	exec.Command("touch", tempFile).Run()
 
-	// Lets check for 60 seconds, while waiting for initial sync to complete
-	for i := 1; i <= 600; i++ {
+	for i := 1; i <= timeoutLoops; i++ {
 		if i%10 == 0 {
 			os.Stdout.WriteString(".")
 		}
@@ -226,7 +244,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string) {
 			exec.Command("rm", "-f", tempFile).Run()
 			return
 		} else {
-			time.Sleep(time.Duration(100) * time.Millisecond)
+			time.Sleep(timeoutLoopSleep)
 		}
 	}
 
