@@ -46,6 +46,8 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the unison container and start of initial sync",
 				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
+			// Arbitrary sleep length but anything less than 3 wasn't catching
+			// ongoing very quick file updates during a test
 			cli.IntFlag{
 				Name:   "initial-sync-wait",
 				Value:  5,
@@ -247,8 +249,6 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, sync
 			exec.Command("rm", "-f", tempFile).Run()
 
 			cmd.out.Info.Print("Waiting for initial sync to finish")
-			// Arbitrary sleep length but anything less than 3 wasn't catching
-			// ongoing very quick file updates during a test
 			var statSleep = time.Duration(syncWaitSeconds) * time.Second
 			// Initialize at -2 to force at least one loop
 			var lastSize = int64(-2)
