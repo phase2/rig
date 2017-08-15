@@ -41,14 +41,18 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			cli.IntFlag{
-				Name:  "initial-sync-timeout",
-				Value: 60,
-				Usage: "Maximum amount of time in seconds to allow for detection of successful initial sync.",
+				Name:   "initial-sync-timeout",
+				Value:  60,
+				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the unison container and start of initial sync",
+				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
+			// Arbitrary sleep length but anything less than 3 wasn't catching
+			// ongoing very quick file updates during a test
 			cli.IntFlag{
-				Name:  "container-start-timeout",
-				Value: 10,
-				Usage: "Maximum amount of time in seconds to wait for the unison container to start",
+				Name:   "initial-sync-wait",
+				Value:  5,
+				Usage:  "Time in seconds to wait between checks to see if initial sync has finished.",
+				EnvVar: "RIG_PROJECT_INITIAL_SYNC_WAIT",
 			},
 		},
 		Before: cmd.Before,
@@ -96,7 +100,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
 	}
 
-	var ip = cmd.WaitForUnisonContainer(volumeName, ctx.Int("container-start-timeout"))
+	var ip = cmd.WaitForUnisonContainer(volumeName, ctx.Int("initial-sync-timeout"))
 
 	cmd.out.Info.Println("Initializing sync")
 
@@ -125,7 +129,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
 	}
 
-	cmd.WaitForSyncInit(logFile, ctx.Int("initial-sync-timeout"))
+	cmd.WaitForSyncInit(logFile, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait"))
 
 	return nil
 }
@@ -223,8 +227,9 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 }
 
 // The local unison process is finished initializing when the log file exists
-func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int) {
-	cmd.out.Info.Print("Waiting for initial sync to finish...")
+// and has stopped growing in size
+func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, syncWaitSeconds int) {
+	cmd.out.Info.Print("Waiting for initial sync detection")
 
 	var tempFile = fmt.Sprintf(".%s.tmp", logFile)
 	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
@@ -238,9 +243,25 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int) {
 		if i%10 == 0 {
 			os.Stdout.WriteString(".")
 		}
-		if _, err := os.Stat(logFile); err == nil {
-			// Remove the temp file now that we are running
-			os.Stdout.WriteString("done\n")
+		if statInfo, err := os.Stat(logFile); err == nil {
+			os.Stdout.WriteString(" initial sync detected\n")
+
+			cmd.out.Info.Print("Waiting for initial sync to finish")
+			var statSleep = time.Duration(syncWaitSeconds) * time.Second
+			// Initialize at -2 to force at least one loop
+			var lastSize = int64(-2)
+			for lastSize != statInfo.Size() {
+				os.Stdout.WriteString(".")
+				time.Sleep(statSleep)
+				lastSize = statInfo.Size()
+				if statInfo, err = os.Stat(logFile); err != nil {
+					cmd.out.Info.Print(err.Error())
+					lastSize = -1
+				}
+			}
+			os.Stdout.WriteString(" done\n")
+			// Remove the temp file, waiting until after sync so spurious
+			// failure message doesn't show in log
 			exec.Command("rm", "-f", tempFile).Run()
 			return
 		} else {
@@ -250,7 +271,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int) {
 
 	// The log file was not created, the sync has not started yet
 	exec.Command("rm", "-f", tempFile).Run()
-	cmd.out.Error.Fatal("Sync container failed to start!")
+	cmd.out.Error.Fatal("Failed to detect start of initial sync!")
 }
 
 // Get the local Unison version to try to load a compatible unison image
