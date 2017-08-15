@@ -41,24 +41,23 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			cli.IntFlag{
-				Name:  "initial-sync-timeout",
-				Value: 60,
-				Usage: "Maximum amount of time in seconds to allow for detection of initial sync.",
-                EnvVar: "RIG_PROJECT_INITIAL_SYNC_TIMEOUT",
-
+				Name:   "initial-sync-timeout",
+				Value:  60,
+				Usage:  "Maximum amount of time in seconds to allow for detection of initial sync.",
+				EnvVar: "RIG_PROJECT_INITIAL_SYNC_TIMEOUT",
 			},
 			cli.IntFlag{
-				Name:  "container-start-timeout",
-				Value: 10,
-				Usage: "Maximum amount of time in seconds to wait for the unison container to start",
+				Name:   "container-start-timeout",
+				Value:  10,
+				Usage:  "Maximum amount of time in seconds to wait for the unison container to start",
 				EnvVar: "RIG_PROJECT_CONTAINER_START_TIMEOUT",
 			},
 			cli.IntFlag{
-                Name:  "initial-sync-wait",
-                Value: 5,
-                Usage: "Time in seconds to wait between checks to see if initial sync has finished.",
-                EnvVar: "RIG_PROJECT_INITIAL_SYNC_WAIT",
-            },
+				Name:   "initial-sync-wait",
+				Value:  5,
+				Usage:  "Time in seconds to wait between checks to see if initial sync has finished.",
+				EnvVar: "RIG_PROJECT_INITIAL_SYNC_WAIT",
+			},
 		},
 		Before: cmd.Before,
 		Action: cmd.RunStart,
@@ -258,15 +257,15 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, sync
 			// ongoing very quick file updates during a test
 			var statSleep = time.Duration(syncWaitSeconds) * time.Second
 			// Initialize at -2 to force at least one loop
-			var lastSize = int64(-2);
+			var lastSize = int64(-2)
 			for lastSize != statInfo.Size() {
-    		    os.Stdout.WriteString(".")
-			    time.Sleep(statSleep)
-			    lastSize = statInfo.Size()
-			    if statInfo, err = os.Stat(logFile); err != nil {
-                    cmd.out.Info.Print(err.Error())
-                    lastSize = -1
-			    }
+				os.Stdout.WriteString(".")
+				time.Sleep(statSleep)
+				lastSize = statInfo.Size()
+				if statInfo, err = os.Stat(logFile); err != nil {
+					cmd.out.Info.Print(err.Error())
+					lastSize = -1
+				}
 			}
 			os.Stdout.WriteString(" done\n")
 			return
