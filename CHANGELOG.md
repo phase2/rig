@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1
+
+ - Don't start NFS if not on Darwin
+ - Auto update generator (project create) and dashboard images
+ - Added flag to disable autoupdate of generator (project create) image
+ - Added doctor check for Docker env var configuration
+ - Added doctor check for `/data` and `/Users` usage
+ - Added configurable timeouts for sync start
+ - Added detection when sync start has finished initializing
+
 ## 1.3.0
 
  - `Commands()` function now returns an array of cli.Command structs instead of a single struct 

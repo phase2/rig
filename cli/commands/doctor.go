@@ -2,12 +2,15 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
+	"strconv"
 )
 
 type Doctor struct {
@@ -26,8 +29,28 @@ func (cmd *Doctor) Commands() []cli.Command {
 }
 
 func (cmd *Doctor) Run(c *cli.Context) error {
+	// 1. Ensure the configured docker-machine matches the set environment.
+	if cmd.machine.Exists() {
+		if _, isset := os.LookupEnv("DOCKER_MACHINE_NAME"); isset == false {
+			cmd.out.Error.Fatalf("Docker configuration is not set. Please run 'eval \"$(rig config)\"'.")
+		} else if cmd.machine.Name != os.Getenv("DOCKER_MACHINE_NAME") {
+			cmd.out.Error.Fatalf("Your environment configuration specifies a different machine. Please re-run as 'rig --name=\"%s\" doctor'.", cmd.machine.Name)
+		} else {
+			cmd.out.Info.Printf("Docker Machine (%s) name matches your environment configuration.", cmd.machine.Name)
+		}
+		if output, err := exec.Command("docker-machine", "url", cmd.machine.Name).Output(); err == nil {
+			hostUrl := strings.TrimSpace(string(output))
+			if hostUrl != os.Getenv("DOCKER_HOST") {
+				cmd.out.Error.Fatalf("Docker Host configuration should be '%s' but got '%s'. Please re-run 'eval \"$(rig config)\"'.", os.Getenv("DOCKER_HOST"), hostUrl)
+			} else {
+				cmd.out.Info.Printf("Docker Machine (%s) URL (%s) matches your environment configuration.", cmd.machine.Name, hostUrl)
+			}
+		}
+	} else {
+		cmd.out.Error.Fatalf("No machine named '%s' exists. Did you run 'rig start --name=\"%s\"'?", cmd.machine.Name, cmd.machine.Name)
+	}
 
-	// 1. Check Docker API Version compatibility
+	// 2. Check Docker API Version compatibility
 	clientApiVersion := util.GetDockerClientApiVersion()
 	serverApiVersion, err := util.GetDockerServerApiVersion(cmd.machine.Name)
 	serverMinApiVersion, _ := util.GetDockerServerMinApiVersion(cmd.machine.Name)
@@ -53,7 +76,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		cmd.out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientApiVersion, serverApiVersion, serverMinApiVersion)
 	}
 
-	// 2. Pull down the data from DNSDock. This will confirm we can resolve names as well
+	// 3. Pull down the data from DNSDock. This will confirm we can resolve names as well
 	//    as route to the appropriate IP addresses via the added route commands
 	if cmd.machine.IsRunning() {
 		dnsRecords := DnsRecords{BaseCommand{machine: cmd.machine, out: cmd.out}}
@@ -78,13 +101,43 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		cmd.out.Warning.Printf("Docker Machine `%s` is not running. Cannot determine if DNS resolution is working correctly.", cmd.machine.Name)
 	}
 
-	// 3. Ensure that docker-machine-nfs script is available for our NFS mounts (Mac ONLY)
+	// 4. Ensure that docker-machine-nfs script is available for our NFS mounts (Mac ONLY)
 	if runtime.GOOS == "darwin" {
 		if err := exec.Command("which", "docker-machine-nfs").Run(); err != nil {
 			cmd.out.Error.Println("Docker Machine NFS is not installed.")
 		} else {
 			cmd.out.Info.Println("Docker Machine NFS is installed.")
 		}
+	}
+
+	// 5. Check for storage on VM volume
+	output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
+	dataUsage := strings.TrimSpace(string(output))
+	if i, err := strconv.Atoi(dataUsage); err == nil {
+		if i >= 85 && i < 95 {
+			cmd.out.Warning.Printf("Data volume (/data) is %d%% used. Please free up space soon.", i)
+		} else if i >= 95 {
+			cmd.out.Error.Printf("Data volume (/data) is %d%% used. Please free up space. Try 'docker system prune' or removing old projects / databases from /data.", i)
+		} else {
+			cmd.out.Info.Printf("Data volume (/data) is %d%% used.", i)
+		}
+	} else {
+		cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to parse '%s'", dataUsage)
+	}
+
+	// 6. Check for storage on /Users
+	output, err = exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
+	userUsage := strings.TrimSpace(string(output))
+	if i, err := strconv.Atoi(userUsage); err == nil {
+		if i >= 85 && i < 95 {
+			cmd.out.Warning.Printf("Root drive (/Users) is %d%% used. Please free up space soon.", i)
+		} else if i >= 95 {
+			cmd.out.Error.Printf("Root drive (/Users) is %d%% used. Please free up space.", i)
+		} else {
+			cmd.out.Info.Printf("Root drive (/Users) is %d%% used.", i)
+		}
+	} else {
+		cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to parse '%s'", userUsage)
 	}
 
 	return nil
