@@ -270,7 +270,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, sync
 
 	// The log file was not created, the sync has not started yet
 	exec.Command("rm", "-f", tempFile).Run()
-	cmd.out.Error.Fatal("Failed to detect start of initial sync! Check sync log file.")
+	cmd.out.Error.Fatal("Failed to detect start of initial sync!")
 }
 
 // Get the local Unison version to try to load a compatible unison image
