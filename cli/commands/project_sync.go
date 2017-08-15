@@ -43,14 +43,8 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
 				Value:  60,
-				Usage:  "Maximum amount of time in seconds to allow for detection of initial sync.",
-				EnvVar: "RIG_PROJECT_INITIAL_SYNC_TIMEOUT",
-			},
-			cli.IntFlag{
-				Name:   "container-start-timeout",
-				Value:  10,
-				Usage:  "Maximum amount of time in seconds to wait for the unison container to start",
-				EnvVar: "RIG_PROJECT_CONTAINER_START_TIMEOUT",
+				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the unison container and start of initial sync",
+				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
 			cli.IntFlag{
 				Name:   "initial-sync-wait",
@@ -104,7 +98,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
 	}
 
-	var ip = cmd.WaitForUnisonContainer(volumeName, ctx.Int("container-start-timeout"))
+	var ip = cmd.WaitForUnisonContainer(volumeName, ctx.Int("initial-sync-timeout"))
 
 	cmd.out.Info.Println("Initializing sync")
 
@@ -276,7 +270,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, sync
 
 	// The log file was not created, the sync has not started yet
 	exec.Command("rm", "-f", tempFile).Run()
-	cmd.out.Error.Fatal("Sync container failed to start!")
+	cmd.out.Error.Fatal("Failed to detect start of initial sync! Check sync log file.")
 }
 
 // Get the local Unison version to try to load a compatible unison image
