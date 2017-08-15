@@ -30,7 +30,9 @@ func (cmd *Doctor) Commands() []cli.Command {
 func (cmd *Doctor) Run(c *cli.Context) error {
 	// 1. Ensure the configured docker-machine matches the set environment.
 	if cmd.machine.Exists() {
-		if cmd.machine.Name != os.Getenv("DOCKER_MACHINE_NAME") {
+		if _, isset := os.LookupEnv("DOCKER_MACHINE_NAME"); isset == false {
+			cmd.out.Error.Fatalf("Docker configuration is not set. Please run 'eval \"$(rig config)\"'.")
+		} else if cmd.machine.Name != os.Getenv("DOCKER_MACHINE_NAME") {
 			cmd.out.Error.Fatalf("Your environment configuration specifies a different machine. Please re-run as 'rig --name=\"%s\" doctor'.", cmd.machine.Name)
 		} else {
 			cmd.out.Info.Printf("Docker Machine (%s) name matches your environment configuration.", cmd.machine.Name)
