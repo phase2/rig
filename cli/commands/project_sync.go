@@ -43,13 +43,22 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 			cli.IntFlag{
 				Name:  "initial-sync-timeout",
 				Value: 60,
-				Usage: "Maximum amount of time in seconds to allow for detection of successful initial sync.",
+				Usage: "Maximum amount of time in seconds to allow for detection of initial sync.",
+                EnvVar: "RIG_PROJECT_INITIAL_SYNC_TIMEOUT",
+
 			},
 			cli.IntFlag{
 				Name:  "container-start-timeout",
 				Value: 10,
 				Usage: "Maximum amount of time in seconds to wait for the unison container to start",
+				EnvVar: "RIG_PROJECT_CONTAINER_START_TIMEOUT",
 			},
+			cli.IntFlag{
+                Name:  "initial-sync-wait",
+                Value: 5,
+                Usage: "Time in seconds to wait between checks to see if initial sync has finished.",
+                EnvVar: "RIG_PROJECT_INITIAL_SYNC_WAIT",
+            },
 		},
 		Before: cmd.Before,
 		Action: cmd.RunStart,
@@ -125,7 +134,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
 	}
 
-	cmd.WaitForSyncInit(logFile, ctx.Int("initial-sync-timeout"))
+	cmd.WaitForSyncInit(logFile, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait"))
 
 	return nil
 }
@@ -223,8 +232,9 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 }
 
 // The local unison process is finished initializing when the log file exists
-func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int) {
-	cmd.out.Info.Print("Waiting for initial sync to finish...")
+// and has stopped growing in size
+func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, syncWaitSeconds int) {
+	cmd.out.Info.Print("Waiting for initial sync detection")
 
 	var tempFile = fmt.Sprintf(".%s.tmp", logFile)
 	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
@@ -238,10 +248,27 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int) {
 		if i%10 == 0 {
 			os.Stdout.WriteString(".")
 		}
-		if _, err := os.Stat(logFile); err == nil {
+		if statInfo, err := os.Stat(logFile); err == nil {
+			os.Stdout.WriteString(" initial sync detected\n")
 			// Remove the temp file now that we are running
-			os.Stdout.WriteString("done\n")
 			exec.Command("rm", "-f", tempFile).Run()
+
+			cmd.out.Info.Print("Waiting for initial sync to finish")
+			// Arbitrary sleep length but anything less than 3 wasn't catching
+			// ongoing very quick file updates during a test
+			var statSleep = time.Duration(syncWaitSeconds) * time.Second
+			// Initialize at -2 to force at least one loop
+			var lastSize = int64(-2);
+			for lastSize != statInfo.Size() {
+    		    os.Stdout.WriteString(".")
+			    time.Sleep(statSleep)
+			    lastSize = statInfo.Size()
+			    if statInfo, err = os.Stat(logFile); err != nil {
+                    cmd.out.Info.Print(err.Error())
+                    lastSize = -1
+			    }
+			}
+			os.Stdout.WriteString(" done\n")
 			return
 		} else {
 			time.Sleep(timeoutLoopSleep)
