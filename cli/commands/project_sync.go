@@ -245,8 +245,6 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, sync
 		}
 		if statInfo, err := os.Stat(logFile); err == nil {
 			os.Stdout.WriteString(" initial sync detected\n")
-			// Remove the temp file now that we are running
-			exec.Command("rm", "-f", tempFile).Run()
 
 			cmd.out.Info.Print("Waiting for initial sync to finish")
 			var statSleep = time.Duration(syncWaitSeconds) * time.Second
@@ -262,6 +260,9 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, timeoutSeconds int, sync
 				}
 			}
 			os.Stdout.WriteString(" done\n")
+			// Remove the temp file, waiting until after sync so spurious
+			// failure message doesn't show in log
+			exec.Command("rm", "-f", tempFile).Run()
 			return
 		} else {
 			time.Sleep(timeoutLoopSleep)
