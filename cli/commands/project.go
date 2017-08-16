@@ -79,7 +79,7 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 func (cmd *Project) Run(c *cli.Context) error {
 
 	if cmd.Config.Scripts == nil {
-		cmd.out.Error.Fatal("There are no scripts discovered in: %s", cmd.Config.File)
+		cmd.out.Error.Fatalf("There are no scripts discovered in: %s", cmd.Config.File)
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
