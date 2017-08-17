@@ -31,21 +31,21 @@ func (cmd *Doctor) Commands() []cli.Command {
 func (cmd *Doctor) Run(c *cli.Context) error {
 	// 0. Ensure all of rig's dependencies are available in the PATH.
 	if err := exec.Command("docker", "-h").Start(); err == nil {
-		cmd.out.Info.Println("Docker is installed.");
+		cmd.out.Info.Println("Docker is installed.")
 	} else {
-		cmd.out.Error.Fatal("Docker (docker) is not installed.");
+		cmd.out.Error.Fatal("Docker (docker) is not installed.")
 	}
 	if runtime.GOOS != "linux" {
 		if err := exec.Command("docker-machine", "-h").Start(); err == nil {
-			cmd.out.Info.Println("Docker Machine is installed.");
+			cmd.out.Info.Println("Docker Machine is installed.")
 		} else {
-			cmd.out.Error.Fatal("Docker Machine (docker-machine) is not installed.");
+			cmd.out.Error.Fatal("Docker Machine (docker-machine) is not installed.")
 		}
 	}
 	if err := exec.Command("docker-compose", "-h").Start(); err == nil {
-		cmd.out.Info.Println("Docker Compose is installed.");
+		cmd.out.Info.Println("Docker Compose is installed.")
 	} else {
-		cmd.out.Warning.Printf("Docker Compose (docker-compose) is not installed.");
+		cmd.out.Warning.Printf("Docker Compose (docker-compose) is not installed.")
 	}
 
 	// 1. Ensure the configured docker-machine matches the set environment.
@@ -130,7 +130,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 5. Check for storage on VM volume
-        if runtime.GOOS != "linux" {
+	if runtime.GOOS != "linux" {
 		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			dataUsage := strings.TrimSpace(string(output))
@@ -146,7 +146,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 				cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to parse '%s'", dataUsage)
 			}
 		} else {
-			cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to execute 'df': %v", err);
+			cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to execute 'df': %v", err)
 		}
 	}
 
@@ -167,7 +167,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 				cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to parse '%s'", userUsage)
 			}
 		} else {
-			cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to execute 'df': %v", err);
+			cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to execute 'df': %v", err)
 		}
 	}
 
