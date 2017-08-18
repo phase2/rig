@@ -23,7 +23,7 @@ func (cmd *Project) Commands() []cli.Command {
 	command := cli.Command{
 		Name:        "project",
 		Usage:       "Run project-specific commands.",
-		Description: "Run project-specific commands as part of development.\n\n\tConfigured scripts are driven by an Outrigger configuration file expected at your project root directory.\n\n\tBy default, this is a YAML file named '.outrigger.yml'. It can be overridden by setting an environment variable $RIG_PROJECT_CONFIG_FILE.",
+		Description: "Run project-specific commands as part of development.\n\n\tConfigured scripts are driven by an Outrigger configuration file expected at your project root directory.\n\n\tBy default, this is a YAML file named 'outrigger.yml' with fallback to '.outrigger.yml'. It can be overridden by setting an environment variable $RIG_PROJECT_CONFIG_FILE.",
 		Aliases:     []string{"run"},
 		Category:    "Development",
 		Before:      cmd.Before,

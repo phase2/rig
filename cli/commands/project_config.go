@@ -36,14 +36,30 @@ type ProjectConfig struct {
 // Create a new ProjectConfig using configured or default locations
 func NewProjectConfig() *ProjectConfig {
 	projectConfigFile := os.Getenv("RIG_PROJECT_CONFIG_FILE")
+
+	var discovery []string
 	if projectConfigFile == "" {
-		projectConfigFile = "./.outrigger.yml"
+		discovery = make([]string, 2)
+		discovery[0] = "./outrigger.yml"
+		discovery[1] = "./.outrigger.yml"
+	} else {
+		discovery = make([]string, 1)
+		discovery[0] = projectConfigFile
 	}
-	return NewProjectConfigFromFile(projectConfigFile)
+
+	readyConfig := &ProjectConfig{}
+	for _, filePath := range discovery {
+		if config, err := NewProjectConfigFromFile(filePath); err == nil {
+			readyConfig = config
+			break
+		}
+	}
+
+	return readyConfig
 }
 
 // Create a new ProjectConfig from the specified file
-func NewProjectConfigFromFile(filename string) *ProjectConfig {
+func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	logger := util.Logger()
 
 	filepath, _ := filepath.Abs(filename)
@@ -55,7 +71,7 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 	yamlFile, err := ioutil.ReadFile(config.File)
 	if err != nil {
 		logger.Verbose.Printf("No project configuration file found at: %s", config.File)
-		return config
+		return config, err
 	}
 
 	if err := yaml.Unmarshal(yamlFile, config); err != nil {
@@ -76,7 +92,7 @@ func NewProjectConfigFromFile(filename string) *ProjectConfig {
 		}
 	}
 
-	return config
+	return config, nil
 }
 
 // Ensures our configuration data structure conforms to our ad hoc schema.
