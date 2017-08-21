@@ -29,6 +29,25 @@ func (cmd *Doctor) Commands() []cli.Command {
 }
 
 func (cmd *Doctor) Run(c *cli.Context) error {
+	// 0. Ensure all of rig's dependencies are available in the PATH.
+	if err := exec.Command("docker", "-h").Start(); err == nil {
+		cmd.out.Info.Println("Docker is installed.")
+	} else {
+		cmd.out.Error.Fatal("Docker (docker) is not installed.")
+	}
+	if runtime.GOOS != "linux" {
+		if err := exec.Command("docker-machine", "-h").Start(); err == nil {
+			cmd.out.Info.Println("Docker Machine is installed.")
+		} else {
+			cmd.out.Error.Fatal("Docker Machine (docker-machine) is not installed.")
+		}
+	}
+	if err := exec.Command("docker-compose", "-h").Start(); err == nil {
+		cmd.out.Info.Println("Docker Compose is installed.")
+	} else {
+		cmd.out.Warning.Printf("Docker Compose (docker-compose) is not installed.")
+	}
+
 	// 1. Ensure the configured docker-machine matches the set environment.
 	if cmd.machine.Exists() {
 		if _, isset := os.LookupEnv("DOCKER_MACHINE_NAME"); isset == false {
@@ -111,33 +130,45 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 5. Check for storage on VM volume
-	output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
-	dataUsage := strings.TrimSpace(string(output))
-	if i, err := strconv.Atoi(dataUsage); err == nil {
-		if i >= 85 && i < 95 {
-			cmd.out.Warning.Printf("Data volume (/data) is %d%% used. Please free up space soon.", i)
-		} else if i >= 95 {
-			cmd.out.Error.Printf("Data volume (/data) is %d%% used. Please free up space. Try 'docker system prune' or removing old projects / databases from /data.", i)
+	if runtime.GOOS != "linux" {
+		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
+		if err == nil {
+			dataUsage := strings.TrimSpace(string(output))
+			if i, err := strconv.Atoi(dataUsage); err == nil {
+				if i >= 85 && i < 95 {
+					cmd.out.Warning.Printf("Data volume (/data) is %d%% used. Please free up space soon.", i)
+				} else if i >= 95 {
+					cmd.out.Error.Printf("Data volume (/data) is %d%% used. Please free up space. Try 'docker system prune' or removing old projects / databases from /data.", i)
+				} else {
+					cmd.out.Info.Printf("Data volume (/data) is %d%% used.", i)
+				}
+			} else {
+				cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to parse '%s'", dataUsage)
+			}
 		} else {
-			cmd.out.Info.Printf("Data volume (/data) is %d%% used.", i)
+			cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to execute 'df': %v", err)
 		}
-	} else {
-		cmd.out.Warning.Printf("Unable to determine usage level of /data volume. Failed to parse '%s'", dataUsage)
 	}
 
 	// 6. Check for storage on /Users
-	output, err = exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
-	userUsage := strings.TrimSpace(string(output))
-	if i, err := strconv.Atoi(userUsage); err == nil {
-		if i >= 85 && i < 95 {
-			cmd.out.Warning.Printf("Root drive (/Users) is %d%% used. Please free up space soon.", i)
-		} else if i >= 95 {
-			cmd.out.Error.Printf("Root drive (/Users) is %d%% used. Please free up space.", i)
+	if runtime.GOOS != "linux" {
+		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
+		if err == nil {
+			userUsage := strings.TrimSpace(string(output))
+			if i, err := strconv.Atoi(userUsage); err == nil {
+				if i >= 85 && i < 95 {
+					cmd.out.Warning.Printf("Root drive (/Users) is %d%% used. Please free up space soon.", i)
+				} else if i >= 95 {
+					cmd.out.Error.Printf("Root drive (/Users) is %d%% used. Please free up space.", i)
+				} else {
+					cmd.out.Info.Printf("Root drive (/Users) is %d%% used.", i)
+				}
+			} else {
+				cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to parse '%s'", userUsage)
+			}
 		} else {
-			cmd.out.Info.Printf("Root drive (/Users) is %d%% used.", i)
+			cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to execute 'df': %v", err)
 		}
-	} else {
-		cmd.out.Warning.Printf("Unable to determine usage level of root drive (/Users). Failed to parse '%s'", userUsage)
 	}
 
 	return nil
