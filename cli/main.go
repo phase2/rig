@@ -2,9 +2,11 @@ package main
 
 import (
 	"os"
+	"fmt"
 
 	"github.com/phase2/rig/cli/commands"
 	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/cli/notify"
 	"github.com/urfave/cli"
 )
 
@@ -55,6 +57,35 @@ func main() {
 	app.Commands = append(app.Commands, (&commands.Watch{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Project{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Noop{}).Commands()...)
+
+
+	notificationTitle := fmt.Sprintf("Outrigger CLI (rig) v%s", VERSION)
+	notify.Init(app.Name, notificationTitle, "images/logo.png", map[string]bool{
+		"start": true,
+		"stop": false,
+		"restart": true,
+		"upgrade": true,
+		"dns": false,
+		"dashboard": false,
+		"data-backup": true,
+		"data-restore": true,
+		"kill": true,
+		"remove": false,
+		"project": false,
+		"doctor": false,
+		"noop": true,
+	})
+
+	// Adds --notify or --no-notify flag to each command according to the whitelist.
+	// This would be better as part of the command configuration but there does not
+	// appear to be an option for arbitrary properties.
+	// * Commands marked as true will default to have desktop notifications and a
+	// --no-notify flag.
+	// * Commands marked as false will default to not have notifications and have
+	// a --notify flag to trigger a notification.
+	// * Commands excluded will have not trigger notifications or have flags.
+	app.Commands = notify.AddNotifications(app.Commands)
 
 	app.Run(os.Args)
 }
