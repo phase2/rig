@@ -1,12 +1,12 @@
 package main
 
 import (
-	"os"
 	"fmt"
+	"os"
 
 	"github.com/phase2/rig/cli/commands"
-	"github.com/phase2/rig/cli/util"
 	"github.com/phase2/rig/cli/notify"
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
@@ -59,22 +59,21 @@ func main() {
 	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Noop{}).Commands()...)
 
-
 	notificationTitle := fmt.Sprintf("Outrigger CLI (rig) v%s", VERSION)
 	notify.Init(app.Name, notificationTitle, "images/logo.png", map[string]bool{
-		"start": true,
-		"stop": false,
-		"restart": true,
-		"upgrade": true,
-		"dns": false,
-		"dashboard": false,
-		"data-backup": true,
+		"start":        true,
+		"stop":         false,
+		"restart":      true,
+		"upgrade":      true,
+		"dns":          false,
+		"dashboard":    false,
+		"data-backup":  true,
 		"data-restore": true,
-		"kill": true,
-		"remove": false,
-		"project": false,
-		"doctor": false,
-		"noop": true,
+		"kill":         true,
+		"remove":       false,
+		"project":      false,
+		"doctor":       false,
+		"noop":         true,
 	})
 
 	// Adds --notify or --no-notify flag to each command according to the whitelist.
