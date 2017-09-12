@@ -9,6 +9,10 @@
 			"Rev": "aabad6e819789e569bd6aabf444c935aa9ba1e44"
 		},
 		{
+			"ImportPath": "github.com/deckarep/gosx-notifier",
+			"Rev": "61a88900fb062ed8c63828adf4d7b58463b61f78"
+		},
+		{
 			"ImportPath": "github.com/fatih/color",
 			"Comment": "v0.1-12-g9aae6aa",
 			"Rev": "9aae6aaa22315390f03959adca2c4d395b02fcef"
@@ -22,12 +26,20 @@
 			"Rev": "29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc"
 		},
 		{
+			"ImportPath": "github.com/martinlindhe/notify",
+			"Rev": "369b9400397a805575ad39e97cc4e7d493ea4335"
+		},
+		{
 			"ImportPath": "github.com/mattn/go-colorable",
 			"Rev": "4af63d73f5bea08b682ad2cd198b1e607afd6be0"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
 			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
+		},
+		{
+			"ImportPath": "github.com/nu7hatch/gouuid",
+			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 		},
 		{
 			"ImportPath": "github.com/urfave/cli",
@@ -37,6 +49,10 @@
 		{
 			"ImportPath": "golang.org/x/sys/unix",
 			"Rev": "eb2c74142fd19a79b3f237334c7384d5167b1b46"
+		},
+		{
+			"ImportPath": "gopkg.in/toast.v1",
+			"Rev": "b700e246b8b6d3e13554091e540e1019e26389f1"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
