@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -43,7 +44,7 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
 				Value:  60,
-				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the unison container and start of initial sync",
+				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the unison container and start of initial sync. (not needed on linux)",
 				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
 			// Arbitrary sleep length but anything less than 3 wasn't catching
@@ -51,7 +52,7 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 			cli.IntFlag{
 				Name:   "initial-sync-wait",
 				Value:  5,
-				Usage:  "Time in seconds to wait between checks to see if initial sync has finished.",
+				Usage:  "Time in seconds to wait between checks to see if initial sync has finished. (not needed on linux)",
 				EnvVar: "RIG_PROJECT_INITIAL_SYNC_WAIT",
 			},
 		},
@@ -74,8 +75,23 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	config := NewProjectConfig()
 	volumeName := cmd.GetVolumeName(ctx, config)
-	cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
 
+	switch platform := runtime.GOOS; platform {
+		case "darwin":
+			cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
+			cmd.StartUnisonSync(ctx, volumeName, config)
+		case "linux":
+			cmd.out.Verbose.Printf("Setting up local volume: %s", volumeName)
+			cmd.SetupBindVolume(volumeName)
+		default:
+			cmd.out.Verbose.Printf("Volume Sync not supported on: %s", platform)
+	}
+
+	return nil
+}
+
+// For systems that need/support Unison
+func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, config *ProjectConfig) {
 	// Ensure the processes can handle a large number of watches
 	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", MAX_WATCHES); err != nil {
 		cmd.out.Error.Fatalf("Error configuring file watches on Docker Machine: %v", err)
@@ -86,6 +102,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 	cmd.out.Info.Println("Starting unison container")
 	unisonMinorVersion := cmd.GetUnisonMinorVersion()
+
 	cmd.out.Verbose.Printf("Local unison version for compatibilty: %s", unisonMinorVersion)
 	exec.Command("docker", "container", "stop", volumeName).Run()
 	err := exec.Command("docker", "container", "run", "--detach", "--rm",
@@ -96,6 +113,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		"--name", volumeName,
 		fmt.Sprintf("outrigger/unison:%s", unisonMinorVersion),
 	).Run()
+
 	if err != nil {
 		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
 	}
@@ -123,19 +141,38 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 			unisonArgs = append(unisonArgs, "-ignore", ignore)
 		}
 	}
-
 	cmd.out.Verbose.Printf("Unison Args: %s", strings.Join(unisonArgs[:], " "))
 	if err = exec.Command("unison", unisonArgs...).Start(); err != nil {
 		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
 	}
-
 	cmd.WaitForSyncInit(logFile, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait"))
-
-	return nil
 }
 
-// Start the unison sync process
+// For systems that have native container/volume support
+func (cmd *ProjectSync) SetupBindVolume(volumeName string) {
+
+	cmd.out.Info.Printf("Starting local bind volume: %s", volumeName)
+
+	if workingDir, err := os.Getwd(); err == nil {
+		volumeArgs := []string{
+			"volume", "create",
+			"--opt", "type=none",
+			"--opt", fmt.Sprintf("device=%s", workingDir),
+			"--opt", "o=bind",
+			volumeName,
+		}
+		exec.Command("docker", volumeArgs...).Run()
+	} else {
+		cmd.out.Error.Fatalf("Error resolving the working directory for volume creation: %v", err)
+	}
+}
+
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
+	if runtime.GOOS == "linux" {
+		cmd.out.Info.Println("No unison container to stop, using local bind volume")
+		return nil
+	}
+
 	config := NewProjectConfig()
 	volumeName := cmd.GetVolumeName(ctx, config)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
