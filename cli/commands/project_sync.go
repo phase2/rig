@@ -152,6 +152,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 func (cmd *ProjectSync) SetupBindVolume(volumeName string) {
 
 	cmd.out.Info.Printf("Starting local bind volume: %s", volumeName)
+	exec.Command("docker", "volume", "rm", volumeName).Run()
 
 	if workingDir, err := os.Getwd(); err == nil {
 		volumeArgs := []string{
