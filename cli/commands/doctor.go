@@ -70,29 +70,34 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 2. Check Docker API Version compatibility
-	clientApiVersion := util.GetDockerClientApiVersion()
-	serverApiVersion, err := util.GetDockerServerApiVersion(cmd.machine.Name)
-	serverMinApiVersion, _ := util.GetDockerServerMinApiVersion(cmd.machine.Name)
+	if runtime.GOOS != "linux" {
+		clientApiVersion := util.GetDockerClientApiVersion()
+		serverApiVersion, err := util.GetDockerServerApiVersion(cmd.machine.Name)
+		serverMinApiVersion, _ := util.GetDockerServerMinApiVersion(cmd.machine.Name)
 
-	// Older clients can talk to newer servers, and when you ask a newer server
-	// it's version in the presence of an older server it will downgrade it's
-	// compatability as far as possible. So as long as the client API is not greater
-	// than the servers current version or less than the servers minimum api version
-	// then we are compatible
-	constraintString := fmt.Sprintf("<= %s", serverApiVersion)
-	if serverMinApiVersion != nil {
-		constraintString = fmt.Sprintf(">= %s", serverMinApiVersion)
-	}
-	apiConstraint, _ := version.NewConstraint(constraintString)
+		// Older clients can talk to newer servers, and when you ask a newer server
+		// it's version in the presence of an older server it will downgrade it's
+		// compatability as far as possible. So as long as the client API is not greater
+		// than the servers current version or less than the servers minimum api version
+		// then we are compatible
+		constraintString := fmt.Sprintf("<= %s", serverApiVersion)
+		if serverMinApiVersion != nil {
+			constraintString = fmt.Sprintf(">= %s", serverMinApiVersion)
+		}
+		apiConstraint, _ := version.NewConstraint(constraintString)
 
-	if err != nil {
-		cmd.out.Error.Println("Could not determine Docker Machine Docker versions: ", err)
-	} else if clientApiVersion.Equal(serverApiVersion) {
-		cmd.out.Info.Printf("Docker Client (%s) and Server (%s) have equal API Versions", clientApiVersion, serverApiVersion)
-	} else if apiConstraint.Check(clientApiVersion) {
-		cmd.out.Info.Printf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientApiVersion, constraintString, serverApiVersion, serverMinApiVersion)
+		if err != nil {
+			cmd.out.Error.Println("Could not determine Docker Machine Docker versions: ", err)
+		} else if clientApiVersion.Equal(serverApiVersion) {
+			cmd.out.Info.Printf("Docker Client (%s) and Server (%s) have equal API Versions", clientApiVersion, serverApiVersion)
+		} else if apiConstraint.Check(clientApiVersion) {
+			cmd.out.Info.Printf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientApiVersion, constraintString, serverApiVersion, serverMinApiVersion)
+		} else {
+			cmd.out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientApiVersion, serverApiVersion, serverMinApiVersion)
+		}
 	} else {
-		cmd.out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientApiVersion, serverApiVersion, serverMinApiVersion)
+		dockerApiVersion := util.GetDockerClientApiVersion()
+		cmd.out.Info.Printf("Docker Version: %s", dockerApiVersion)
 	}
 
 	// 3. Pull down the data from DNSDock. This will confirm we can resolve names as well
