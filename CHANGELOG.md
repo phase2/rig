@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2
+
+ - Added support for outrigger.yml (non-hidden)
+ - Added Linux compatibility to `doctor`
+ - Added support for Linux local bind volumes (for parity with `sync:start`)
+
 ## 1.3.1
 
  - Don't start NFS if not on Darwin
