@@ -77,14 +77,12 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	volumeName := cmd.GetVolumeName(ctx, config)
 
 	switch platform := runtime.GOOS; platform {
-	case "darwin":
-		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
-		cmd.StartUnisonSync(ctx, volumeName, config)
 	case "linux":
 		cmd.out.Verbose.Printf("Setting up local volume: %s", volumeName)
 		cmd.SetupBindVolume(volumeName)
 	default:
-		cmd.out.Verbose.Printf("Volume Sync not supported on: %s", platform)
+		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
+		cmd.StartUnisonSync(ctx, volumeName, config)
 	}
 
 	return nil
