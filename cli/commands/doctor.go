@@ -49,24 +49,26 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 1. Ensure the configured docker-machine matches the set environment.
-	if cmd.machine.Exists() {
-		if _, isset := os.LookupEnv("DOCKER_MACHINE_NAME"); isset == false {
-			cmd.out.Error.Fatalf("Docker configuration is not set. Please run 'eval \"$(rig config)\"'.")
-		} else if cmd.machine.Name != os.Getenv("DOCKER_MACHINE_NAME") {
-			cmd.out.Error.Fatalf("Your environment configuration specifies a different machine. Please re-run as 'rig --name=\"%s\" doctor'.", cmd.machine.Name)
-		} else {
-			cmd.out.Info.Printf("Docker Machine (%s) name matches your environment configuration.", cmd.machine.Name)
-		}
-		if output, err := exec.Command("docker-machine", "url", cmd.machine.Name).Output(); err == nil {
-			hostUrl := strings.TrimSpace(string(output))
-			if hostUrl != os.Getenv("DOCKER_HOST") {
-				cmd.out.Error.Fatalf("Docker Host configuration should be '%s' but got '%s'. Please re-run 'eval \"$(rig config)\"'.", os.Getenv("DOCKER_HOST"), hostUrl)
+	if runtime.GOOS != "linux" {
+		if cmd.machine.Exists() {
+			if _, isset := os.LookupEnv("DOCKER_MACHINE_NAME"); isset == false {
+				cmd.out.Error.Fatalf("Docker configuration is not set. Please run 'eval \"$(rig config)\"'.")
+			} else if cmd.machine.Name != os.Getenv("DOCKER_MACHINE_NAME") {
+				cmd.out.Error.Fatalf("Your environment configuration specifies a different machine. Please re-run as 'rig --name=\"%s\" doctor'.", cmd.machine.Name)
 			} else {
-				cmd.out.Info.Printf("Docker Machine (%s) URL (%s) matches your environment configuration.", cmd.machine.Name, hostUrl)
+				cmd.out.Info.Printf("Docker Machine (%s) name matches your environment configuration.", cmd.machine.Name)
 			}
+			if output, err := exec.Command("docker-machine", "url", cmd.machine.Name).Output(); err == nil {
+				hostUrl := strings.TrimSpace(string(output))
+				if hostUrl != os.Getenv("DOCKER_HOST") {
+					cmd.out.Error.Fatalf("Docker Host configuration should be '%s' but got '%s'. Please re-run 'eval \"$(rig config)\"'.", os.Getenv("DOCKER_HOST"), hostUrl)
+				} else {
+					cmd.out.Info.Printf("Docker Machine (%s) URL (%s) matches your environment configuration.", cmd.machine.Name, hostUrl)
+				}
+			}
+		} else {
+			cmd.out.Error.Fatalf("No machine named '%s' exists. Did you run 'rig start --name=\"%s\"'?", cmd.machine.Name, cmd.machine.Name)
 		}
-	} else {
-		cmd.out.Error.Fatalf("No machine named '%s' exists. Did you run 'rig start --name=\"%s\"'?", cmd.machine.Name, cmd.machine.Name)
 	}
 
 	// 2. Check Docker API Version compatibility
@@ -97,32 +99,28 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		}
 	} else {
 		dockerApiVersion := util.GetDockerClientApiVersion()
-		cmd.out.Info.Printf("Docker Version: %s", dockerApiVersion)
+		cmd.out.Info.Printf("Docker API Version: %s", dockerApiVersion)
 	}
 
 	// 3. Pull down the data from DNSDock. This will confirm we can resolve names as well
 	//    as route to the appropriate IP addresses via the added route commands
-	if cmd.machine.IsRunning() {
-		dnsRecords := DnsRecords{BaseCommand{machine: cmd.machine, out: cmd.out}}
-		if records, err := dnsRecords.LoadRecords(); err == nil {
-			resolved := false
-			for _, record := range records {
-				if record["Name"] == "dnsdock" {
-					resolved = true
-					cmd.out.Info.Printf("DNS and routing services are working. DNSDock resolves to %s", record["IPs"])
-					break
-				}
+	dnsRecords := DnsRecords{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	if records, err := dnsRecords.LoadRecords(); err == nil {
+		resolved := false
+		for _, record := range records {
+			if record["Name"] == "dnsdock" {
+				resolved = true
+				cmd.out.Info.Printf("DNS and routing services are working. DNSDock resolves to %s", record["IPs"])
+				break
 			}
+		}
 
-			if !resolved {
-				cmd.out.Error.Println("Unable to verify DNS services are working.")
-			}
-		} else {
-			cmd.out.Error.Println("Unable to verify DNS services and routing are working.")
-			cmd.out.Error.Println(err)
+		if !resolved {
+			cmd.out.Error.Println("Unable to verify DNS services are working.")
 		}
 	} else {
-		cmd.out.Warning.Printf("Docker Machine `%s` is not running. Cannot determine if DNS resolution is working correctly.", cmd.machine.Name)
+		cmd.out.Error.Println("Unable to verify DNS services and routing are working.")
+		cmd.out.Error.Println(err)
 	}
 
 	// 4. Ensure that docker-machine-nfs script is available for our NFS mounts (Mac ONLY)
