@@ -42,10 +42,15 @@ func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 // native execution of the command passed to it.
 //
 // Derived from: http://stackoverflow.com/a/40770011/38408
-func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
+func PassthruCommand(cmd *exec.Cmd, display bool) (exitCode int) {
+	if display {
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+	} else {
+		cmd.Stderr = ioutil.Discard
+		cmd.Stdout = ioutil.Discard
+	}
 
 	err := cmd.Run()
 

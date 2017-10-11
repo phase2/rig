@@ -35,6 +35,9 @@ func (cmd *Project) Commands() []cli.Command {
 	sync := ProjectSync{}
 	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
+	doctor := ProjectDoctor{}
+	command.Subcommands = append(command.Subcommands, doctor.Commands()...)
+
 	if subcommands := cmd.GetScriptsAsSubcommands(command.Subcommands); subcommands != nil {
 		command.Subcommands = append(command.Subcommands, subcommands...)
 	}
@@ -85,17 +88,13 @@ func (cmd *Project) Run(c *cli.Context) error {
 	key := strings.TrimPrefix(c.Command.Name, "run:")
 	if script, ok := cmd.Config.Scripts[key]; ok {
 		cmd.out.Verbose.Printf("Executing '%s': %s", key, script.Description)
-		cmd.addCommandPath()
+		cmd.AddCommandPath()
 		dir := filepath.Dir(cmd.Config.Path)
 
-		// Concat the commands together adding the args to this command as args to the last step
-		scriptCommands := strings.Join(script.Run, cmd.GetCommandSeparator()) + " " + strings.Join(c.Args(), " ")
+		shellCmd := cmd.GetCommand(script.Run, c.Args(), dir)
 
-		shellCmd := cmd.GetCommand(scriptCommands)
-		shellCmd.Dir = dir
-
-		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, scriptCommands)
-		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
+		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, shellCmd.Path)
+		if exitCode := util.PassthruCommand(shellCmd, true); exitCode != 0 {
 			cmd.out.Error.Printf("Error running project script '%s': %d", key, exitCode)
 			os.Exit(exitCode)
 		}
@@ -108,12 +107,19 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 // Construct a command to execute a configured script.
 // @see https://github.com/medhoover/gom/blob/staging/config/command.go
-func (cmd *Project) GetCommand(val string) *exec.Cmd {
+func (cmd *Project) GetCommand(steps []string, extra []string, workingDirectory string) *exec.Cmd {
+	// Concat the commands together adding the args to this command as args to the last step
+	scriptCommands := strings.Join(steps, cmd.GetCommandSeparator()) + " " + strings.Join(extra, " ")
+
+	var command *exec.Cmd
 	if runtime.GOOS == "windows" {
-		return exec.Command("cmd", "/c", val)
+		command = exec.Command("cmd", "/c", scriptCommands)
 	}
 
-	return exec.Command("sh", "-c", val)
+	command = exec.Command("sh", "-c", scriptCommands)
+	command.Dir = workingDirectory
+
+	return command
 }
 
 // Get command separator based on platform.
@@ -127,7 +133,7 @@ func (cmd *Project) GetCommandSeparator() string {
 
 // Override the PATH environment variable for further shell executions.
 // This is used on POSIX systems for lookup of scripts.
-func (cmd *Project) addCommandPath() {
+func (cmd *Project) AddCommandPath() {
 	binDir := cmd.Config.Bin
 	if binDir != "" {
 		cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)
