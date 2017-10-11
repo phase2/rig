@@ -19,6 +19,7 @@ before_install: cd cli
 
 script:
   - "../scripts/test-go-fmt.sh"
+  - "go tool vet -v commands"
 
 notifications:
   flowdock:
