@@ -68,6 +68,8 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 				command.Aliases = []string{script.Alias}
 			}
 
+			command.Description = command.Description + cmd.ScriptRunHelp(script)
+
 			commands = append(commands, command)
 		}
 	}
@@ -134,4 +136,12 @@ func (cmd *Project) addCommandPath() {
 		path := os.Getenv("PATH")
 		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path))
 	}
+}
+
+// Generate help details based on script configuration.
+func (cmd *Project) ScriptRunHelp(script *ProjectScript) string {
+	help := fmt.Sprintf("\n\nSCRIPT STEPS:\n\t- ")
+	help = help + strings.Join(script.Run, "\n\t- ") + " [args...]\n"
+
+	return help
 }
