@@ -23,6 +23,17 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	return nil
 }
 
+func (cmd *BaseCommand) Success(message string) error {
+	//notify.CommandSuccess(message);
+	cmd.out.Info.Println(message)
+	return nil
+}
+
+func (cmd *BaseCommand) Error(message string, exitCode int) error {
+	//notify.CommandError(message);
+	return cli.NewExitError(message, exitCode)
+}
+
 func (cmd *BaseCommand) NewContext(name string, flags []cli.Flag, parent *cli.Context) *cli.Context {
 	flagSet := flag.NewFlagSet(name, flag.ContinueOnError)
 	for _, f := range flags {
