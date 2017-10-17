@@ -18,6 +18,8 @@ type BaseCommand struct {
 
 // Run before all commands to setup core services
 func (cmd *BaseCommand) Before(c *cli.Context) error {
+	// Re-initialize logger in case Commands() call led to a logger trigger.
+	util.LoggerInit(c.GlobalBool("verbose"))
 	cmd.out = util.Logger()
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
 	return nil
