@@ -42,6 +42,16 @@ func (cmd *Project) Commands() []cli.Command {
 	return []cli.Command{command}
 }
 
+// Run before all commands to setup core services
+func (cmd *Project) Before(c *cli.Context) error {
+	if err := cmd.BaseCommand.Before(c); err != nil {
+		return err
+	}
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+
+	return nil
+}
+
 // Processes script configuration into formal subcommands.
 func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cli.Command {
 

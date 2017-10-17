@@ -19,6 +19,7 @@ import (
 
 type ProjectSync struct {
 	BaseCommand
+	Config *ProjectConfig
 }
 
 // Minimal compose file struct to discover volumes
@@ -71,10 +72,20 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	return []cli.Command{start, stop}
 }
 
+// Run before all commands to setup core services
+func (cmd *ProjectSync) Before(c *cli.Context) error {
+	if err := cmd.BaseCommand.Before(c); err != nil {
+		return err
+	}
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+
+	return nil
+}
+
 // Start the unison sync process
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
-	config := NewProjectConfig()
-	volumeName := cmd.GetVolumeName(ctx, config)
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config)
 
 	switch platform := runtime.GOOS; platform {
 	case "linux":
@@ -82,7 +93,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.SetupBindVolume(volumeName)
 	default:
 		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
-		cmd.StartUnisonSync(ctx, volumeName, config)
+		cmd.StartUnisonSync(ctx, volumeName, cmd.Config)
 	}
 
 	return nil
@@ -172,8 +183,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		return nil
 	}
 
-	config := NewProjectConfig()
-	volumeName := cmd.GetVolumeName(ctx, config)
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 
 	cmd.out.Info.Println("Stopping unison container")
