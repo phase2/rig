@@ -36,7 +36,6 @@ type ProjectConfig struct {
 
 // Create a new ProjectConfig using configured or default locations
 func NewProjectConfig() *ProjectConfig {
-	logger := util.Logger()
 	readyConfig := &ProjectConfig{}
 	projectConfigFile := os.Getenv("RIG_PROJECT_CONFIG_FILE")
 
@@ -47,7 +46,6 @@ func NewProjectConfig() *ProjectConfig {
 	if projectConfigFile != "" {
 		if config, err := NewProjectConfigFromFile(projectConfigFile); err == nil {
 			readyConfig = config
-			logger.Verbose.Printf("Loaded project configuration from %s", readyConfig.Path)
 		}
 	}
 
@@ -75,10 +73,11 @@ func FindProjectConfigFilePath() (string, error) {
 	return "", errors.New("No outrigger configuration file found.")
 }
 
-// Create a new ProjectConfig from the specified file
+// Create a new ProjectConfig from the specified file.
+// @todo do not use the logger here, instead return errors.
+// Use of the logger here initializes it in non-verbose mode.
 func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	logger := util.Logger()
-
 	filepath, _ := filepath.Abs(filename)
 	config := &ProjectConfig{
 		File: filename,
