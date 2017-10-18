@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/urfave/cli"
 )
@@ -38,5 +39,5 @@ func (cmd *Stop) Run(c *cli.Context) error {
 	}
 	color.Unset()
 
-	return nil
+	return cmd.Success(fmt.Sprintf("Machine '%s' stopped", cmd.machine.Name))
 }

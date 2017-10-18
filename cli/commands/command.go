@@ -28,7 +28,9 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 
 func (cmd *BaseCommand) Success(message string) error {
 	//notify.CommandSuccess(message);
-	cmd.out.Info.Println(message)
+	if message != "" {
+		cmd.out.Info.Println(message)
+	}
 	return nil
 }
 

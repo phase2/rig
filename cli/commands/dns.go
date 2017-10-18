@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 
+	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -40,10 +41,10 @@ func (cmd *Dns) Run(c *cli.Context) error {
 		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
 		cmd.ConfigureRoutes(cmd.machine)
 	} else {
-		cmd.out.Error.Fatalf("Machine '%s' is not running.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), 11)
 	}
 
-	return nil
+	return cmd.Success("DNS Services have been started")
 }
 
 // Remove the host filter from the xhyve bridge interface
