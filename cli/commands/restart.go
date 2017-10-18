@@ -3,6 +3,7 @@ package commands
 import (
 	"time"
 
+	"fmt"
 	"github.com/urfave/cli"
 )
 
@@ -26,15 +27,19 @@ func (cmd *Restart) Run(c *cli.Context) error {
 		cmd.out.Info.Printf("Restarting machine '%s'", cmd.machine.Name)
 
 		stop := Stop{BaseCommand{machine: cmd.machine, out: cmd.out}}
-		stop.Run(c)
+		if err := stop.Run(c); err != nil {
+			return err
+		}
 
 		time.Sleep(time.Duration(5) * time.Second)
 
 		start := Start{BaseCommand{machine: cmd.machine, out: cmd.out}}
-		start.Run(c)
+		if err := start.Run(c); err != nil {
+			return err
+		}
 	} else {
-		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), 11)
 	}
 
-	return nil
+	return cmd.Success(fmt.Sprintf("Machine '%s' restarted", cmd.machine.Name))
 }
