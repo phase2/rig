@@ -72,19 +72,10 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	return []cli.Command{start, stop}
 }
 
-// Run before all commands to setup core services
-func (cmd *ProjectSync) Before(c *cli.Context) error {
-	if err := cmd.BaseCommand.Before(c); err != nil {
-		return err
-	}
-	cmd.Config = NewProjectConfig()
-	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
-
-	return nil
-}
-
 // Start the unison sync process
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	volumeName := cmd.GetVolumeName(ctx, cmd.Config)
 
 	switch platform := runtime.GOOS; platform {
@@ -182,6 +173,8 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		cmd.out.Info.Println("No unison container to stop, using local bind volume")
 		return nil
 	}
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 
 	volumeName := cmd.GetVolumeName(ctx, cmd.Config)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
