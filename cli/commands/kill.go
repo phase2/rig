@@ -3,6 +3,7 @@ package commands
 import (
 	"os/exec"
 
+	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -24,12 +25,14 @@ func (cmd *Kill) Commands() []cli.Command {
 
 func (cmd *Kill) Run(c *cli.Context) error {
 	if !cmd.machine.Exists() {
-		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), 11)
 	}
 
 	// First stop it (and cleanup)
 	stop := Stop{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	stop.Run(c)
+	if err := stop.Run(c); err != nil {
+		return err
+	}
 
 	cmd.out.Info.Printf("Killing machine '%s'", cmd.machine.Name)
 	util.StreamCommand(exec.Command("docker-machine", "kill", cmd.machine.Name))
@@ -47,5 +50,5 @@ func (cmd *Kill) Run(c *cli.Context) error {
 		cmd.out.Warning.Printf("Driver not recognized: %s\n", driver)
 	}
 
-	return nil
+	return cmd.Success(fmt.Sprintf("Machine '%s' killed", cmd.machine.Name))
 }

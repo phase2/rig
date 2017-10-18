@@ -31,7 +31,7 @@ func (cmd *DnsRecords) Run(c *cli.Context) error {
 
 	records, err := cmd.LoadRecords()
 	if err != nil {
-		cmd.out.Error.Fatalln(err)
+		return cmd.Error(err.Error(), 17)
 	}
 
 	for _, record := range records {
@@ -44,7 +44,7 @@ func (cmd *DnsRecords) Run(c *cli.Context) error {
 		}
 	}
 
-	return nil
+	return cmd.Success("")
 }
 
 // Get the records from DNSDock and process/return them
