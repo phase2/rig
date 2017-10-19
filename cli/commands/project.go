@@ -84,7 +84,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
 	if script, ok := cmd.Config.Scripts[key]; ok {
-		cmd.out.Verbose.Printf("Executing '%s': %s", key, script.Description)
+		cmd.out.Verbose.Printf("Initializing project script '%s': %s", key, script.Description)
 		cmd.addCommandPath()
 		dir := filepath.Dir(cmd.Config.Path)
 
@@ -93,6 +93,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 		shellCmd := cmd.GetCommand(scriptCommands)
 		shellCmd.Dir = dir
+		cmd.out.Verbose.Printf("Script execution - Working Directory: %s", dir)
 
 		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, scriptCommands)
 		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
@@ -130,7 +131,7 @@ func (cmd *Project) GetCommandSeparator() string {
 func (cmd *Project) addCommandPath() {
 	binDir := cmd.Config.Bin
 	if binDir != "" {
-		cmd.out.Verbose.Printf("Adding '%s' to the PATH for script execution.", binDir)
+		cmd.out.Verbose.Printf("Script execution - Adding to $PATH: %s", binDir)
 		path := os.Getenv("PATH")
 		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path))
 	}
