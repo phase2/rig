@@ -57,6 +57,12 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 				Usage:  "Time in seconds to wait between checks to see if initial sync has finished. (not needed on linux)",
 				EnvVar: "RIG_PROJECT_INITIAL_SYNC_WAIT",
 			},
+			// Override the local sync path.
+			cli.StringFlag{
+				Name:  "sync-path",
+				Value: "",
+				Usage: "Specify the location in the local filesystem to be synced. If not used it will look for the directory of project configuration or fall back to current working directory. Use '--sync-path=.' to guarantee current working directory is used.",
+			},
 		},
 		Before: cmd.Before,
 		Action: cmd.RunStart,
@@ -66,8 +72,16 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Usage:       "Stops a unison sync on local project directory. Optionally provide a volume name.",
 		ArgsUsage:   "[optional volume name]",
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
-		Before:      cmd.Before,
-		Action:      cmd.RunStop,
+		Flags: []cli.Flag{
+			// Override the local sync path.
+			cli.StringFlag{
+				Name:  "sync-path",
+				Value: "",
+				Usage: "Specify the location in the local filesystem to be synced. If not used it will look for the directory of project configuration or fall back to current working directory. Use '--sync-path=.' to guarantee current working directory is used.",
+			},
+		},
+		Before: cmd.Before,
+		Action: cmd.RunStop,
 	}
 
 	return []cli.Command{start, stop}
@@ -78,7 +92,12 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	cmd.Config = NewProjectConfig()
 	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	// Determine the working directory for CWD-sensitive operations.
-	workingDir := filepath.Dir(cmd.Config.Path)
+	var workingDir string
+	if syncPath, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err != nil {
+		cmd.out.Error.Fatal(err)
+	} else {
+		workingDir = syncPath
+	}
 	// Determine the volume name to be used across all operating systems.
 	// For cross-compatibility the way this volume is set up will vary.
 	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
@@ -154,6 +173,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	// process is still watching the "current directory" and so needs the working
 	// directory to be explicitly set.
 	command.Dir = workingDir
+	cmd.out.Verbose.Printf("Script execution - Working Directory: %s", workingDir)
 	if err = command.Start(); err != nil {
 		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
 	}
@@ -185,11 +205,15 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 
 	// Determine the working directory for CWD-sensitive operations.
-	workingDir := filepath.Dir(cmd.Config.Path)
+	var workingDir string
+	if syncPath, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err != nil {
+		cmd.out.Error.Fatal(err)
+	} else {
+		workingDir = syncPath
+	}
 	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
 
-  cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
-
+	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 	cmd.out.Info.Println("Stopping unison container")
 	exec.Command("docker", "container", "stop", volumeName).Run()
 
@@ -334,4 +358,29 @@ func (cmd *ProjectSync) RemoveLogFile(logFile string, workingDir string) error {
 	command.Dir = workingDir
 
 	return command.Run()
+}
+
+// Derive the source path for the local host side of the file sync.
+// If there is no override, use an empty string.
+func (cmd *ProjectSync) DeriveLocalSyncPath(config *ProjectConfig, override string) (string, error) {
+	var workingDir string
+	if override != "" {
+		workingDir = override
+	} else if config.Path != "" {
+		workingDir = filepath.Dir(config.Path)
+	} else if cwd, err := os.Getwd(); err == nil {
+		workingDir = cwd
+	} else {
+		return "", fmt.Errorf("Could not identify a source directory for file sync.")
+	}
+
+	if absoluteWorkingDir, err := filepath.Abs(workingDir); err == nil {
+		if _, err := os.Stat(absoluteWorkingDir); !os.IsNotExist(err) {
+			return absoluteWorkingDir, nil
+		} else {
+			return "", fmt.Errorf("Identified sync source path does not exist: %s", absoluteWorkingDir)
+		}
+	} else {
+		return "", fmt.Errorf("Could not process the directory into an absolute file path: %s", workingDir)
+	}
 }
