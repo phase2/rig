@@ -20,6 +20,7 @@ import (
 
 type ProjectSync struct {
 	BaseCommand
+	Config *ProjectConfig
 }
 
 // Minimal compose file struct to discover volumes
@@ -74,12 +75,13 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 
 // Start the Unison sync process.
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
-	config := NewProjectConfig()
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	// Determine the working directory for CWD-sensitive operations.
-	workingDir := filepath.Dir(config.Path)
+	workingDir := filepath.Dir(cmd.Config.Path)
 	// Determine the volume name to be used across all operating systems.
 	// For cross-compatibility the way this volume is set up will vary.
-	volumeName := cmd.GetVolumeName(ctx, config, workingDir)
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
 
 	switch platform := runtime.GOOS; platform {
 	case "linux":
@@ -87,7 +89,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.SetupBindVolume(volumeName, workingDir)
 	default:
 		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
-		cmd.StartUnisonSync(ctx, volumeName, config, workingDir)
+		cmd.StartUnisonSync(ctx, volumeName, cmd.Config, workingDir)
 	}
 
 	return nil
@@ -179,12 +181,14 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		cmd.out.Info.Println("No unison container to stop, using local bind volume")
 		return nil
 	}
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 
-	config := NewProjectConfig()
 	// Determine the working directory for CWD-sensitive operations.
-	workingDir := filepath.Dir(config.Path)
-	volumeName := cmd.GetVolumeName(ctx, config, workingDir)
-	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
+	workingDir := filepath.Dir(cmd.Config.Path)
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+
+  cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 
 	cmd.out.Info.Println("Stopping unison container")
 	exec.Command("docker", "container", "stop", volumeName).Run()

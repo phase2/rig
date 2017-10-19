@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,33 +36,48 @@ type ProjectConfig struct {
 
 // Create a new ProjectConfig using configured or default locations
 func NewProjectConfig() *ProjectConfig {
+	readyConfig := &ProjectConfig{}
 	projectConfigFile := os.Getenv("RIG_PROJECT_CONFIG_FILE")
 
-	var discovery []string
 	if projectConfigFile == "" {
-		discovery = make([]string, 2)
-		discovery[0] = "./outrigger.yml"
-		discovery[1] = "./.outrigger.yml"
-	} else {
-		discovery = make([]string, 1)
-		discovery[0] = projectConfigFile
+		projectConfigFile, _ = FindProjectConfigFilePath()
 	}
 
-	readyConfig := &ProjectConfig{}
-	for _, filePath := range discovery {
-		if config, err := NewProjectConfigFromFile(filePath); err == nil {
+	if projectConfigFile != "" {
+		if config, err := NewProjectConfigFromFile(projectConfigFile); err == nil {
 			readyConfig = config
-			break
 		}
 	}
 
 	return readyConfig
 }
 
-// Create a new ProjectConfig from the specified file
+// Traverse directory structure looking for an outrigger project config file.
+func FindProjectConfigFilePath() (string, error) {
+	if cwd, err := os.Getwd(); err == nil {
+		var configFilePath string
+		for cwd != "." && cwd != string(filepath.Separator) {
+			for _, filename := range [2]string{"outrigger.yml", ".outrigger.yml"} {
+				configFilePath = filepath.Join(cwd, filename)
+				if _, err := os.Stat(configFilePath); !os.IsNotExist(err) {
+					return configFilePath, nil
+				}
+			}
+
+			cwd = filepath.Dir(cwd)
+		}
+	} else {
+		return "", err
+	}
+
+	return "", errors.New("No outrigger configuration file found.")
+}
+
+// Create a new ProjectConfig from the specified file.
+// @todo do not use the logger here, instead return errors.
+// Use of the logger here initializes it in non-verbose mode.
 func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	logger := util.Logger()
-
 	filepath, _ := filepath.Abs(filename)
 	config := &ProjectConfig{
 		File: filename,
@@ -70,7 +86,7 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 
 	yamlFile, err := ioutil.ReadFile(config.File)
 	if err != nil {
-		logger.Verbose.Printf("No project configuration file found at: %s", config.File)
+		logger.Verbose.Printf("No project configuration file could be read at: %s", config.File)
 		return config, err
 	}
 
