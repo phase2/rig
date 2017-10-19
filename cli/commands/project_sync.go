@@ -19,6 +19,7 @@ import (
 
 type ProjectSync struct {
 	BaseCommand
+	Config *ProjectConfig
 }
 
 // Minimal compose file struct to discover volumes
@@ -73,8 +74,9 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 
 // Start the unison sync process
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
-	config := NewProjectConfig()
-	volumeName := cmd.GetVolumeName(ctx, config)
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config)
 
 	switch platform := runtime.GOOS; platform {
 	case "linux":
@@ -82,7 +84,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.SetupBindVolume(volumeName)
 	default:
 		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
-		cmd.StartUnisonSync(ctx, volumeName, config)
+		cmd.StartUnisonSync(ctx, volumeName, cmd.Config)
 	}
 
 	return nil
@@ -171,9 +173,10 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		cmd.out.Info.Println("No unison container to stop, using local bind volume")
 		return nil
 	}
+	cmd.Config = NewProjectConfig()
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 
-	config := NewProjectConfig()
-	volumeName := cmd.GetVolumeName(ctx, config)
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 
 	cmd.out.Info.Println("Stopping unison container")

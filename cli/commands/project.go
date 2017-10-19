@@ -44,7 +44,6 @@ func (cmd *Project) Commands() []cli.Command {
 
 // Processes script configuration into formal subcommands.
 func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cli.Command {
-
 	cmd.Config.ValidateProjectScripts(otherSubcommands)
 
 	if cmd.Config.Scripts == nil {
@@ -67,7 +66,6 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 			if len(script.Alias) > 0 {
 				command.Aliases = []string{script.Alias}
 			}
-
 			command.Description = command.Description + cmd.ScriptRunHelp(script)
 
 			commands = append(commands, command)
@@ -77,9 +75,9 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 	return commands
 }
 
-// Return the help for all the scripts.
+// Execute the selected projec script.
 func (cmd *Project) Run(c *cli.Context) error {
-
+	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	if cmd.Config.Scripts == nil {
 		cmd.out.Error.Fatal("There are no scripts discovered in: %s", cmd.Config.File)
 	}
