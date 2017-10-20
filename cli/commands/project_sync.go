@@ -173,7 +173,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	// process is still watching the "current directory" and so needs the working
 	// directory to be explicitly set.
 	command.Dir = workingDir
-	cmd.out.Verbose.Printf("Script execution - Working Directory: %s", workingDir)
+	cmd.out.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
 	if err = command.Start(); err != nil {
 		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
 	}
