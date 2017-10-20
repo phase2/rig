@@ -9,7 +9,7 @@ Use this readme when you want to develop the Outrigger CLI.
 Setup
 -----
 
-Install go from homebrew using the flag to include common cross-compiler targets (namely Darwin, Linux, and Windows) 
+Install go from homebrew using the flag to include common cross-compiler targets (namely Darwin, Linux, and Windows)
 
 ```bash
 brew install go --with-cc-common
@@ -42,20 +42,24 @@ Code
 ----
 
 We make use of a few key libraries to do all the fancy stuff that the `rig` CLI will do.
- 
+
  * https://github.com/urfave/cli
-     * The entire CLI framework from helps text to flags. This was an easy cli to build b/c of this library 
+     * The entire CLI framework from helps text to flags. This was an easy cli to build b/c of this library
  * https://github.com/fatih/color
      * All the fancy terminal color output
  * https://github.com/bitly/go-simplejson
-     * The JSON parse and access library used primarily with the output of `docker-machine inspect` 
+     * The JSON parse and access library used primarily with the output of `docker-machine inspect`
  * https://gopkg.in/yaml.v2
-     * The YAML library for parsing/reading YAML files 
+     * The YAML library for parsing/reading YAML files
+ * https://github.com/martinlindhe/notify
+     * Cross-platform notifications library, leveraging:
+        * https://github.com/go-toast/toast for Windows
+        * https://github.com/deckarep/gosx-notifier for macOS
 
 Build
 -----
 
-If you want to build `rig` for all platforms, simply execute the `build.sh` script from the root 
+If you want to build `rig` for all platforms, simply execute the `build.sh` script from the root
 directory. This script will build the binary for Darwin, Linux and Windows and put it in the appropriate
  `dist/[PLATFORM]` directory for each operating system.
 
@@ -65,7 +69,7 @@ do that, simply run the following command.
 ```bash
 gox -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
 ```
-   
+
 This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `bin/`
 directory for the appropriate OS with the name `rig`.  
 
