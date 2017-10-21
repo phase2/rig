@@ -91,24 +91,23 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	cmd.Config = NewProjectConfig()
 	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
-	// Determine the working directory for CWD-sensitive operations.
-	var workingDir string
-	if syncPath, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err != nil {
-		cmd.out.Error.Fatal(err)
-	} else {
-		workingDir = syncPath
-	}
-	// Determine the volume name to be used across all operating systems.
-	// For cross-compatibility the way this volume is set up will vary.
-	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
 
-	switch platform := runtime.GOOS; platform {
-	case "linux":
-		cmd.out.Verbose.Printf("Setting up local volume: %s", volumeName)
-		cmd.SetupBindVolume(volumeName, workingDir)
-	default:
-		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
-		cmd.StartUnisonSync(ctx, volumeName, cmd.Config, workingDir)
+	// Determine the working directory for CWD-sensitive operations.
+	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
+		// Determine the volume name to be used across all operating systems.
+		// For cross-compatibility the way this volume is set up will vary.
+		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+
+		switch platform := runtime.GOOS; platform {
+		case "linux":
+			cmd.out.Verbose.Printf("Setting up local volume: %s", volumeName)
+			cmd.SetupBindVolume(volumeName, workingDir)
+		default:
+			cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
+			cmd.StartUnisonSync(ctx, volumeName, cmd.Config, workingDir)
+		}
+	} else {
+		cmd.out.Error.Fatal(err)
 	}
 
 	return nil
@@ -205,17 +204,14 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 
 	// Determine the working directory for CWD-sensitive operations.
-	var workingDir string
-	if syncPath, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err != nil {
-		cmd.out.Error.Fatal(err)
+	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
+		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+		cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
+		cmd.out.Info.Println("Stopping unison container")
+		exec.Command("docker", "container", "stop", volumeName).Run()
 	} else {
-		workingDir = syncPath
+		cmd.out.Error.Fatal(err)
 	}
-	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
-
-	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
-	cmd.out.Info.Println("Stopping unison container")
-	exec.Command("docker", "container", "stop", volumeName).Run()
 
 	return nil
 }
@@ -298,7 +294,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeoutSeconds int, syncWaitSeconds int) {
 	cmd.out.Info.Print("Waiting for initial sync detection")
 
-	var tempFile = filepath.Join(workingDir, fmt.Sprintf(".test-sync-start.tmp"))
+	var tempFile = filepath.Join(workingDir, ".test-sync-start.tmp")
 	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
 	// * 10 here because we loop once every 100 ms and we want to get to seconds
 	var timeoutLoops = timeoutSeconds * 10
