@@ -2,6 +2,19 @@ version: '2.1'
 
 services:
 
+  # Install project dependencies.
+  goreleaser:
+    build:
+      context: .
+      dockerfile: Dockerfile.goreleaser
+    network_mode: bridge
+    environment:
+      GOPATH: "/go"
+    volumes:
+      - .:/go/src/github.com/phase2/rig
+    working_dir: /go/src/github.com/phase2/rig/cli
+    entrypoint: goreleaser
+
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
