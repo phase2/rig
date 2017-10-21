@@ -27,16 +27,27 @@
 
 [[constraint]]
   name = "github.com/fatih/color"
+  version = "1.5.0"
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.3"
 
 [[constraint]]
   name = "github.com/hashicorp/go-version"
+  branch = "master"
+  revision = "fc61389"
 
 [[constraint]]
   name = "github.com/kardianos/osext"
+  branch = "master"
+  revision = "ae77be6"
 
 [[constraint]]
   name = "github.com/urfave/cli"
-  version = "1.18.0"
+  version = "1.20.0"
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"
+  branch = "v2"
+  revision = "eb3733d"

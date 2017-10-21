@@ -10,47 +10,54 @@
 [[projects]]
   name = "github.com/fatih/color"
   packages = ["."]
-  revision = "9aae6aaa22315390f03959adca2c4d395b02fcef"
+  revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
+  version = "v1.5.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  revision = "03c5bf6be031b6dd45afec16b1cf94fc8938bc77"
+  revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
 
 [[projects]]
+  branch = "master"
   name = "github.com/kardianos/osext"
   packages = ["."]
-  revision = "29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc"
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
-  revision = "4af63d73f5bea08b682ad2cd198b1e607afd6be0"
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "56b76bdf51f7708750eac80fa38b952bb9f32639"
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/urfave/cli"
   packages = ["."]
-  revision = "1efa31f08b9333f1bd4882d61f9d668a70cd902e"
-  version = "v1.18.0"
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "eb2c74142fd19a79b3f237334c7384d5167b1b46"
+  revision = "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
+  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4cd1f45b0ba850d30ae29ff8d3f8f524952fe397230c87f76af0007b54706cd3"
+  inputs-digest = "678adfbe5598e3c66325e41d24ad40c157b194fb0e6b8947da376121810cd414"
   solver-name = "gps-cdcl"
   solver-version = 1
