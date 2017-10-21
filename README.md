@@ -13,6 +13,9 @@ Install go from homebrew using the flag to include common cross-compiler targets
 
 ```bash
 brew install go --with-cc-common
+brew install dep
+brew tap goreleaser/tap
+brew install goreleaser/tap/goreleaser
 ```
 
 Setup `$GOPATH` and `$PATH` in your favorite shell (`~/.bashrc` or `~/.zshrc`)
