@@ -9,7 +9,8 @@ services:
       dockerfile: Dockerfile.goreleaser
     network_mode: bridge
     environment:
-      GOPATH: "/go"
+      - GOPATH=/go
+      - GITHUB_TOKEN
     volumes:
       - .:/go/src/github.com/phase2/rig
     working_dir: /go/src/github.com/phase2/rig/cli
