@@ -39,14 +39,14 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	start := cli.Command{
 		Name:        "sync:start",
 		Aliases:     []string{"sync"},
-		Usage:       "Start a unison sync on local project directory. Optionally provide a volume name.",
+                Usage:       "Start a Unison sync on local project directory. Optionally provide a volume name.",
 		ArgsUsage:   "[optional volume name]",
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
 				Value:  60,
-				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the unison container and start of initial sync. (not needed on linux)",
+                                Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. (not needed on linux)",
 				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
 			// Arbitrary sleep length but anything less than 3 wasn't catching
@@ -69,7 +69,7 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	}
 	stop := cli.Command{
 		Name:        "sync:stop",
-		Usage:       "Stops a unison sync on local project directory. Optionally provide a volume name.",
+                Usage:       "Stops a Unison sync on local project directory. Optionally provide a volume name.",
 		ArgsUsage:   "[optional volume name]",
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
@@ -123,10 +123,10 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
 	exec.Command("docker", "volume", "create", volumeName).Run()
 
-	cmd.out.Info.Println("Starting unison container")
+        cmd.out.Info.Println("Starting Unison container")
 	unisonMinorVersion := cmd.GetUnisonMinorVersion()
 
-	cmd.out.Verbose.Printf("Local unison version for compatibilty: %s", unisonMinorVersion)
+        cmd.out.Verbose.Printf("Local Unison version for compatibilty: %s", unisonMinorVersion)
 	exec.Command("docker", "container", "stop", volumeName).Run()
 	err := exec.Command("docker", "container", "run", "--detach", "--rm",
 		"-v", fmt.Sprintf("%s:/unison", volumeName),
@@ -174,7 +174,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	command.Dir = workingDir
 	cmd.out.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
 	if err = command.Start(); err != nil {
-		cmd.out.Error.Fatalf("Error starting local unison process: %v", err)
+                cmd.out.Error.Fatalf("Error starting local Unison process: %v", err)
 	}
 	cmd.WaitForSyncInit(logFile, workingDir, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait"))
 }
@@ -197,7 +197,7 @@ func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) er
 
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if runtime.GOOS == "linux" {
-		cmd.out.Info.Println("No unison container to stop, using local bind volume")
+                cmd.out.Info.Println("No Unison container to stop, using local bind volume")
 		return nil
 	}
 	cmd.Config = NewProjectConfig()
@@ -207,7 +207,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
 		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
 		cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
-		cmd.out.Info.Println("Stopping unison container")
+                cmd.out.Info.Println("Stopping Unison container")
 		exec.Command("docker", "container", "stop", volumeName).Run()
 	} else {
 		cmd.out.Error.Fatal(err)
@@ -275,7 +275,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 	}
 	ip := strings.Trim(string(output), "\n")
 
-	cmd.out.Verbose.Printf("Checking for unison network connection on %s %d", ip, UNISON_PORT)
+        cmd.out.Verbose.Printf("Checking for Unison network connection on %s %d", ip, UNISON_PORT)
 	for i := 1; i <= timeoutLoops; i++ {
 		if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UNISON_PORT)); err == nil {
 			conn.Close()
