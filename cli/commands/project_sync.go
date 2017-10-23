@@ -16,6 +16,8 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
+
+	"github.com/phase2/rig/cli/util"
 )
 
 type ProjectSync struct {
@@ -39,14 +41,14 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	start := cli.Command{
 		Name:        "sync:start",
 		Aliases:     []string{"sync"},
-                Usage:       "Start a Unison sync on local project directory. Optionally provide a volume name.",
+		Usage:       "Start a Unison sync on local project directory. Optionally provide a volume name.",
 		ArgsUsage:   "[optional volume name]",
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
 				Value:  60,
-                                Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. (not needed on linux)",
+				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. (not needed on linux)",
 				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
 			// Arbitrary sleep length but anything less than 3 wasn't catching
@@ -69,7 +71,7 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	}
 	stop := cli.Command{
 		Name:        "sync:stop",
-                Usage:       "Stops a Unison sync on local project directory. Optionally provide a volume name.",
+		Usage:       "Stops a Unison sync on local project directory. Optionally provide a volume name.",
 		ArgsUsage:   "[optional volume name]",
 		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
@@ -123,10 +125,10 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
 	exec.Command("docker", "volume", "create", volumeName).Run()
 
-        cmd.out.Info.Println("Starting Unison container")
+	cmd.out.Info.Println("Starting Unison container")
 	unisonMinorVersion := cmd.GetUnisonMinorVersion()
 
-        cmd.out.Verbose.Printf("Local Unison version for compatibilty: %s", unisonMinorVersion)
+	cmd.out.Verbose.Printf("Local Unison version for compatibilty: %s", unisonMinorVersion)
 	exec.Command("docker", "container", "stop", volumeName).Run()
 	err := exec.Command("docker", "container", "run", "--detach", "--rm",
 		"-v", fmt.Sprintf("%s:/unison", volumeName),
@@ -146,9 +148,11 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	cmd.out.Info.Println("Initializing sync")
 
 	// Determine the location of the local Unison log file.
-	var logFile = filepath.Join(workingDir, fmt.Sprintf("%s.log", volumeName))
+	var logFile = fmt.Sprintf("%s.log", volumeName)
 	// Remove the log file, the existence of the log file will mean that sync is up and running
-	cmd.RemoveLogFile(logFile, workingDir)
+	if err := util.RemoveFile(logFile, workingDir); err != nil {
+		cmd.out.Error.Printf("Could not remove Unison log file: %s: %s", logFile, err.Error())
+	}
 
 	// Initiate local Unison process.
 	unisonArgs := []string{
@@ -168,13 +172,10 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	}
 	cmd.out.Verbose.Printf("Unison Args: %s", strings.Join(unisonArgs[:], " "))
 	command := exec.Command("unison", unisonArgs...)
-	// While the logFile is an absolute path to the workingDirectory, the Unison
-	// process is still watching the "current directory" and so needs the working
-	// directory to be explicitly set.
 	command.Dir = workingDir
 	cmd.out.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
 	if err = command.Start(); err != nil {
-                cmd.out.Error.Fatalf("Error starting local Unison process: %v", err)
+		cmd.out.Error.Fatalf("Error starting local Unison process: %v", err)
 	}
 	cmd.WaitForSyncInit(logFile, workingDir, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait"))
 }
@@ -197,7 +198,7 @@ func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) er
 
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if runtime.GOOS == "linux" {
-                cmd.out.Info.Println("No Unison container to stop, using local bind volume")
+		cmd.out.Info.Println("No Unison container to stop, using local bind volume")
 		return nil
 	}
 	cmd.Config = NewProjectConfig()
@@ -207,7 +208,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
 		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
 		cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
-                cmd.out.Info.Println("Stopping Unison container")
+		cmd.out.Info.Println("Stopping Unison container")
 		exec.Command("docker", "container", "stop", volumeName).Run()
 	} else {
 		cmd.out.Error.Fatal(err)
@@ -275,7 +276,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 	}
 	ip := strings.Trim(string(output), "\n")
 
-        cmd.out.Verbose.Printf("Checking for Unison network connection on %s %d", ip, UNISON_PORT)
+	cmd.out.Verbose.Printf("Checking for Unison network connection on %s %d", ip, UNISON_PORT)
 	for i := 1; i <= timeoutLoops; i++ {
 		if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UNISON_PORT)); err == nil {
 			conn.Close()
@@ -294,46 +295,62 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeoutSeconds int, syncWaitSeconds int) {
 	cmd.out.Info.Print("Waiting for initial sync detection")
 
-	var tempFile = filepath.Join(workingDir, ".test-sync-start.tmp")
-	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
-	// * 10 here because we loop once every 100 ms and we want to get to seconds
-	var timeoutLoops = timeoutSeconds * 10
+	// The use of os.Stat below is not subject to our working directory configuration,
+	// so to ensure we can stat the log file we convert it to an absolute path.
+	if logFilePath, err := util.AbsJoin(workingDir, logFile); err != nil {
+		cmd.out.Info.Print(err.Error())
+	} else {
+		// Create a temp file to cause a sync action
+		var tempFile = ".rig-check-sync-start"
 
-	// Create a temp file to cause a sync action
-	exec.Command("touch", tempFile).Run()
-
-	for i := 1; i <= timeoutLoops; i++ {
-		if i%10 == 0 {
-			os.Stdout.WriteString(".")
+		if err := util.TouchFile(tempFile, workingDir); err != nil {
+			cmd.out.Error.Fatal("Could not create file used to detect initial sync: %s", err.Error())
 		}
-		if statInfo, err := os.Stat(logFile); err == nil {
-			os.Stdout.WriteString(" initial sync detected\n")
+		cmd.out.Verbose.Printf("Creating temporary file so we can watch for Unison initialization: %s", tempFile)
 
-			cmd.out.Info.Print("Waiting for initial sync to finish")
-			var statSleep = time.Duration(syncWaitSeconds) * time.Second
-			// Initialize at -2 to force at least one loop
-			var lastSize = int64(-2)
-			for lastSize != statInfo.Size() {
+		var timeoutLoopSleep = time.Duration(100) * time.Millisecond
+		// * 10 here because we loop once every 100 ms and we want to get to seconds
+		var timeoutLoops = timeoutSeconds * 10
+		var statSleep = time.Duration(syncWaitSeconds) * time.Second
+		for i := 1; i <= timeoutLoops; i++ {
+			if i%10 == 0 {
 				os.Stdout.WriteString(".")
-				time.Sleep(statSleep)
-				lastSize = statInfo.Size()
-				if statInfo, err = os.Stat(logFile); err != nil {
-					cmd.out.Info.Print(err.Error())
-					lastSize = -1
-				}
 			}
-			os.Stdout.WriteString(" done\n")
-			// Remove the temp file, waiting until after sync so spurious
-			// failure message doesn't show in log
-			exec.Command("rm", "-f", tempFile).Run()
-			return
-		} else {
-			time.Sleep(timeoutLoopSleep)
+			if statInfo, err := os.Stat(logFile); err == nil {
+				os.Stdout.WriteString(" initial sync detected\n")
+
+				cmd.out.Info.Print("Waiting for initial sync to finish")
+				// Initialize at -2 to force at least one loop
+				var lastSize = int64(-2)
+				for lastSize != statInfo.Size() {
+					os.Stdout.WriteString(".")
+					time.Sleep(statSleep)
+					lastSize = statInfo.Size()
+					if statInfo, err = os.Stat(logFilePath); err != nil {
+						cmd.out.Info.Print(err.Error())
+						lastSize = -1
+					}
+				}
+				os.Stdout.WriteString(" done\n")
+				// Remove the temp file, waiting until after sync so spurious
+				// failure message doesn't show in log
+				if err := util.RemoveFile(tempFile, workingDir); err != nil {
+					cmd.out.Warning.Printf("Could not remove the temporary file: %s: %s", tempFile, err.Error())
+				}
+				return
+			} else {
+				time.Sleep(timeoutLoopSleep)
+			}
+		}
+
+		// The log file was not created, the sync has not started yet
+		if err := util.RemoveFile(tempFile, workingDir); err != nil {
+			// While the removal of the tempFile is not significant, if something
+			// prevents removal there may be a bigger problem.
+			cmd.out.Warning.Printf("Could not remove the temporary file: %s", err.Error())
 		}
 	}
 
-	// The log file was not created, the sync has not started yet
-	exec.Command("rm", "-f", tempFile).Run()
 	cmd.out.Error.Fatal("Failed to detect start of initial sync!")
 }
 
@@ -346,14 +363,6 @@ func (cmd *ProjectSync) GetUnisonMinorVersion() string {
 	v := version.Must(version.NewVersion(rawVersion))
 	segments := v.Segments()
 	return fmt.Sprintf("%d.%d", segments[0], segments[1])
-}
-
-// Remove the Unison logfile.
-func (cmd *ProjectSync) RemoveLogFile(logFile string, workingDir string) error {
-	command := exec.Command("rm", "-f", logFile)
-	command.Dir = workingDir
-
-	return command.Run()
 }
 
 // Derive the source path for the local host side of the file sync.
