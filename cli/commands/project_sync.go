@@ -92,7 +92,9 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 // Start the Unison sync process.
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	cmd.Config = NewProjectConfig()
-	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+        if cmd.Config.NotEmpty() {
+                cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+        }
 
 	// Determine the working directory for CWD-sensitive operations.
 	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
@@ -204,7 +206,9 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		return nil
 	}
 	cmd.Config = NewProjectConfig()
-	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+        if cmd.Config.NotEmpty() {
+                cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+        }
 
 	// Determine the working directory for CWD-sensitive operations.
 	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
@@ -373,7 +377,7 @@ func (cmd *ProjectSync) DeriveLocalSyncPath(config *ProjectConfig, override stri
 	var workingDir string
 	if override != "" {
 		workingDir = override
-	} else if config.Path != "" {
+        } else if config.NotEmpty() {
 		workingDir = filepath.Dir(config.Path)
 	} else if cwd, err := os.Getwd(); err == nil {
 		workingDir = cwd
