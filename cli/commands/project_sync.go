@@ -149,9 +149,11 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 
 	// Determine the location of the local Unison log file.
 	var logFile = fmt.Sprintf("%s.log", volumeName)
-	// Remove the log file, the existence of the log file will mean that sync is up and running
+	// Remove the log file, the existence of the log file will mean that sync is
+	// up and running. If the logfile does not exist, do not complain. If the
+	// filesystem cannot delete the file when it exists, it will lead to errors.
 	if err := util.RemoveFile(logFile, workingDir); err != nil {
-		cmd.out.Error.Printf("Could not remove Unison log file: %s: %s", logFile, err.Error())
+		cmd.out.Verbose.Printf("Could not remove Unison log file: %s: %s", logFile, err.Error())
 	}
 
 	// Initiate local Unison process.
