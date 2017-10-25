@@ -30,12 +30,6 @@ Checkout the code into your `$GOPATH` in `$GOPATH/src/github.com/phase2/rig`
 Get all the dependencies
 
 ```bash
-# Go Dependency Manager
-go get -u github.com/golang/dep/...
-
-# Go Cross Platform Build Tool
-go get github.com/mitchellh/gox
-
 # Install the project dependencies into $GOPATH
 cd $GOPATH/src/github.com/phase2/rig/cli
 dep ensure
@@ -66,11 +60,11 @@ For development, sometimes you will just want to build for your target platform 
 do that, simply run the following command.
 
 ```bash
-gox -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
+GOARCH=amd64 GOOS=darwin go build -o ../build/darwin/rig
 ```
    
-This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `bin/`
-directory for the appropriate OS with the name `rig`.  
+This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `build/darwin/`
+with the name `rig`.
 
 Developing Rig with Docker [Experimental]
 -----------------------------------------
@@ -80,21 +74,38 @@ local golang environment. Using docker-compose, run the following commands:
 
 ```bash
 docker-compose run --rm install
-docker-compose run --rm build
+docker-compose run --rm compile
 ```
 
 This will produce a working OSX binary at `build/darwin/rig`.
 
-Deploy to Homebrew
-------------------
+If you change a dependency in `Gopkg.toml` you can update an individual package dependency with:
 
-We now manage the Mac / OSX version of the binaries via `brew`.  To publish a new build to `brew` you must
-perform the following operations.
+```bash
+docker-compose run --rm update [package]
+```
 
- - Change the code :)
- - When changing the code make sure to update the VERSION variable in main.go
- - Build all the code via `build.sh`
- - Make sure you have https://github.com/phase2/homebrew-outrigger cloned into ~/Projects/homebrew-outrigger
- - Prepare a new `brew` version via `brew-publish.sh`
-    - Part of this will write a new formula into homebrew-outrigger
- - Commit & push the updated formula to publish the new version
+If you want to update all packages use:
+
+```bash
+docker-compose run --rm update
+```
+
+
+Release
+-------
+
+We use [GoReleaser](https://goreleaser.com) to handle nearly all of our release concerns.  GoReleaser will handle
+
+* Building for all target platforms
+* Create a GitHub release on our project page based on tag
+* Create archive file for each target platform and attach it to the GitHub release
+* Update the Homebrew formula and publish it
+* Create .deb and .rpm packages for linux installations
+
+To create a new release of rig:
+* Get all the code committed to `master`
+* Tag master with the new version number
+* Run `docker-compose run --rm goreleaser`
+* ...
+* Profit!

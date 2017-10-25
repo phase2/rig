@@ -4,22 +4,19 @@ services:
 
   # Install project dependencies.
   goreleaser:
-    build:
-      context: .
-      dockerfile: Dockerfile.goreleaser
-    network_mode: bridge
+    extends: base
     environment:
       - GOPATH=/go
       - GITHUB_TOKEN
-    volumes:
-      - .:/go/src/github.com/phase2/rig
-    working_dir: /go/src/github.com/phase2/rig/cli
-    entrypoint: goreleaser
+    entrypoint: [ "goreleaser" ]
 
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
-    command: gox -osarch="Darwin/amd64" -output="../build/{{.OS}}/rig"
+    command: go build -o ../build/darwin/rig
+    environment:
+      - GOOS=darwin
+      - GOARCH=amd64
 
   # Install project dependencies.
   install:
