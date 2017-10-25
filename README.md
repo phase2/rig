@@ -7,7 +7,7 @@ See the [documentation for more details](http://docs.outrigger.sh).
 Use this readme when you want to develop the Outrigger CLI.
 
 Setup
------
+------
 
 Install go from homebrew using the flag to include common cross-compiler targets (namely Darwin, Linux, and Windows) 
 
@@ -35,39 +35,20 @@ cd $GOPATH/src/github.com/phase2/rig/cli
 dep ensure
 ```
 
-Code
-----
+Developing Locally
+-------------------
 
-We make use of a few key libraries to do all the fancy stuff that the `rig` CLI will do.
- 
- * https://github.com/urfave/cli
-     * The entire CLI framework from helps text to flags. This was an easy cli to build b/c of this library 
- * https://github.com/fatih/color
-     * All the fancy terminal color output
- * https://github.com/bitly/go-simplejson
-     * The JSON parse and access library used primarily with the output of `docker-machine inspect` 
- * https://gopkg.in/yaml.v2
-     * The YAML library for parsing/reading YAML files 
-
-Build
------
-
-If you want to build `rig` for all platforms, simply execute the `build.sh` script from the root 
-directory. This script will build the binary for Darwin, Linux and Windows and put it in the appropriate
- `dist/[PLATFORM]` directory for each operating system.
-
-For development, sometimes you will just want to build for your target platform because it is faster. TO
-do that, simply run the following command.
+If you want to build  `rig` locally for your target platform, simply run the following command:
 
 ```bash
 GOARCH=amd64 GOOS=darwin go build -o ../build/darwin/rig
 ```
    
 This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `build/darwin/`
-with the name `rig`.
+with the name `rig`.  Change `GOARCH` and `GOOS` if you need to target a different platform
 
-Developing Rig with Docker [Experimental]
------------------------------------------
+Developing with Docker
+-----------------------
 
 You can use the Docker integration within this repository to facilitate development in lieu of setting up a
 local golang environment. Using docker-compose, run the following commands:
@@ -109,3 +90,18 @@ To create a new release of rig:
 * Run `docker-compose run --rm goreleaser`
 * ...
 * Profit!
+
+
+Dependencies
+-------------
+
+We make use of a few key libraries to do all the fancy stuff that the `rig` CLI will do.
+ 
+ * https://github.com/urfave/cli
+     * The entire CLI framework from helps text to flags. This was an easy cli to build b/c of this library 
+ * https://github.com/fatih/color
+     * All the fancy terminal color output
+ * https://github.com/bitly/go-simplejson
+     * The JSON parse and access library used primarily with the output of `docker-machine inspect` 
+ * https://gopkg.in/yaml.v2
+     * The YAML library for parsing/reading YAML files 
