@@ -17,6 +17,7 @@ before_install: cd cli
 script:
   - "../scripts/test-go-fmt.sh"
   - "go run main.go"
+  - "go test github.com/phase2/rig/cli/util"
 
 notifications:
   flowdock:

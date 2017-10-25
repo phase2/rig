@@ -9,8 +9,12 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
+// Allow testing code to override the behavior of exec.Command or modify the
+// resulting exec.Cmd object.
+var execCommand = exec.Command
+
 func GetRawCurrentDockerVersion() string {
-	output, _ := exec.Command("docker", "--version").Output()
+	output, _ := execCommand("docker", "--version").Output()
 	re := regexp.MustCompile("Docker version (.*),")
 	return re.FindAllStringSubmatch(string(output), -1)[0][1]
 }
@@ -21,14 +25,14 @@ func GetCurrentDockerVersion() *version.Version {
 }
 
 func GetDockerClientApiVersion() *version.Version {
-	output, _ := exec.Command("docker", "version", "--format", "{{.Client.APIVersion}}").Output()
+	output, _ := execCommand("docker", "version", "--format", "{{.Client.APIVersion}}").Output()
 	re := regexp.MustCompile("^([\\d|\\.]+)")
 	versionNumber := re.FindAllStringSubmatch(string(output), -1)[0][1]
 	return version.Must(version.NewVersion(versionNumber))
 }
 
 func GetDockerServerApiVersion(name string) (*version.Version, error) {
-	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.APIVersion}}").Output()
+	output, err := execCommand("docker-machine", "ssh", name, "docker version --format {{.Server.APIVersion}}").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +40,7 @@ func GetDockerServerApiVersion(name string) (*version.Version, error) {
 }
 
 func GetDockerServerMinApiVersion(name string) (*version.Version, error) {
-	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.MinAPIVersion}}").Output()
+	output, err := execCommand("docker-machine", "ssh", name, "docker version --format {{.Server.MinAPIVersion}}").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +49,7 @@ func GetDockerServerMinApiVersion(name string) (*version.Version, error) {
 
 // Determine the age of the Docker Image and whether the image is older than the designated timestamp.
 func ImageOlderThan(image string, elapsed_seconds float64) (bool, float64, error) {
-	output, err := exec.Command("docker", "inspect", "--format", "{{.Created}}", image).Output()
+	output, err := execCommand("docker", "inspect", "--format", "{{.Created}}", image).Output()
 	if err != nil {
 		return false, 0, err
 	}
