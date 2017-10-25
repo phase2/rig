@@ -48,7 +48,7 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 	}
 
 	if _, err := os.Stat(backupFile); err != nil {
-		return cmd.Error(fmt.Sprintf("Backup archive %s doesn't exists.", backupFile), 15)
+		return cmd.Error(fmt.Sprintf("Backup archive %s doesn't exists.", backupFile), "BACKUP-ARCHIVE-NOT-FOUND", 12)
 	}
 
 	cmd.out.Info.Printf("Restoring %s to %s on '%s'...", backupFile, dataDir, cmd.machine.Name)
@@ -64,7 +64,7 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 	color.Unset()
 
 	if err != nil {
-		return cmd.Error(err.Error(), 16)
+		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
 	}
 
 	return cmd.Success("Data Restore was successful")

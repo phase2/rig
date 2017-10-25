@@ -40,13 +40,13 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	cmd.out.Info.Printf("Upgrading '%s'...", cmd.machine.Name)
 
 	if cmd.machine.GetData().Get("Driver").Get("Boot2DockerURL").MustString() == "" {
-		return cmd.Error(fmt.Sprintf("Machine '%s' was not created with a boot2docker URL. Run `docker-machine upgrade %s` directly", cmd.machine.Name, cmd.machine.Name), 17)
+		return cmd.Error(fmt.Sprintf("Machine '%s' was not created with a boot2docker URL. Run `docker-machine upgrade %s` directly", cmd.machine.Name, cmd.machine.Name), "MACHINE-CREATED-MANUALLY", 12)
 	}
 
 	currentDockerVersion := util.GetCurrentDockerVersion()
 	machineDockerVersion, err := cmd.machine.GetDockerVersion()
 	if err != nil {
-		return cmd.Error(fmt.Sprintf("Could not determine Machine Docker version. Is your machine running?. %s", err), 11)
+		return cmd.Error(fmt.Sprintf("Could not determine Machine Docker version. Is your machine running?. %s", err), "MACHINE-STOPPED", 12)
 	}
 
 	if currentDockerVersion.Equal(machineDockerVersion) {

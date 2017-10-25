@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
+	"fmt"
 )
 
 type RigCommand interface {
@@ -27,16 +28,14 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 }
 
 func (cmd *BaseCommand) Success(message string) error {
-	//notify.CommandSuccess(message);
 	if message != "" {
 		cmd.out.Info.Println(message)
 	}
 	return nil
 }
 
-func (cmd *BaseCommand) Error(message string, exitCode int) error {
-	//notify.CommandError(message);
-	return cli.NewExitError(message, exitCode)
+func (cmd *BaseCommand) Error(message string, errorName string, exitCode int) error {
+	return cli.NewExitError(fmt.Sprintf("ERROR: %s [%s] (%d)", message, errorName, exitCode), exitCode)
 }
 
 func (cmd *BaseCommand) NewContext(name string, flags []cli.Flag, parent *cli.Context) *cli.Context {

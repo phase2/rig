@@ -58,7 +58,7 @@ func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 			return err
 		}
 	} else {
-		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), 11)
+		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
 	return cmd.Success("")
@@ -86,7 +86,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return cmd.Error(fmt.Sprintf("Couldn't determine current working directory: %s", err), 20)
+		return cmd.Error(fmt.Sprintf("Couldn't determine current working directory: %s", err), "WORKING-DIR-NOT-FOUND", 12)
 	}
 
 	// Keep passed in args as distinct elements or they will be treated as
@@ -104,7 +104,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 
 	shellCmd := exec.Command("docker", args...)
 	if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-		return cmd.Error(fmt.Sprintf("Error running generator %s %s", image, strings.Join(ctx.Args(), " ")), exitCode)
+		return cmd.Error(fmt.Sprintf("Error running generator %s %s", image, strings.Join(ctx.Args(), " ")), "COMMAND-ERROR", exitCode)
 	}
 
 	return nil
