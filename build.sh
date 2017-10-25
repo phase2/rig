@@ -2,12 +2,12 @@
 #
 # To use this you will need to: go get github.com/mitchellh/gox
 
-go get github.com/tools/godep
-go get github.com/mitchellh/gox
+go get -u github.com/golang/dep/...
+go get -u github.com/mitchellh/gox
 
 pushd cli
 
-godep restore
+dep ensure
 
 # Build for platforms
 gox -osarch="Darwin/amd64" -output="../build/darwin/rig"

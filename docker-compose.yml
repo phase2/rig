@@ -10,7 +10,7 @@ services:
   # Install project dependencies.
   install:
     extends: base
-    command: godep restore -v
+    command: dep ensure
 
   # Foundational service to run commands within the container.
   base:

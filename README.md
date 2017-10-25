@@ -28,14 +28,14 @@ Get all the dependencies
 
 ```bash
 # Go Dependency Manager
-go get github.com/tools/godep
+go get -u github.com/golang/dep/...
 
 # Go Cross Platform Build Tool
 go get github.com/mitchellh/gox
 
 # Install the project dependencies into $GOPATH
 cd $GOPATH/src/github.com/phase2/rig/cli
-godep restore
+dep ensure
 ```
 
 Code

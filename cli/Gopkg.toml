@@ -1,0 +1,50 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  name = "github.com/bitly/go-simplejson"
+  version = "0.5.0"
+
+[[constraint]]
+  name = "github.com/fatih/color"
+  version = "1.5.0"
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-version"
+  revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
+
+[[constraint]]
+  name = "github.com/kardianos/osext"
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  version = "1.20.0"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"

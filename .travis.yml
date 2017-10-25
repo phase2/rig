@@ -4,16 +4,13 @@ os: linux
 
 language: go
 go:
-  - 1.7
+  - 1.9
   - tip
 
 matrix:
   fast_finish: true
   allow_failures:
     - go: tip
-
-env:
-  - GO15VENDOREXPERIMENT="0"
 
 before_install: cd cli
 
