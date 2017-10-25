@@ -61,9 +61,9 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 			},
 			// Override the local sync path.
 			cli.StringFlag{
-				Name:  "sync-path",
+				Name:  "dir",
 				Value: "",
-				Usage: "Specify the location in the local filesystem to be synced. If not used it will look for the directory of project configuration or fall back to current working directory. Use '--sync-path=.' to guarantee current working directory is used.",
+				Usage: "Specify the location in the local filesystem to be synced. If not used it will look for the directory of project configuration or fall back to current working directory. Use '--dir=.' to guarantee current working directory is used.",
 			},
 		},
 		Before: cmd.Before,
@@ -77,9 +77,9 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Flags: []cli.Flag{
 			// Override the local sync path.
 			cli.StringFlag{
-				Name:  "sync-path",
+				Name:  "dir",
 				Value: "",
-				Usage: "Specify the location in the local filesystem to be synced. If not used it will look for the directory of project configuration or fall back to current working directory. Use '--sync-path=.' to guarantee current working directory is used.",
+				Usage: "Specify the location in the local filesystem to be synced. If not used it will look for the directory of project configuration or fall back to current working directory. Use '--dir=.' to guarantee current working directory is used.",
 			},
 		},
 		Before: cmd.Before,
@@ -97,7 +97,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	}
 
 	// Determine the working directory for CWD-sensitive operations.
-	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
+	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir")); err == nil {
 		// Determine the volume name to be used across all operating systems.
 		// For cross-compatibility the way this volume is set up will vary.
 		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
@@ -211,7 +211,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	}
 
 	// Determine the working directory for CWD-sensitive operations.
-	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("sync-path")); err == nil {
+	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir")); err == nil {
 		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
 		cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 		cmd.out.Info.Println("Stopping Unison container")
