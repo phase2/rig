@@ -63,7 +63,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 		cmd.out.Verbose.Println("Pre-flight check...")
 
 		if err := exec.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
-			return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", 10)
+			return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
 		}
 
 		cmd.out.Verbose.Println("Resetting Docker environment variables...")

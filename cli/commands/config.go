@@ -48,7 +48,7 @@ func (cmd *Config) Run(c *cli.Context) error {
 			os.Stdout.Write(output)
 		}
 	} else {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), 11)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	return cmd.Success("")

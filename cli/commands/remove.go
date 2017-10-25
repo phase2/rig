@@ -29,7 +29,7 @@ func (cmd *Remove) Commands() []cli.Command {
 
 func (cmd *Remove) Run(c *cli.Context) error {
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), 11)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	cmd.out.Info.Printf("Removing '%s'", cmd.machine.Name)
@@ -54,5 +54,5 @@ func (cmd *Remove) Run(c *cli.Context) error {
 	cmd.out.Info.Println("Removing the docker-machine")
 	cmd.machine.Remove()
 
-	return cmd.Success(fmt.Sprintf("Machine '%' removed", cmd.machine.Name))
+	return cmd.Success(fmt.Sprintf("Machine '%s' removed", cmd.machine.Name))
 }

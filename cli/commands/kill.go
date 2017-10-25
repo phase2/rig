@@ -25,7 +25,7 @@ func (cmd *Kill) Commands() []cli.Command {
 
 func (cmd *Kill) Run(c *cli.Context) error {
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), 11)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	// First stop it (and cleanup)

@@ -41,7 +41,7 @@ func (cmd *Dns) Run(c *cli.Context) error {
 		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
 		cmd.ConfigureRoutes(cmd.machine)
 	} else {
-		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), 11)
+		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED",  12)
 	}
 
 	return cmd.Success("DNS Services have been started")
