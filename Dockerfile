@@ -11,6 +11,7 @@ RUN apk add --no-cache \
   ruby \
   ruby-dev \
   tar \
+  && go get -u github.com/golang/dep/... \
   && go get -u github.com/goreleaser/goreleaser
 
 RUN gem install --no-rdoc --no-ri fpm
