@@ -125,6 +125,15 @@ func (c *ProjectConfig) ValidateConfigVersion() error {
 	return nil
 }
 
+// NotEmpty is a simple check to confirm you have a populated config object.
+func (c *ProjectConfig) NotEmpty() bool {
+	if err := c.ValidateConfigVersion(); err != nil {
+		return false
+	}
+
+	return true
+}
+
 // Validate the config scripts against a set of rules/norms
 func (c *ProjectConfig) ValidateProjectScripts(subcommands []cli.Command) {
 	logger := util.Logger()

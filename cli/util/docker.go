@@ -1,37 +1,13 @@
 package util
 
 import (
-	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-version"
-	"github.com/kardianos/osext"
 )
-
-// Get the directory of this binary
-func GetExecutableDir() (string, error) {
-	return osext.ExecutableFolder()
-}
-
-// Ask the user a yes/no question
-// Return true if they answered yes, false otherwise
-func AskYesNo(question string) bool {
-
-	fmt.Printf("%s? [y/N]: ", question)
-
-	var response string
-	fmt.Scanln(&response)
-
-	yesResponses := []string{"y", "Y", "yes", "Yes", "YES"}
-	for _, elem := range yesResponses {
-		if elem == response {
-			return true
-		}
-	}
-	return false
-}
 
 func GetRawCurrentDockerVersion() string {
 	output, _ := exec.Command("docker", "--version").Output()
@@ -65,4 +41,21 @@ func GetDockerServerMinApiVersion(name string) (*version.Version, error) {
 		return nil, err
 	}
 	return version.Must(version.NewVersion(strings.TrimSpace(string(output)))), nil
+}
+
+// Determine the age of the Docker Image and whether the image is older than the designated timestamp.
+func ImageOlderThan(image string, elapsed_seconds float64) (bool, float64, error) {
+	output, err := exec.Command("docker", "inspect", "--format", "{{.Created}}", image).Output()
+	if err != nil {
+		return false, 0, err
+	}
+
+	datestring := strings.TrimSpace(string(output))
+	datetime, err := time.Parse(time.RFC3339, datestring)
+	if err != nil {
+		return false, 0, err
+	}
+
+	seconds := time.Since(datetime).Seconds()
+	return seconds > elapsed_seconds, seconds, nil
 }
