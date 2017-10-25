@@ -7,12 +7,15 @@ See the [documentation for more details](http://docs.outrigger.sh).
 Use this readme when you want to develop the Outrigger CLI.
 
 Setup
------
+------
 
 Install go from homebrew using the flag to include common cross-compiler targets (namely Darwin, Linux, and Windows) 
 
 ```bash
 brew install go --with-cc-common
+brew install dep
+brew tap goreleaser/tap
+brew install goreleaser/tap/goreleaser
 ```
 
 Setup `$GOPATH` and `$PATH` in your favorite shell (`~/.bashrc` or `~/.zshrc`)
@@ -27,19 +30,70 @@ Checkout the code into your `$GOPATH` in `$GOPATH/src/github.com/phase2/rig`
 Get all the dependencies
 
 ```bash
-# Go Dependency Manager
-go get github.com/tools/godep
-
-# Go Cross Platform Build Tool
-go get github.com/mitchellh/gox
-
 # Install the project dependencies into $GOPATH
 cd $GOPATH/src/github.com/phase2/rig/cli
-godep restore
+dep ensure
 ```
 
-Code
-----
+Developing Locally
+-------------------
+
+If you want to build  `rig` locally for your target platform, simply run the following command:
+
+```bash
+GOARCH=amd64 GOOS=darwin go build -o ../build/darwin/rig
+```
+   
+This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `build/darwin/`
+with the name `rig`.  Change `GOARCH` and `GOOS` if you need to target a different platform
+
+Developing with Docker
+-----------------------
+
+You can use the Docker integration within this repository to facilitate development in lieu of setting up a
+local golang environment. Using docker-compose, run the following commands:
+
+```bash
+docker-compose run --rm install
+docker-compose run --rm compile
+```
+
+This will produce a working OSX binary at `build/darwin/rig`.
+
+If you change a dependency in `Gopkg.toml` you can update an individual package dependency with:
+
+```bash
+docker-compose run --rm update [package]
+```
+
+If you want to update all packages use:
+
+```bash
+docker-compose run --rm update
+```
+
+
+Release
+-------
+
+We use [GoReleaser](https://goreleaser.com) to handle nearly all of our release concerns.  GoReleaser will handle
+
+* Building for all target platforms
+* Create a GitHub release on our project page based on tag
+* Create archive file for each target platform and attach it to the GitHub release
+* Update the Homebrew formula and publish it
+* Create .deb and .rpm packages for linux installations
+
+To create a new release of rig:
+* Get all the code committed to `master`
+* Tag master with the new version number
+* Run `docker-compose run --rm goreleaser`
+* ...
+* Profit!
+
+
+Dependencies
+-------------
 
 We make use of a few key libraries to do all the fancy stuff that the `rig` CLI will do.
  
@@ -51,47 +105,3 @@ We make use of a few key libraries to do all the fancy stuff that the `rig` CLI 
      * The JSON parse and access library used primarily with the output of `docker-machine inspect` 
  * https://gopkg.in/yaml.v2
      * The YAML library for parsing/reading YAML files 
-
-Build
------
-
-If you want to build `rig` for all platforms, simply execute the `build.sh` script from the root 
-directory. This script will build the binary for Darwin, Linux and Windows and put it in the appropriate
- `dist/[PLATFORM]` directory for each operating system.
-
-For development, sometimes you will just want to build for your target platform because it is faster. TO
-do that, simply run the following command.
-
-```bash
-gox -osarch="Darwin/amd64" -output="build/{{.OS}}/rig"
-```
-   
-This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `bin/`
-directory for the appropriate OS with the name `rig`.  
-
-Developing Rig with Docker [Experimental]
------------------------------------------
-
-You can use the Docker integration within this repository to facilitate development in lieu of setting up a
-local golang environment. Using docker-compose, run the following commands:
-
-```bash
-docker-compose run --rm install
-docker-compose run --rm build
-```
-
-This will produce a working OSX binary at `build/darwin/rig`.
-
-Deploy to Homebrew
-------------------
-
-We now manage the Mac / OSX version of the binaries via `brew`.  To publish a new build to `brew` you must
-perform the following operations.
-
- - Change the code :)
- - When changing the code make sure to update the VERSION variable in main.go
- - Build all the code via `build.sh`
- - Make sure you have https://github.com/phase2/homebrew-outrigger cloned into ~/Projects/homebrew-outrigger
- - Prepare a new `brew` version via `brew-publish.sh`
-    - Part of this will write a new formula into homebrew-outrigger
- - Commit & push the updated formula to publish the new version

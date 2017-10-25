@@ -1,9 +1,17 @@
-FROM golang:1.7-alpine
+FROM golang:1.9-alpine
 
 RUN apk add --no-cache \
   ca-certificates \
   git \
   gcc \
+  libffi-dev \
+  make \
   musl-dev \
-  && go get github.com/tools/godep \
-  && go get github.com/mitchellh/gox
+  rpm \
+  ruby \
+  ruby-dev \
+  tar \
+  && go get -u github.com/golang/dep/... \
+  && go get -u github.com/goreleaser/goreleaser
+
+RUN gem install --no-rdoc --no-ri fpm

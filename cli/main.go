@@ -8,14 +8,14 @@ import (
 	"github.com/urfave/cli"
 )
 
-const VERSION = "1.3.2"
+var version = "master"
 
 // It all starts here
 func main() {
 	app := cli.NewApp()
 	app.Name = "rig"
 	app.Usage = "Containerized platform environment for projects"
-	app.Version = VERSION
+	app.Version = version
 	app.EnableBashCompletion = true
 
 	app.Flags = []cli.Flag{

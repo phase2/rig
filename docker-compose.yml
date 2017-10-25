@@ -2,15 +2,34 @@ version: '2.1'
 
 services:
 
+  # Install project dependencies.
+  goreleaser:
+    extends: base
+    environment:
+      - GOPATH=/go
+      - GITHUB_TOKEN
+    entrypoint: [ "goreleaser" ]
+
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
-    command: gox -osarch="Darwin/amd64" -output="../build/{{.OS}}/rig"
+    command: go build -o ../build/darwin/rig
+    environment:
+      - GOOS=darwin
+      - GOARCH=amd64
 
   # Install project dependencies.
   install:
     extends: base
-    command: godep restore -v
+    command: dep ensure
+
+  # Update project dependencies.
+  # Will update all if no arguments are provided. To update a particular package use:
+  #       docker-compose run --rm update [PACKAGENAME]
+  update:
+    extends: base
+    entrypoint: [ "dep", "ensure", "-update" ]
+    command: ""
 
   # Foundational service to run commands within the container.
   base:
