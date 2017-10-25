@@ -26,6 +26,14 @@ services:
     extends: base
     command: dep ensure
 
+  # Update project dependencies.
+  # Will update all if no arguments are provided. To update a particular package use:
+  #       docker-compose run --rm update [PACKAGENAME]
+  update:
+    extends: base
+    entrypoint: [ "dep", "ensure", "-update" ]
+    command: ""
+
   # Foundational service to run commands within the container.
   base:
     build: .

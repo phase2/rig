@@ -35,11 +35,11 @@
 
 [[constraint]]
   name = "github.com/hashicorp/go-version"
-  revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/kardianos/osext"
-  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/urfave/cli"
@@ -47,4 +47,4 @@
 
 [[constraint]]
   name = "gopkg.in/yaml.v2"
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  branch = "v2"

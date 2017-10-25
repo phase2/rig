@@ -14,11 +14,13 @@
   version = "v1.5.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
   revision = "fc61389e27c71d120f87031ca8c88a3428f372dd"
 
 [[projects]]
+  branch = "master"
   name = "github.com/kardianos/osext"
   packages = ["."]
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
@@ -45,9 +47,10 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
+  revision = "92ac112afc6efd90284acda2b046fc0e351228f6"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
@@ -55,6 +58,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "77a6e334601c4bcd44e4c2f213a8f6d48e0e918760c916a4c21024fdec091e3a"
+  inputs-digest = "9866632c6655f2b13c5a6567e87d824685c882e40fc4a1a7513bdf9d4710045a"
   solver-name = "gps-cdcl"
   solver-version = 1
