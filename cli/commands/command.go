@@ -2,9 +2,10 @@ package commands
 
 import (
 	"flag"
+	"fmt"
+
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
-	"fmt"
 )
 
 type RigCommand interface {
