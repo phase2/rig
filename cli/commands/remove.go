@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -28,7 +29,7 @@ func (cmd *Remove) Commands() []cli.Command {
 
 func (cmd *Remove) Run(c *cli.Context) error {
 	if !cmd.machine.Exists() {
-		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	cmd.out.Info.Printf("Removing '%s'", cmd.machine.Name)
@@ -40,17 +41,18 @@ func (cmd *Remove) Run(c *cli.Context) error {
 		cmd.out.Warning.Println()
 
 		if !util.AskYesNo("Are you sure you want to remove '" + cmd.machine.Name + "'") {
-			cmd.out.Warning.Println("Remove was aborted")
-			return nil
+			return cmd.Success("Remove was aborted")
 		}
 	}
 
 	// Run kill first
 	kill := Kill{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	kill.Run(c)
+	if err := kill.Run(c); err != nil {
+		return err
+	}
 
 	cmd.out.Info.Println("Removing the docker-machine")
 	cmd.machine.Remove()
 
-	return nil
+	return cmd.Success(fmt.Sprintf("Machine '%s' removed", cmd.machine.Name))
 }

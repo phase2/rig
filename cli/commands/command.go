@@ -2,6 +2,8 @@ package commands
 
 import (
 	"flag"
+	"fmt"
+
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -24,6 +26,17 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	cmd.out = util.Logger()
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
 	return nil
+}
+
+func (cmd *BaseCommand) Success(message string) error {
+	if message != "" {
+		cmd.out.Info.Println(message)
+	}
+	return nil
+}
+
+func (cmd *BaseCommand) Error(message string, errorName string, exitCode int) error {
+	return cli.NewExitError(fmt.Sprintf("ERROR: %s [%s] (%d)", message, errorName, exitCode), exitCode)
 }
 
 func (cmd *BaseCommand) NewContext(name string, flags []cli.Flag, parent *cli.Context) *cli.Context {

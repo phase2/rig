@@ -23,11 +23,10 @@ func (cmd *Prune) Commands() []cli.Command {
 }
 
 func (cmd *Prune) Run(c *cli.Context) error {
-	cmd.out.Info.Println("Removing exited Docker containers...")
-	util.StreamCommand(exec.Command("bash", "-c", "docker ps -a -q -f status=exited | grep . | xargs docker rm -v"))
+	cmd.out.Info.Println("Cleaning up Docker images and containers...")
+	if exitCode := util.PassthruCommand(exec.Command("docker", "system", "prune", "--all", "--volumes")); exitCode != 0 {
+		return cmd.Error("Error pruning Docker resources.", "COMMAND-ERROR", 13)
+	}
 
-	cmd.out.Info.Println("Removing dangling Docker images...")
-	util.StreamCommand(exec.Command("bash", "-c", "docker images --no-trunc -q -f \"dangling=true\" | grep . | xargs docker rmi"))
-
-	return nil
+	return cmd.Success("")
 }

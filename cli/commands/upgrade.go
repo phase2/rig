@@ -40,29 +40,31 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	cmd.out.Info.Printf("Upgrading '%s'...", cmd.machine.Name)
 
 	if cmd.machine.GetData().Get("Driver").Get("Boot2DockerURL").MustString() == "" {
-		cmd.out.Info.Printf("Machine '%s' was not created with a boot2docker URL. Run `docker-machine upgrade %s` directly", cmd.machine.Name, cmd.machine.Name)
-		os.Exit(1)
+		return cmd.Error(fmt.Sprintf("Machine '%s' was not created with a boot2docker URL. Run `docker-machine upgrade %s` directly", cmd.machine.Name, cmd.machine.Name), "MACHINE-CREATED-MANUALLY", 12)
 	}
 
 	currentDockerVersion := util.GetCurrentDockerVersion()
 	machineDockerVersion, err := cmd.machine.GetDockerVersion()
 	if err != nil {
-		cmd.out.Error.Fatalf("Could not determine Machine Docker version. Is your machine running?. %s", err)
+		return cmd.Error(fmt.Sprintf("Could not determine Machine Docker version. Is your machine running?. %s", err), "MACHINE-STOPPED", 12)
 	}
 
 	if currentDockerVersion.Equal(machineDockerVersion) {
-		cmd.out.Info.Printf("Machine '%s' has the same Docker version (%s) as your local Docker binary (%s). There is nothing to upgrade. If you wish to upgrade you'll need to install a newer version of the Docker binary before running the upgrade command.", cmd.machine.Name, machineDockerVersion, currentDockerVersion)
-		os.Exit(1)
+		return cmd.Success(fmt.Sprintf("Machine '%s' has the same Docker version (%s) as your local Docker binary (%s). There is nothing to upgrade. If you wish to upgrade you'll need to install a newer version of the Docker binary before running the upgrade command.", cmd.machine.Name, machineDockerVersion, currentDockerVersion))
 	}
 
 	cmd.out.Info.Printf("Backing up to prepare for upgrade...")
 	backup := &DataBackup{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	backup.Run(c)
+	if err := backup.Run(c); err != nil {
+		return err
+	}
 
 	remove := &Remove{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	removeCtx := cmd.NewContext(remove.Commands()[0].Name, remove.Commands()[0].Flags, c)
 	cmd.SetContextFlag(removeCtx, "force", strconv.FormatBool(true))
-	remove.Run(removeCtx)
+	if err := remove.Run(removeCtx); err != nil {
+		return err
+	}
 
 	start := &Start{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	startCtx := cmd.NewContext(start.Commands()[0].Name, start.Commands()[0].Flags, c)
@@ -70,14 +72,18 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	cmd.SetContextFlag(startCtx, "cpu-count", strconv.FormatInt(int64(cmd.machine.GetCPU()), 10))
 	cmd.SetContextFlag(startCtx, "memory-size", strconv.FormatInt(int64(cmd.machine.GetMemory()), 10))
 	cmd.SetContextFlag(startCtx, "disk-size", strconv.FormatInt(int64(cmd.machine.GetDiskInGB()), 10))
-	start.Run(startCtx)
+	if err := start.Run(startCtx); err != nil {
+		return err
+	}
 
 	restore := &DataRestore{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	restoreCtx := cmd.NewContext(restore.Commands()[0].Name, restore.Commands()[0].Flags, c)
 	cmd.SetContextFlag(restoreCtx, "data-dir", c.String("data-dir"))
 	backupFile := fmt.Sprintf("%s%c%s.tgz", c.String("backup-dir"), os.PathSeparator, cmd.machine.Name)
 	cmd.SetContextFlag(restoreCtx, "backup-file", backupFile)
-	restore.Run(restoreCtx)
+	if err := restore.Run(restoreCtx); err != nil {
+		return err
+	}
 
-	return nil
+	return cmd.Success(fmt.Sprintf("Upgrade of '%s' complete", cmd.machine.Name))
 }

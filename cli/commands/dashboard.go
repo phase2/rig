@@ -29,10 +29,10 @@ func (cmd *Dashboard) Run(ctx *cli.Context) error {
 		cmd.out.Info.Println("Launching Dashboard")
 		cmd.LaunchDashboard(cmd.machine)
 	} else {
-		cmd.out.Error.Fatalf("Machine '%s' is not running.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
-	return nil
+	return cmd.Success("")
 }
 
 func (cmd *Dashboard) LaunchDashboard(machine Machine) {

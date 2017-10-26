@@ -48,11 +48,11 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 		cmd.out.Info.Printf("Creating backup directory: %s...", backupDir)
 		if mkdirErr := exec.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
 			cmd.out.Error.Println(mkdirErr)
-			cmd.out.Error.Fatalf("Could not create backup directory %s", backupDir)
+			return cmd.Error(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
 		}
 	} else if _, err := os.Stat(backupFile); err == nil {
 		// If the backup dir already exists, make sure the backup file does not exist.
-		cmd.out.Error.Fatalf("Backup archive %s already exists.", backupFile)
+		return cmd.Error(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
 	}
 
 	cmd.out.Info.Printf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile)
@@ -68,8 +68,8 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	color.Unset()
 
 	if err != nil {
-		cmd.out.Warning.Println("There may have been problems. See above for any errors")
+		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
 	}
 
-	return nil
+	return cmd.Success("Data Backup completed with no errors")
 }

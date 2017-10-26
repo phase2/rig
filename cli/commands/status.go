@@ -3,6 +3,7 @@ package commands
 import (
 	"os/exec"
 
+	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 	"os"
@@ -25,7 +26,7 @@ func (cmd *Status) Commands() []cli.Command {
 
 func (cmd *Status) Run(c *cli.Context) error {
 	if !cmd.machine.Exists() {
-		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	if cmd.out.IsVerbose {
@@ -35,5 +36,5 @@ func (cmd *Status) Run(c *cli.Context) error {
 		os.Stdout.Write(output)
 	}
 
-	return nil
+	return cmd.Success("")
 }

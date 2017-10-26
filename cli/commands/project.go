@@ -97,14 +97,13 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, scriptCommands)
 		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-			cmd.out.Error.Printf("Error running project script '%s': %d", key, exitCode)
-			os.Exit(exitCode)
+			return cmd.Error(fmt.Sprintf("Error running project script '%s': %d", key), "COMMAND-ERROR", exitCode)
 		}
 	} else {
-		cmd.out.Error.Printf("Unrecognized script '%s'", key)
+		return cmd.Error(fmt.Sprintf("Unrecognized script '%s'", key), "SCRIPT-NOT-FOUND", 12)
 	}
 
-	return nil
+	return cmd.Success("")
 }
 
 // Construct a command to execute a configured script.
