@@ -1,9 +1,10 @@
 package commands
 
 import (
-	"os/exec"
-
 	"fmt"
+	"os/exec"
+	"runtime"
+
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -24,6 +25,10 @@ func (cmd *Kill) Commands() []cli.Command {
 }
 
 func (cmd *Kill) Run(c *cli.Context) error {
+	if runtime.GOOS == "linux" {
+		return cmd.Success("Kill is not needed on Linux")
+	}
+
 	if !cmd.machine.Exists() {
 		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}

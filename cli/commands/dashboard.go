@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	dashboardContainerName string = "outrigger-dashboard"
-	dashboardImageName     string = "outrigger/dashboard:latest"
+	DashboardContainerName string = "outrigger-dashboard"
+	DashboardImageName     string = "outrigger/dashboard:latest"
 )
 
 type Dashboard struct {
@@ -30,7 +30,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 }
 
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
-	if cmd.machine.IsRunning() {
+	if cmd.machine.IsRunning() || runtime.GOOS == "linux" {
 		cmd.out.Info.Println("Launching Dashboard")
 		return cmd.LaunchDashboard(cmd.machine)
 	} else {
@@ -48,13 +48,13 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 
 	// The check for whether the image is older than 30 days is not currently used,
 	// except to indicate the age of the image before update in the next section.
-	_, seconds, err := util.ImageOlderThan(dashboardImageName, 86400*30)
+	_, seconds, err := util.ImageOlderThan(DashboardImageName, 86400*30)
 	if err == nil {
-		cmd.out.Verbose.Printf("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400)
+		cmd.out.Verbose.Printf("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", DashboardImageName, seconds/86400)
 	}
 
-	cmd.out.Verbose.Printf("Attempting to update %s", dashboardImageName)
-	if err := util.StreamCommand(exec.Command("docker", "pull", dashboardImageName)); err != nil {
+	cmd.out.Verbose.Printf("Attempting to update %s", DashboardImageName)
+	if err := util.StreamCommand(exec.Command("docker", "pull", DashboardImageName)); err != nil {
 		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 	}
 
@@ -67,8 +67,8 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		"-l", "com.dnsdock.name=dashboard",
 		"-l", "com.dnsdock.image=outrigger",
 		"-e", fmt.Sprintf("DOCKER_API_VERSION=%s", dockerApiVersion),
-		"--name", dashboardContainerName,
-		dashboardImageName,
+		"--name", DashboardContainerName,
+		DashboardImageName,
 	}
 
 	util.ForceStreamCommand(exec.Command("docker", args...))
@@ -86,8 +86,8 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 
 // Stop and remove the dashboard Docker image.
 func (cmd *Dashboard) StopDashboard() error {
-	exec.Command("docker", "stop", dashboardContainerName).Run()
-	exec.Command("docker", "rm", dashboardContainerName).Run()
+	exec.Command("docker", "stop", DashboardContainerName).Run()
+	exec.Command("docker", "rm", DashboardContainerName).Run()
 
 	return nil
 }

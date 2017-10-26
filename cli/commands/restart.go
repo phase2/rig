@@ -26,9 +26,9 @@ func (cmd *Restart) Commands() []cli.Command {
 func (cmd *Restart) Run(c *cli.Context) error {
 	if runtime.GOOS == "linux" || cmd.machine.Exists() {
 		if runtime.GOOS == "linux" {
-			cmd.out.Info.Println("Restarting Outrigger")
+			cmd.out.Info.Println("Restarting Outrigger services")
 		} else {
-			cmd.out.Info.Printf("Restarting Outrigger on Machine '%s'", cmd.machine.Name)
+			cmd.out.Info.Printf("Restarting Outrigger machine '%s' and services", cmd.machine.Name)
 		}
 
 		stop := Stop{BaseCommand{machine: cmd.machine, out: cmd.out}}
@@ -46,5 +46,5 @@ func (cmd *Restart) Run(c *cli.Context) error {
 		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
-	return cmd.Success(fmt.Sprintf("Machine '%s' restarted", cmd.machine.Name))
+	return cmd.Success("Restart successful")
 }

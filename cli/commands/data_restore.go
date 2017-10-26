@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
@@ -37,8 +38,12 @@ func (cmd *DataRestore) Commands() []cli.Command {
 }
 
 func (cmd *DataRestore) Run(c *cli.Context) error {
+	if runtime.GOOS == "linux" {
+		return cmd.Success("Data Restore is not needed on Linux, please unarchive any data directly")
+	}
+
 	if !cmd.machine.Exists() {
-		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	dataDir := c.String("data-dir")

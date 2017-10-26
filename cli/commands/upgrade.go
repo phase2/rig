@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 
 	"github.com/phase2/rig/cli/util"
@@ -37,6 +38,10 @@ func (cmd *Upgrade) Commands() []cli.Command {
 }
 
 func (cmd *Upgrade) Run(c *cli.Context) error {
+	if runtime.GOOS == "linux" {
+		return cmd.Success("Upgrade is not needed on Linux")
+	}
+
 	cmd.out.Info.Printf("Upgrading '%s'...", cmd.machine.Name)
 
 	if cmd.machine.GetData().Get("Driver").Get("Boot2DockerURL").MustString() == "" {

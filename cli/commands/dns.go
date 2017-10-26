@@ -36,8 +36,11 @@ func (cmd *Dns) Commands() []cli.Command {
 }
 
 func (cmd *Dns) Run(c *cli.Context) error {
-	if cmd.machine.IsRunning() {
-		cmd.out.Info.Println("Configuring DNS")
+	cmd.out.Info.Println("Configuring DNS")
+
+	if runtime.GOOS == "linux" {
+		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
+	} else if cmd.machine.IsRunning() {
 		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
 		cmd.ConfigureRoutes(cmd.machine)
 	} else {
@@ -79,7 +82,7 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 	if runtime.GOOS == "windows" {
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		util.StreamCommand(exec.Command("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machineIp))
-	} else {
+	} else if runtime.GOOS == "darwin" {
 		if machine.IsXhyve() {
 			cmd.RemoveHostFilter(machine.GetIP())
 		}
@@ -104,13 +107,17 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 func (cmd *Dns) ConfigureDns(machine Machine, nameservers string) {
 	dnsServers := strings.Split(nameservers, ",")
 
-	machine.SetEnv()
-	bridgeIp := machine.GetBridgeIP()
+	// Linux uses standard bridge IP
+	// May need to make this configurable is there are local linux/docker customizations?
+	var bridgeIp = "172.17.0.1"
+	if runtime.GOOS != "linux" {
+		machine.SetEnv()
+		bridgeIp = machine.GetBridgeIP()
+	}
+
+	cmd.StopDns()
 
 	// Start dnsdock
-	exec.Command("docker", "stop", "dnsdock").Run()
-	exec.Command("docker", "rm", "dnsdock").Run()
-
 	args := []string{
 		"run",
 		"-d",
@@ -127,4 +134,9 @@ func (cmd *Dns) ConfigureDns(machine Machine, nameservers string) {
 		args = append(args, "--nameserver="+server)
 	}
 	util.ForceStreamCommand(exec.Command("docker", args...))
+}
+
+func (cmd *Dns) StopDns() {
+	exec.Command("docker", "stop", "dnsdock").Run()
+	exec.Command("docker", "rm", "dnsdock").Run()
 }

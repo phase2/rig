@@ -27,6 +27,10 @@ func (cmd *Config) Commands() []cli.Command {
 }
 
 func (cmd *Config) Run(c *cli.Context) error {
+	if runtime.GOOS == "linux" {
+		return cmd.Success("Config is not needed on Linux")
+	}
+
 	// Darwin is installed via brew, so no need to muck with PATH
 	if runtime.GOOS != "darwin" {
 		// Add stuff to PATH only once
