@@ -144,4 +144,3 @@ func (cmd *Start) StartMinimal(nameservers string) error {
 
 	return cmd.Success("Outrigger services started")
 }
-
