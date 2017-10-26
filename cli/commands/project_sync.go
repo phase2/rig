@@ -96,7 +96,6 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 		cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	}
 
-
 	// Determine the working directory for CWD-sensitive operations.
 	var workingDir, err = cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir"))
 	if err != nil {
@@ -222,7 +221,6 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if cmd.Config.NotEmpty() {
 		cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	}
-
 
 	// Determine the working directory for CWD-sensitive operations.
 	var workingDir, err = cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir"))
