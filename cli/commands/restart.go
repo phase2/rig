@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"runtime"
 	"time"
 
 	"fmt"
@@ -23,8 +24,12 @@ func (cmd *Restart) Commands() []cli.Command {
 }
 
 func (cmd *Restart) Run(c *cli.Context) error {
-	if cmd.machine.Exists() {
-		cmd.out.Info.Printf("Restarting machine '%s'", cmd.machine.Name)
+	if runtime.GOOS == "linux" || cmd.machine.Exists() {
+		if runtime.GOOS == "linux" {
+			cmd.out.Info.Println("Restarting Outrigger")
+		} else {
+			cmd.out.Info.Printf("Restarting Outrigger on Machine '%s'", cmd.machine.Name)
+		}
 
 		stop := Stop{BaseCommand{machine: cmd.machine, out: cmd.out}}
 		if err := stop.Run(c); err != nil {

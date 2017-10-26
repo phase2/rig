@@ -26,6 +26,27 @@ func (cmd *Stop) Commands() []cli.Command {
 }
 
 func (cmd *Stop) Run(c *cli.Context) error {
+	switch platform := runtime.GOOS; platform {
+	case "linux":
+		return cmd.StopMinimal()
+	default:
+		return cmd.StopOutrigger()
+	}
+}
+
+// Stop "minimal" Outrigger operations, which refers to Linux environments where
+// a virtual machine and networking is not managed by Outrigger.
+func (cmd *Stop) StopMinimal() error {
+	cmd.out.Verbose.Printf("Skipping Step: Linux does not have a docker-machine to stop.")
+	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dash.StopDashboard()
+	cmd.out.Verbose.Printf("Skipping Step: Outrigger does not manage Linux networking.")
+
+	return nil
+}
+
+// Halt all Outrigger and Docker-related operations.
+func (cmd *Stop) StopOutrigger() error {
 	cmd.out.Info.Printf("Stopping machine '%s'", cmd.machine.Name)
 	cmd.machine.Stop()
 
