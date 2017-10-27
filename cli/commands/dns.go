@@ -1,13 +1,13 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"strings"
 
-	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -38,7 +38,7 @@ func (cmd *Dns) Commands() []cli.Command {
 func (cmd *Dns) Run(c *cli.Context) error {
 	cmd.out.Info.Println("Configuring DNS")
 
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
 	} else if cmd.machine.IsRunning() {
 		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
@@ -110,7 +110,7 @@ func (cmd *Dns) ConfigureDns(machine Machine, nameservers string) {
 	// Linux uses standard bridge IP
 	// May need to make this configurable is there are local linux/docker customizations?
 	var bridgeIp = "172.17.0.1"
-	if runtime.GOOS != "linux" {
+	if !util.SupportsNativeDocker() {
 		machine.SetEnv()
 		bridgeIp = machine.GetBridgeIP()
 	}

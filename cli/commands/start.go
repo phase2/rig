@@ -53,7 +53,7 @@ func (cmd *Start) Commands() []cli.Command {
 }
 
 func (cmd *Start) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		cmd.out.Info.Println("Linux users should use Docker natively for best performance.")
 		cmd.out.Info.Println("Please ensure your local Docker setup is compatible with Outrigger.")
 		cmd.out.Info.Println("See http://docs.outrigger.sh/getting-started/linux-installation/")

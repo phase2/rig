@@ -27,7 +27,7 @@ func (cmd *Config) Commands() []cli.Command {
 }
 
 func (cmd *Config) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		return cmd.Success("Config is not needed on Linux")
 	}
 

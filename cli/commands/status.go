@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
@@ -26,7 +25,7 @@ func (cmd *Status) Commands() []cli.Command {
 }
 
 func (cmd *Status) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		return cmd.Success("Status is not needed on Linux")
 	}
 

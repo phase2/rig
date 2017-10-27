@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 
 	"github.com/phase2/rig/cli/util"
@@ -53,7 +52,7 @@ func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 		argsMessage = fmt.Sprintf(" with arguments: %s", strings.Join(ctx.Args(), " "))
 	}
 
-	if cmd.machine.IsRunning() || runtime.GOOS == "linux" {
+	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
 		cmd.out.Verbose.Printf("Executing container %s%s", image, argsMessage)
 		if err := cmd.RunGenerator(ctx, cmd.machine, image); err != nil {
 			return err

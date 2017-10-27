@@ -1,11 +1,12 @@
 package commands
 
 import (
+	"fmt"
 	"os/exec"
 	"runtime"
 
-	"fmt"
 	"github.com/fatih/color"
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
@@ -26,12 +27,11 @@ func (cmd *Stop) Commands() []cli.Command {
 }
 
 func (cmd *Stop) Run(c *cli.Context) error {
-	switch platform := runtime.GOOS; platform {
-	case "linux":
+	if util.SupportsNativeDocker() {
 		return cmd.StopMinimal()
-	default:
-		return cmd.StopOutrigger()
 	}
+
+	return cmd.StopOutrigger()
 }
 
 // Stop "minimal" Outrigger operations, which refers to Linux environments where

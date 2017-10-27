@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os/exec"
-	"runtime"
 
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
@@ -25,7 +24,7 @@ func (cmd *Kill) Commands() []cli.Command {
 }
 
 func (cmd *Kill) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		return cmd.Success("Kill is not needed on Linux")
 	}
 

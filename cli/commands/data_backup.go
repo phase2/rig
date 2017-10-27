@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 
 	"github.com/fatih/color"
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
@@ -38,7 +38,7 @@ func (cmd *DataBackup) Commands() []cli.Command {
 }
 
 func (cmd *DataBackup) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		return cmd.Success("Data Backup is not needed on Linux, please archive any data directly")
 	}
 

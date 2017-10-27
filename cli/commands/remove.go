@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
@@ -30,7 +29,7 @@ func (cmd *Remove) Commands() []cli.Command {
 }
 
 func (cmd *Remove) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		return cmd.Success("Remove is not needed on Linux")
 	}
 

@@ -30,7 +30,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 }
 
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
-	if cmd.machine.IsRunning() || runtime.GOOS == "linux" {
+	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
 		cmd.out.Info.Println("Launching Dashboard")
 		return cmd.LaunchDashboard(cmd.machine)
 	} else {

@@ -1,11 +1,11 @@
 package commands
 
 import (
-	"runtime"
+	"fmt"
 	"time"
 
-	"fmt"
 	"github.com/urfave/cli"
+	"github.com/phase2/rig/cli/util"
 )
 
 type Restart struct {
@@ -24,8 +24,8 @@ func (cmd *Restart) Commands() []cli.Command {
 }
 
 func (cmd *Restart) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" || cmd.machine.Exists() {
-		if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() || cmd.machine.Exists() {
+		if util.SupportsNativeDocker() {
 			cmd.out.Info.Println("Restarting Outrigger services")
 		} else {
 			cmd.out.Info.Printf("Restarting Outrigger machine '%s' and services", cmd.machine.Name)

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
@@ -38,7 +38,7 @@ func (cmd *DataRestore) Commands() []cli.Command {
 }
 
 func (cmd *DataRestore) Run(c *cli.Context) error {
-	if runtime.GOOS == "linux" {
+	if util.SupportsNativeDocker() {
 		return cmd.Success("Data Restore is not needed on Linux, please unarchive any data directly")
 	}
 
