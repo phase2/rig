@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/fatih/color"
+	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
 
@@ -37,8 +38,12 @@ func (cmd *DataBackup) Commands() []cli.Command {
 }
 
 func (cmd *DataBackup) Run(c *cli.Context) error {
+	if util.SupportsNativeDocker() {
+		return cmd.Success("Data Backup is not needed on Linux, please archive any data directly")
+	}
+
 	if !cmd.machine.Exists() {
-		cmd.out.Error.Fatalf("No machine named '%s' exists.", cmd.machine.Name)
+		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	dataDir := c.String("data-dir")

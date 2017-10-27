@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	dashboardContainerName string = "outrigger-dashboard"
-	dashboardImageName     string = "outrigger/dashboard:latest"
+	dashboardContainerName = "outrigger-dashboard"
+	dashboardImageName     = "outrigger/dashboard:latest"
 )
 
 type Dashboard struct {
@@ -30,7 +30,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 }
 
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
-	if cmd.machine.IsRunning() {
+	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
 		cmd.out.Info.Println("Launching Dashboard")
 		return cmd.LaunchDashboard(cmd.machine)
 	} else {

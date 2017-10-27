@@ -1,12 +1,12 @@
 package commands
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 
-	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
-	"os"
 )
 
 type Status struct {
@@ -25,6 +25,10 @@ func (cmd *Status) Commands() []cli.Command {
 }
 
 func (cmd *Status) Run(c *cli.Context) error {
+	if util.SupportsNativeDocker() {
+		return cmd.Success("Status is not needed on Linux")
+	}
+
 	if !cmd.machine.Exists() {
 		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}

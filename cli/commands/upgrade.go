@@ -37,6 +37,10 @@ func (cmd *Upgrade) Commands() []cli.Command {
 }
 
 func (cmd *Upgrade) Run(c *cli.Context) error {
+	if util.SupportsNativeDocker() {
+		return cmd.Success("Upgrade is not needed on Linux")
+	}
+
 	cmd.out.Info.Printf("Upgrading '%s'...", cmd.machine.Name)
 
 	if cmd.machine.GetData().Get("Driver").Get("Boot2DockerURL").MustString() == "" {

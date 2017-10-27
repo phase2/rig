@@ -5,12 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
-	"strconv"
 )
 
 type Doctor struct {
@@ -35,7 +35,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	} else {
 		cmd.out.Error.Fatal("Docker (docker) is not installed.")
 	}
-	if runtime.GOOS != "linux" {
+	if !util.SupportsNativeDocker() {
 		if err := exec.Command("docker-machine", "-h").Start(); err == nil {
 			cmd.out.Info.Println("Docker Machine is installed.")
 		} else {
@@ -49,7 +49,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 1. Ensure the configured docker-machine matches the set environment.
-	if runtime.GOOS != "linux" {
+	if !util.SupportsNativeDocker() {
 		if cmd.machine.Exists() {
 			if _, isset := os.LookupEnv("DOCKER_MACHINE_NAME"); isset == false {
 				cmd.out.Error.Fatalf("Docker configuration is not set. Please run 'eval \"$(rig config)\"'.")
@@ -72,7 +72,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 2. Check Docker API Version compatibility
-	if runtime.GOOS != "linux" {
+	if !util.SupportsNativeDocker() {
 		clientApiVersion := util.GetDockerClientApiVersion()
 		serverApiVersion, err := util.GetDockerServerApiVersion(cmd.machine.Name)
 		serverMinApiVersion, _ := util.GetDockerServerMinApiVersion(cmd.machine.Name)
@@ -133,7 +133,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 5. Check for storage on VM volume
-	if runtime.GOOS != "linux" {
+	if !util.SupportsNativeDocker() {
 		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			dataUsage := strings.TrimSpace(string(output))
@@ -154,7 +154,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 
 	// 6. Check for storage on /Users
-	if runtime.GOOS != "linux" {
+	if !util.SupportsNativeDocker() {
 		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			userUsage := strings.TrimSpace(string(output))

@@ -1,9 +1,9 @@
 package commands
 
 import (
+	"fmt"
 	"os/exec"
 
-	"fmt"
 	"github.com/phase2/rig/cli/util"
 	"github.com/urfave/cli"
 )
@@ -24,6 +24,10 @@ func (cmd *Kill) Commands() []cli.Command {
 }
 
 func (cmd *Kill) Run(c *cli.Context) error {
+	if util.SupportsNativeDocker() {
+		return cmd.Success("Kill is not needed on Linux")
+	}
+
 	if !cmd.machine.Exists() {
 		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
