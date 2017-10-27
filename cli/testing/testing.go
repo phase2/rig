@@ -57,6 +57,12 @@ func MainTestProcess(m *testing.M) {
 		// This mode can be used to test that we can predict programmatically assembled command that would be executed.
 		fmt.Println(strings.Join(os.Args[1:], " "))
 
+	case "succeed":
+		os.Exit(0)
+
+	case "fail":
+		os.Exit(42)
+
 	case "mock":
 		if mock != nil {
 			// Used the command that would be executed under normal runtime as the key to our mock value map and outputs the value.
@@ -67,21 +73,39 @@ func MainTestProcess(m *testing.M) {
 	}
 }
 
-// mockExecCommand uses fakeExecCommand to transform the intended remote executation
+// MockExecCommand uses fakeExecCommand to transform the intended remote execution
 // into something controlled by the test runner, then adds an environment variable to
-// the command so TestMain routes it to the mocking functionality.
+// the command so TestMain routes it to the command "mock" functionality.
 func MockExecCommand(command string, args ...string) *exec.Cmd {
 	cmd := fakeExecCommand(command, args...)
 	cmd.Env = append(cmd.Env, "GO_TEST_MODE=mock")
 	return cmd
 }
 
-// echoExecCommand uses fakeExecCommand to transform the intended remote executation
+// EchoExecCommand uses fakeExecCommand to transform the intended remote execution
 // into something controlled by the test runner, then adds an environment variable to
-// the command so TestMain routes it to the command echo functionality.
+// the command so TestMain routes it to the command "echo" functionality.
 func EchoExecCommand(command string, args ...string) *exec.Cmd {
 	cmd := fakeExecCommand(command, args...)
 	cmd.Env = append(cmd.Env, "GO_TEST_MODE=echo")
+	return cmd
+}
+
+// SucceedExecCommand uses fakeExecCommand to transform the intended remote execution
+// into something controlled by the test runner, then adds an environment variable to
+// the command so TestMain routes it to the command "success" functionality.
+func SuccessExecCommand(command string, args ...string) *exec.Cmd {
+	cmd := fakeExecCommand(command, args...)
+	cmd.Env = append(cmd.Env, "GO_TEST_MODE=success")
+	return cmd
+}
+
+// FailExecCommand uses fakeExecCommand to transform the intended remote execution
+// into something controlled by the test runner, then adds an environment variable to
+// the command so TestMain routes it to the command "fail" functionality.
+func FailExecCommand(command string, args ...string) *exec.Cmd {
+	cmd := fakeExecCommand(command, args...)
+	cmd.Env = append(cmd.Env, "GO_TEST_MODE=fail")
 	return cmd
 }
 

@@ -1,9 +1,10 @@
-package util
+package util_test
 
 import (
 	"testing"
 
 	rigtest "github.com/phase2/rig/cli/testing"
+	"github.com/phase2/rig/cli/util"
 )
 
 // mock provides mock values to use as lookup responses to functions we will execute in our production code.
@@ -19,114 +20,77 @@ var mockSet = rigtest.ExecMockSet{
 	"docker inspect --format {{.Created}} outrigger/dust":                            "2017-09-18T21:43:00.565978065Z",
 }
 
-func TestMain(m *testing.M) {
+func init() {
 	rigtest.SetMockByType("success", mockSet)
-	rigtest.MainTestProcess(m)
 }
 
 // TestGetRawCurrentDockerVersion confirms successful Docker version extraction.
 func TestGetRawCurrentDockerVersion(t *testing.T) {
 	// In case some other functionality has swapped out this value, we will store
 	// it explicitly rather than assume it is exec.Command.
-	stashCommand := execCommand
-	// Re-define execCommand so our runtime code executes using the mocking functionality.
-	// I thought execCommand would be a private variable in file scope, apparently sharing the package
+	stashCommand := util.ExecCommand
+	// Re-define util.ExecCommand so our runtime code executes using the mocking functionality.
+	// I thought util.ExecCommand would be a private variable in file scope, apparently sharing the package
 	// is enough to access and manipulate it. Or perhaps test functions have special scope rules?
-	execCommand = rigtest.MockExecCommand
+	util.ExecCommand = rigtest.MockExecCommand
 	// Put back the original behavior after we are done with this test function.
-	defer func() { execCommand = stashCommand }()
+	defer func() { util.ExecCommand = stashCommand }()
 	// Run the code under test.
-	out := GetRawCurrentDockerVersion()
-
-	// Implement our assertion.
-	expected := "17.09.0-ce"
-	if out != expected {
-		t.Errorf("GetRawCurrentDockerVersion: Expected %q, Actual %q", expected, out)
-	}
+	actual := util.GetRawCurrentDockerVersion()
+	rigtest.Equals(t, "17.09.0-ce", actual)
 }
 
 // TestGetCurrentDockerVersion confirms successful processing of Docker version into version object.
 // For more thoroughly commented exec wrangling details see TestGetRawCurrentDockerVersion.
 func TestGetCurrentDockerVersion(t *testing.T) {
-	stashCommand := execCommand
-	execCommand = rigtest.MockExecCommand
-	defer func() { execCommand = stashCommand }()
-	version, err := GetDockerServerApiVersion("gastropod")
-
-	if err != nil {
-		t.Errorf("GetDockerServerApiVersion: %v", err)
-	}
-
-	expected := "1.30.0"
-	if version.String() != expected {
-		t.Errorf("GetDockerServerApiVersion: Expected %q, Actual %q", expected, version)
-	}
+	stashCommand := util.ExecCommand
+	util.ExecCommand = rigtest.MockExecCommand
+	defer func() { util.ExecCommand = stashCommand }()
+	actual, err := util.GetDockerServerApiVersion("gastropod")
+	rigtest.Ok(t, err)
+	rigtest.Equals(t, "1.30.0", actual.String())
 }
 
 // TestGetDockerServerApiVersion confirms successful Docker client version extraction.
 // For more thoroughly commented exec wrangling details see TestGetRawCurrentDockerVersion.
 func TestGetDockerClientApiVersion(t *testing.T) {
-	stashCommand := execCommand
-	execCommand = rigtest.MockExecCommand
-	defer func() { execCommand = stashCommand }()
-	version := GetDockerClientApiVersion()
-
-	expected := "1.30.0"
-	if version.String() != expected {
-		t.Errorf("GetDockerClientApiVersion: Expected %q, Actual %q", expected, version)
-	}
+	stashCommand := util.ExecCommand
+	util.ExecCommand = rigtest.MockExecCommand
+	defer func() { util.ExecCommand = stashCommand }()
+	actual := util.GetDockerClientApiVersion()
+	rigtest.Equals(t, "1.30.0", actual.String())
 }
 
 // TestGetDockerServerApiVersion confirms successful Docker server version extraction.
 // For more thoroughly commented exec wrangling details see TestGetRawCurrentDockerVersion.
 func TestGetDockerServerApiVersion(t *testing.T) {
-	stashCommand := execCommand
-	execCommand = rigtest.MockExecCommand
-	defer func() { execCommand = stashCommand }()
-	version, err := GetDockerServerApiVersion("gastropod")
-
-	if err != nil {
-		t.Errorf("GetDockerServerApiVersion: %v", err)
-	}
-
-	expected := "1.30.0"
-	if version.String() != expected {
-		t.Errorf("GetDockerServerApiVersion: Expected %q, Actual %q", expected, version)
-	}
+	stashCommand := util.ExecCommand
+	util.ExecCommand = rigtest.MockExecCommand
+	defer func() { util.ExecCommand = stashCommand }()
+	actual, err := util.GetDockerServerApiVersion("gastropod")
+	rigtest.Ok(t, err)
+	rigtest.Equals(t, "1.30.0", actual.String())
 }
 
 // TestGetDockerServerMinApiVersion confirms successful Docker minimum API compatibility version.
 // For more thoroughly commented exec wrangling details see TestGetRawCurrentDockerVersion.
 func TestGetDockerServerMinApiVersion(t *testing.T) {
-	stashCommand := execCommand
-	execCommand = rigtest.MockExecCommand
-	defer func() { execCommand = stashCommand }()
-	version, err := GetDockerServerMinApiVersion("gastropod")
-
-	if err != nil {
-		t.Errorf("GetDockerServerMinApiVersion: %v", err)
-	}
-
-	expected := "1.12.0"
-	if version.String() != expected {
-		t.Errorf("GetDockerServerMinApiVersion: Expected %q, Actual %q", expected, version)
-	}
+	stashCommand := util.ExecCommand
+	util.ExecCommand = rigtest.MockExecCommand
+	defer func() { util.ExecCommand = stashCommand }()
+	actual, err := util.GetDockerServerMinApiVersion("gastropod")
+	rigtest.Ok(t, err)
+	rigtest.Equals(t, "1.12.0", actual.String())
 }
 
 // TestImageOlderThan confirms image age evaluation.
 // For more thoroughly commented exec wrangling details see TestGetRawCurrentDockerVersion.
 // @TODO identify how to mock the current time so we can test this more completely.
 func TestImageOlderThan(t *testing.T) {
-	stashCommand := execCommand
-	execCommand = rigtest.MockExecCommand
-	defer func() { execCommand = stashCommand }()
-	older, _, err := ImageOlderThan("outrigger/dust", 86400*30)
-
-	if err != nil {
-		t.Errorf("ImageOlderThan: %v", err)
-	}
-
-	if !older {
-		t.Errorf("ImageOlderThan: Image is older than 30 days ago but reporting as newer.")
-	}
+	stashCommand := util.ExecCommand
+	util.ExecCommand = rigtest.MockExecCommand
+	defer func() { util.ExecCommand = stashCommand }()
+	older, _, err := util.ImageOlderThan("outrigger/dust", 86400*30)
+	rigtest.Ok(t, err)
+	rigtest.Assert(t, older, "Image is older than 30 days ago but reporting as newer.", "howdy")
 }
