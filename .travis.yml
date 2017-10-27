@@ -14,7 +14,7 @@ matrix:
 
 script:
   - "scripts/test-go-fmt.sh"
-  - "go run main.go"
+  - "go run cmd/main.go"
 
 notifications:
   flowdock:
