@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )

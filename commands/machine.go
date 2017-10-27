@@ -11,7 +11,7 @@ import (
 	"errors"
 	"github.com/bitly/go-simplejson"
 	"github.com/hashicorp/go-version"
-	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/util"
 )
 
 type Machine struct {

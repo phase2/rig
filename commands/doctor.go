@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
 

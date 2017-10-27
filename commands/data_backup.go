@@ -6,7 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/fatih/color"
-	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
 

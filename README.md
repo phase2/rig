@@ -31,7 +31,7 @@ Get all the dependencies
 
 ```bash
 # Install the project dependencies into $GOPATH
-cd $GOPATH/src/github.com/phase2/rig/cli
+cd $GOPATH/src/github.com/phase2/rig
 dep ensure
 ```
 
@@ -41,7 +41,7 @@ Developing Locally
 If you want to build  `rig` locally for your target platform, simply run the following command:
 
 ```bash
-GOARCH=amd64 GOOS=darwin go build -o ../build/darwin/rig
+GOARCH=amd64 GOOS=darwin go build -o build/darwin/rig cmd/main.go
 ```
    
 This command targets an OS/Architecture (Darwin/Mac and 64bit) and puts the resultant file in the `build/darwin/`

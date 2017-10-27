@@ -1,11 +1,11 @@
 package util
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/fatih/color"
-	"io/ioutil"
 )
 
 var logger *RigLogger

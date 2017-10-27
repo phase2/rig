@@ -17,7 +17,7 @@ import (
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 
-	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/util"
 )
 
 type ProjectSync struct {

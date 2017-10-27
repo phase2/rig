@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/phase2/rig/cli/util"
+	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
 
