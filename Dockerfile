@@ -12,6 +12,8 @@ RUN apk add --no-cache \
   ruby-dev \
   tar \
   && go get -u github.com/golang/dep/... \
+  && go get -u github.com/alecthomas/gometalinter \
   && go get -u github.com/goreleaser/goreleaser
 
+RUN gometalinter --install --update
 RUN gem install --no-rdoc --no-ri fpm

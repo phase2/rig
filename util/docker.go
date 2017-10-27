@@ -9,25 +9,29 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
+// GetRawCurrentDockerVersion returns the entire semver string from the docker version cli
 func GetRawCurrentDockerVersion() string {
 	output, _ := exec.Command("docker", "--version").Output()
 	re := regexp.MustCompile("Docker version (.*),")
 	return re.FindAllStringSubmatch(string(output), -1)[0][1]
 }
 
+// GetCurrentDockerVersion returns a Version based in the Docker semver
 func GetCurrentDockerVersion() *version.Version {
 	versionNumber := GetRawCurrentDockerVersion()
 	return version.Must(version.NewVersion(versionNumber))
 }
 
-func GetDockerClientApiVersion() *version.Version {
+// GetDockerClientAPIVersion returns a Version for the docker client API version
+func GetDockerClientAPIVersion() *version.Version {
 	output, _ := exec.Command("docker", "version", "--format", "{{.Client.APIVersion}}").Output()
-	re := regexp.MustCompile("^([\\d|\\.]+)")
+	re := regexp.MustCompile(`^([\d|\.]+)`)
 	versionNumber := re.FindAllStringSubmatch(string(output), -1)[0][1]
 	return version.Must(version.NewVersion(versionNumber))
 }
 
-func GetDockerServerApiVersion(name string) (*version.Version, error) {
+// GetDockerServerAPIVersion returns a Version for the docker server API version
+func GetDockerServerAPIVersion(name string) (*version.Version, error) {
 	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.APIVersion}}").Output()
 	if err != nil {
 		return nil, err
@@ -35,7 +39,8 @@ func GetDockerServerApiVersion(name string) (*version.Version, error) {
 	return version.Must(version.NewVersion(strings.TrimSpace(string(output)))), nil
 }
 
-func GetDockerServerMinApiVersion(name string) (*version.Version, error) {
+// GetDockerServerMinAPIVersion returns the minimum compatability version for the docker server
+func GetDockerServerMinAPIVersion(name string) (*version.Version, error) {
 	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.MinAPIVersion}}").Output()
 	if err != nil {
 		return nil, err
@@ -43,8 +48,8 @@ func GetDockerServerMinApiVersion(name string) (*version.Version, error) {
 	return version.Must(version.NewVersion(strings.TrimSpace(string(output)))), nil
 }
 
-// Determine the age of the Docker Image and whether the image is older than the designated timestamp.
-func ImageOlderThan(image string, elapsed_seconds float64) (bool, float64, error) {
+// ImageOlderThan determines the age of the Docker Image and whether the image is older than the designated timestamp.
+func ImageOlderThan(image string, elapsedSeconds float64) (bool, float64, error) {
 	output, err := exec.Command("docker", "inspect", "--format", "{{.Created}}", image).Output()
 	if err != nil {
 		return false, 0, err
@@ -57,5 +62,5 @@ func ImageOlderThan(image string, elapsed_seconds float64) (bool, float64, error
 	}
 
 	seconds := time.Since(datetime).Seconds()
-	return seconds > elapsed_seconds, seconds, nil
+	return seconds > elapsedSeconds, seconds, nil
 }

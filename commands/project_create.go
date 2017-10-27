@@ -10,10 +10,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// ProjectCreate is the command for running the project generator to scaffold a new project
 type ProjectCreate struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *ProjectCreate) Commands() []cli.Command {
 	create := cli.Command{
 		Name:        "create",
@@ -40,7 +42,7 @@ func (cmd *ProjectCreate) Commands() []cli.Command {
 	return []cli.Command{create}
 }
 
-// Run a docker image to execute the desired generator
+// Create executes the `rig project create` command to execute the desired generator
 func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 	image := ctx.String("image")
 	if image == "" {
@@ -64,6 +66,7 @@ func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 	return cmd.Success("")
 }
 
+// RunGenerator runs the generator image
 func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image string) error {
 	machine.SetEnv()
 
@@ -77,7 +80,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 	// or that docker operations failed and things will likely go wrong anyway.
 	if err == nil && !ctx.Bool("no-update") {
 		cmd.out.Verbose.Printf("Attempting to update %s", image)
-		if err := util.StreamCommand(exec.Command("docker", "pull", image)); err != nil {
+		if e := util.StreamCommand(exec.Command("docker", "pull", image)); e != nil {
 			cmd.out.Verbose.Println("Failed to update generator image. Will use local cache if available.")
 		}
 	} else if err == nil && ctx.Bool("no-update") {

@@ -7,10 +7,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Remove is the command for deleting a Docker Machine
 type Remove struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Remove) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -28,6 +30,7 @@ func (cmd *Remove) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig remove` command
 func (cmd *Remove) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		return cmd.Success("Remove is not needed on Linux")

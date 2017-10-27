@@ -12,11 +12,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-type Dns struct {
+// DNS is the command for starting all DNS services and appropriate network routing to access services
+type DNS struct {
 	BaseCommand
 }
 
-func (cmd *Dns) Commands() []cli.Command {
+// Commands returns the operations supported by this command
+func (cmd *DNS) Commands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:  "dns",
@@ -35,13 +37,14 @@ func (cmd *Dns) Commands() []cli.Command {
 	}
 }
 
-func (cmd *Dns) Run(c *cli.Context) error {
+// Run executes the `rig dns` command
+func (cmd *DNS) Run(c *cli.Context) error {
 	cmd.out.Info.Println("Configuring DNS")
 
 	if util.SupportsNativeDocker() {
-		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
+		cmd.ConfigureDNS(cmd.machine, c.String("nameservers"))
 	} else if cmd.machine.IsRunning() {
-		cmd.ConfigureDns(cmd.machine, c.String("nameservers"))
+		cmd.ConfigureDNS(cmd.machine, c.String("nameservers"))
 		cmd.ConfigureRoutes(cmd.machine)
 	} else {
 		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
@@ -50,8 +53,8 @@ func (cmd *Dns) Run(c *cli.Context) error {
 	return cmd.Success("DNS Services have been started")
 }
 
-// Remove the host filter from the xhyve bridge interface
-func (cmd *Dns) RemoveHostFilter(ipAddr string) {
+// RemoveHostFilter removs the host filter from the xhyve bridge interface
+func (cmd *DNS) RemoveHostFilter(ipAddr string) {
 	// #1: route -n get <machineIP> to find the interface name
 	routeData, err := exec.Command("route", "-n", "get", ipAddr).CombinedOutput()
 	if err != nil {
@@ -74,22 +77,24 @@ func (cmd *Dns) RemoveHostFilter(ipAddr string) {
 	util.StreamCommand(exec.Command("sudo", "ifconfig", iface, "-hostfilter", member))
 }
 
-func (cmd *Dns) ConfigureRoutes(machine Machine) {
+// ConfigureRoutes will configure routing to allow access to containers on IP addresses
+// within the Docker Machine bridge network
+func (cmd *DNS) ConfigureRoutes(machine Machine) {
 	cmd.out.Info.Println("Setting up local networking (may require your admin password)")
 
-	machineIp := machine.GetIP()
-	bridgeIp := machine.GetBridgeIP()
+	machineIP := machine.GetIP()
+	bridgeIP := machine.GetBridgeIP()
 	if runtime.GOOS == "windows" {
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
-		util.StreamCommand(exec.Command("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machineIp))
-	} else if runtime.GOOS == "darwin" {
+		util.StreamCommand(exec.Command("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machineIP))
+	} else if util.IsMac() {
 		if machine.IsXhyve() {
 			cmd.RemoveHostFilter(machine.GetIP())
 		}
 		exec.Command("sudo", "mkdir", "-p", "/etc/resolver").Run()
-		exec.Command("bash", "-c", "echo \"nameserver "+bridgeIp+"\" | sudo tee /etc/resolver/vm").Run()
+		exec.Command("bash", "-c", "echo \"nameserver "+bridgeIP+"\" | sudo tee /etc/resolver/vm").Run()
 		exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
-		util.StreamCommand(exec.Command("sudo", "route", "-n", "add", "172.17.0.0/16", machineIp))
+		util.StreamCommand(exec.Command("sudo", "route", "-n", "add", "172.17.0.0/16", machineIP))
 
 		if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 			// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
@@ -104,18 +109,19 @@ func (cmd *Dns) ConfigureRoutes(machine Machine) {
 	}
 }
 
-func (cmd *Dns) ConfigureDns(machine Machine, nameservers string) {
+// ConfigureDNS will start the dnsdock service
+func (cmd *DNS) ConfigureDNS(machine Machine, nameservers string) {
 	dnsServers := strings.Split(nameservers, ",")
 
 	// Linux uses standard bridge IP
 	// May need to make this configurable is there are local linux/docker customizations?
-	var bridgeIp = "172.17.0.1"
+	var bridgeIP = "172.17.0.1"
 	if !util.SupportsNativeDocker() {
 		machine.SetEnv()
-		bridgeIp = machine.GetBridgeIP()
+		bridgeIP = machine.GetBridgeIP()
 	}
 
-	cmd.StopDns()
+	cmd.StopDNS()
 
 	// Start dnsdock
 	args := []string{
@@ -126,7 +132,7 @@ func (cmd *Dns) ConfigureDns(machine Machine, nameservers string) {
 		"-l", "com.dnsdock.name=dnsdock",
 		"-l", "com.dnsdock.image=outrigger",
 		"--name", "dnsdock",
-		"-p", bridgeIp + ":53:53/udp",
+		"-p", bridgeIP + ":53:53/udp",
 		"aacebedo/dnsdock:v1.16.1-amd64",
 		"--domain=vm",
 	}
@@ -136,7 +142,8 @@ func (cmd *Dns) ConfigureDns(machine Machine, nameservers string) {
 	util.ForceStreamCommand(exec.Command("docker", args...))
 }
 
-func (cmd *Dns) StopDns() {
+// StopDNS stops the dnsdock service and cleans up
+func (cmd *DNS) StopDNS() {
 	exec.Command("docker", "stop", "dnsdock").Run()
 	exec.Command("docker", "rm", "dnsdock").Run()
 }

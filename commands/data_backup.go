@@ -10,10 +10,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// DataBackup is the command for backing up the /data directory within the Docker Machine
 type DataBackup struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *DataBackup) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -37,6 +39,7 @@ func (cmd *DataBackup) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig data-backup` command
 func (cmd *DataBackup) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		return cmd.Success("Data Backup is not needed on Linux, please archive any data directly")

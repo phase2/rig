@@ -10,6 +10,7 @@ import (
 
 var logger *RigLogger
 
+// RigLogger is the global logger object
 type RigLogger struct {
 	Info      *log.Logger
 	Warning   *log.Logger
@@ -18,6 +19,7 @@ type RigLogger struct {
 	IsVerbose bool
 }
 
+// LoggerInit initializes the global logger
 func LoggerInit(verbose bool) {
 	var verboseWriter = ioutil.Discard
 	if verbose {
@@ -32,6 +34,7 @@ func LoggerInit(verbose bool) {
 	}
 }
 
+// Logger returns the instance of the global logger
 func Logger() *RigLogger {
 	if logger == nil {
 		LoggerInit(false)

@@ -11,6 +11,12 @@ services:
     entrypoint: [ "goreleaser" ]
 
   # Build rig, dropping off a working binary in build/darwin/rig.
+  lint:
+    extends: base
+    entrypoint: [ "gometalinter", "--vendor", "--config=gometalinter.json"]
+    command: "./..."
+
+  # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
     command: go build -o build/darwin/rig cmd/main.go
