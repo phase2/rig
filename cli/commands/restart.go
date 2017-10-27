@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/urfave/cli"
 	"github.com/phase2/rig/cli/util"
+	"github.com/urfave/cli"
 )
 
 type Restart struct {
