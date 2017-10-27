@@ -34,8 +34,8 @@ type Volume struct {
 	External bool
 }
 
-const UNISON_PORT = 5000
-const MAX_WATCHES = "100000"
+const UnisonPort = 5000
+const MaxWatches = "100000"
 
 func (cmd *ProjectSync) Commands() []cli.Command {
 	start := cli.Command{
@@ -97,55 +97,59 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	}
 
 	// Determine the working directory for CWD-sensitive operations.
-	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir")); err == nil {
-		// Determine the volume name to be used across all operating systems.
-		// For cross-compatibility the way this volume is set up will vary.
-		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
-
-		switch platform := runtime.GOOS; platform {
-		case "linux":
-			cmd.out.Verbose.Printf("Setting up local volume: %s", volumeName)
-			cmd.SetupBindVolume(volumeName, workingDir)
-		default:
-			cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
-			cmd.StartUnisonSync(ctx, volumeName, cmd.Config, workingDir)
-		}
-	} else {
-		cmd.out.Error.Fatal(err)
+	var workingDir, err = cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir"))
+	if err != nil {
+		return cmd.Error(err.Error(), "SYNC-PATH-ERROR", 12)
 	}
 
-	return nil
+	// Determine the volume name to be used across all operating systems.
+	// For cross-compatibility the way this volume is set up will vary.
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+
+	switch platform := runtime.GOOS; platform {
+	case "linux":
+		cmd.out.Verbose.Printf("Setting up local volume: %s", volumeName)
+		return cmd.SetupBindVolume(volumeName, workingDir)
+	default:
+		cmd.out.Verbose.Printf("Starting sync with volume: %s", volumeName)
+		return cmd.StartUnisonSync(ctx, volumeName, cmd.Config, workingDir)
+	}
 }
 
 // For systems that need/support Unison
-func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, config *ProjectConfig, workingDir string) {
+func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, config *ProjectConfig, workingDir string) error {
 	// Ensure the processes can handle a large number of watches
-	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", MAX_WATCHES); err != nil {
-		cmd.out.Error.Fatalf("Error configuring file watches on Docker Machine: %v", err)
+	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", MaxWatches); err != nil {
+		cmd.Error(fmt.Sprintf("Error configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12)
 	}
 
 	cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
-	exec.Command("docker", "volume", "create", volumeName).Run()
+	if err := exec.Command("docker", "volume", "create", volumeName).Run(); err != nil {
+		return cmd.Error(fmt.Sprintf("Failed to create sync volume: %s", volumeName), "VOLUME-CREATE-FAILED", 13)
+	}
 
 	cmd.out.Info.Println("Starting Unison container")
 	unisonMinorVersion := cmd.GetUnisonMinorVersion()
 
 	cmd.out.Verbose.Printf("Local Unison version for compatibilty: %s", unisonMinorVersion)
 	exec.Command("docker", "container", "stop", volumeName).Run()
-	err := exec.Command("docker", "container", "run", "--detach", "--rm",
+	containerArgs := []string{
+		"container", "run", "--detach", "--rm",
 		"-v", fmt.Sprintf("%s:/unison", volumeName),
 		"-e", "UNISON_DIR=/unison",
 		"-l", fmt.Sprintf("com.dnsdock.name=%s", volumeName),
 		"-l", "com.dnsdock.image=volume.outrigger",
 		"--name", volumeName,
 		fmt.Sprintf("outrigger/unison:%s", unisonMinorVersion),
-	).Run()
-
-	if err != nil {
-		cmd.out.Error.Fatalf("Error starting sync container %s: %v", volumeName, err)
+	}
+	if err := exec.Command("docker", containerArgs...).Run(); err != nil {
+		cmd.Error(fmt.Sprintf("Error starting sync container %s: %v", volumeName, err), "SYNC-CONTAINER-START-FAILED", 13)
 	}
 
-	var ip = cmd.WaitForUnisonContainer(volumeName, ctx.Int("initial-sync-timeout"))
+	ip, err := cmd.WaitForUnisonContainer(volumeName, ctx.Int("initial-sync-timeout"))
+	if err != nil {
+		return cmd.Error(err.Error(), "SYNC-INIT-FAILED", 13)
+	}
 
 	cmd.out.Info.Println("Initializing sync")
 
@@ -161,7 +165,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	// Initiate local Unison process.
 	unisonArgs := []string{
 		".",
-		fmt.Sprintf("socket://%s:%d/", ip, UNISON_PORT),
+		fmt.Sprintf("socket://%s:%d/", ip, UnisonPort),
 		"-auto", "-batch", "-silent", "-contactquietly",
 		"-repeat", "watch",
 		"-prefer", ".",
@@ -179,9 +183,14 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	command.Dir = workingDir
 	cmd.out.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
 	if err = command.Start(); err != nil {
-		cmd.out.Error.Fatalf("Error starting local Unison process: %v", err)
+		return cmd.Error(fmt.Sprintf("Failure starting local Unison process: %v", err), "UNISON-START-FAILED", 13)
 	}
-	cmd.WaitForSyncInit(logFile, workingDir, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait"))
+
+	if err := cmd.WaitForSyncInit(logFile, workingDir, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait")); err != nil {
+		return cmd.Error(err.Error(), "UNISON-SYNC-FAILED", 13)
+	}
+
+	return cmd.Success("Unison sync started successfully")
 }
 
 // For systems that have native container/volume support
@@ -197,13 +206,16 @@ func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) er
 		volumeName,
 	}
 
-	return exec.Command("docker", volumeArgs...).Run()
+	if err := exec.Command("docker", volumeArgs...).Run(); err != nil {
+		return cmd.Error(err.Error(), "BIND-VOLUME-FAILURE", 13)
+	}
+
+	return cmd.Success("Bind volume created")
 }
 
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if runtime.GOOS == "linux" {
-		cmd.out.Info.Println("No Unison container to stop, using local bind volume")
-		return nil
+		return cmd.Success("No Unison container to stop, using local bind volume")
 	}
 	cmd.Config = NewProjectConfig()
 	if cmd.Config.NotEmpty() {
@@ -211,16 +223,19 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	}
 
 	// Determine the working directory for CWD-sensitive operations.
-	if workingDir, err := cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir")); err == nil {
-		volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
-		cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
-		cmd.out.Info.Println("Stopping Unison container")
-		exec.Command("docker", "container", "stop", volumeName).Run()
-	} else {
-		cmd.out.Error.Fatal(err)
+	var workingDir, err = cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir"))
+	if err != nil {
+		return cmd.Error(err.Error(), "SYNC-PATH-ERROR", 12)
 	}
 
-	return nil
+	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
+	cmd.out.Info.Println("Stopping Unison container")
+	if err := exec.Command("docker", "container", "stop", volumeName).Run(); err != nil {
+		return cmd.Error(err.Error(), "SYNC-CONTAINER-FAILURE", 13)
+	}
+
+	return cmd.Success("Unison container stopped")
 }
 
 // Find the volume name through a variety of fall backs
@@ -269,7 +284,7 @@ func (cmd *ProjectSync) LoadComposeFile() (*ComposeFile, error) {
 // we need to discover the IP address of the container instead of using the DNS name
 // when compiled without -cgo this executable will not use the native mac dns resolution
 // which is how we have configured dnsdock to provide names for containers.
-func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeconds int) string {
+func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeconds int) (string, error) {
 	cmd.out.Info.Println("Waiting for container to start")
 
 	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
@@ -278,27 +293,27 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 
 	output, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName).Output()
 	if err != nil {
-		cmd.out.Error.Fatalf("Error inspecting sync container %s: %v", containerName, err)
+		return "", fmt.Errorf("error inspecting sync container %s: %v", containerName, err)
 	}
 	ip := strings.Trim(string(output), "\n")
 
-	cmd.out.Verbose.Printf("Checking for Unison network connection on %s %d", ip, UNISON_PORT)
+	cmd.out.Verbose.Printf("Checking for Unison network connection on %s %d", ip, UnisonPort)
 	for i := 1; i <= timeoutLoops; i++ {
-		if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UNISON_PORT)); err == nil {
+		if conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, UnisonPort)); err == nil {
 			conn.Close()
-			return ip
+			return ip, nil
 		} else {
 			cmd.out.Info.Printf("Error: %v", err)
 			time.Sleep(timeoutLoopSleep)
 		}
 	}
-	cmd.out.Error.Fatal("Sync container failed to start!")
-	return ""
+
+	return "", fmt.Errorf("sync container %s failed to start", containerName)
 }
 
 // The local unison process is finished initializing when the log file exists
 // and has stopped growing in size
-func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeoutSeconds int, syncWaitSeconds int) {
+func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeoutSeconds int, syncWaitSeconds int) error {
 	cmd.out.Info.Print("Waiting for initial sync detection")
 
 	// The use of os.Stat below is not subject to our working directory configuration,
@@ -343,7 +358,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 				if err := util.RemoveFile(tempFile, workingDir); err != nil {
 					cmd.out.Warning.Printf("Could not remove the temporary file: %s: %s", tempFile, err.Error())
 				}
-				return
+				return nil
 			} else {
 				time.Sleep(timeoutLoopSleep)
 			}
@@ -357,7 +372,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		}
 	}
 
-	cmd.out.Error.Fatal("Failed to detect start of initial sync!")
+	return fmt.Errorf("Failed to detect start of initial sync")
 }
 
 // Get the local Unison version to try to load a compatible unison image
@@ -382,7 +397,7 @@ func (cmd *ProjectSync) DeriveLocalSyncPath(config *ProjectConfig, override stri
 	} else if cwd, err := os.Getwd(); err == nil {
 		workingDir = cwd
 	} else {
-		return "", fmt.Errorf("Could not identify a source directory for file sync.")
+		return "", fmt.Errorf("Could not identify a source directory for file sync")
 	}
 
 	if absoluteWorkingDir, err := filepath.Abs(workingDir); err == nil {
