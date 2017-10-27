@@ -12,11 +12,9 @@ matrix:
   allow_failures:
     - go: tip
 
-before_install: cd cli
-
 script:
-  - "../scripts/test-go-fmt.sh"
-  - "go run main.go"
+  - "scripts/test-go-fmt.sh"
+  - "go run cmd/main.go"
 
 notifications:
   flowdock:

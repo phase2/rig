@@ -13,7 +13,7 @@ services:
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
-    command: go build -o ../build/darwin/rig
+    command: go build -o build/darwin/rig cmd/main.go
     environment:
       - GOOS=darwin
       - GOARCH=amd64
@@ -48,4 +48,4 @@ services:
       # temporary/brittle workaround.
       - /data/golang/cache:${OUTRIGGER_GOPATH:-/go}/src
       - .:${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig
-    working_dir: ${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig/cli
+    working_dir: ${OUTRIGGER_GOPATH:-/go}/src/github.com/phase2/rig

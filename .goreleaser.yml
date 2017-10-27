@@ -3,6 +3,7 @@
 # Platforms/architectures to target
 builds:
   - binary: rig
+    main: ./cmd/main.go
     goos:
       - windows
       - darwin
