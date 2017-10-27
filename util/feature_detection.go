@@ -6,8 +6,8 @@ import (
 
 // Constants for virtualization drivers
 const (
-	Xhyve = "xhyve"
-	VMWare = "vmwarefusion"
+	Xhyve      = "xhyve"
+	VMWare     = "vmwarefusion"
 	VirtualBox = "virtualbox"
 )
 
