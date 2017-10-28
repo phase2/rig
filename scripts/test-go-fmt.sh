@@ -7,7 +7,7 @@
 # @see https://github.com/limetext/lime/pull/265/files
 ##
 
-fmt="$(find . ! \( -path './3rdparty' -prune \) -type f -name '*.go' -print0 | xargs -0 gofmt -l )"
+fmt="$(find . -not -path '*/vendor/*' -type f -name '*.go' -print0 | xargs -0 gofmt -l )"
 
 if [ -n "$fmt" ]; then
     echo "Unformatted Go source code:"
