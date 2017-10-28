@@ -274,8 +274,8 @@ func (cmd *ProjectSync) LoadComposeFile() (*ComposeFile, error) {
 
 	if err == nil {
 		var config ComposeFile
-		if err := yaml.Unmarshal(yamlFile, &config); err != nil {
-			cmd.out.Error.Fatalf("YAML Parsing Error: %s", err)
+		if e := yaml.Unmarshal(yamlFile, &config); e != nil {
+			cmd.out.Error.Fatalf("YAML Parsing Error: %s", e)
 		}
 		return &config, nil
 	}
