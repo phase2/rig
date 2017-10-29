@@ -14,6 +14,11 @@ const (
 // SupportsNativeDocker determines if the runtime OS support docker natively,
 // versus needing to run docker in a virtual machine
 func SupportsNativeDocker() bool {
+	return IsLinux()
+}
+
+// IsLinux detects if we are running on the linux platform
+func IsLinux() bool {
 	return runtime.GOOS == "linux"
 }
 
