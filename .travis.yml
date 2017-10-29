@@ -12,8 +12,15 @@ matrix:
   allow_failures:
     - go: tip
 
+install:
+  - "go get -u github.com/golang/dep/..."
+  - "go get -u github.com/alecthomas/gometalinter"
+  - "gometalinter --install --update"
+  - "dep ensure"
+
 script:
   - "scripts/test-go-fmt.sh"
+  - "gometalinter --vendor --config=gometalinter.json ./..."
   - "go run cmd/main.go"
 
 notifications:

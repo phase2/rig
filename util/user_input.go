@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// Ask the user a yes/no question
+// AskYesNo asks the user a yes/no question
 // Return true if they answered yes, false otherwise
 func AskYesNo(question string) bool {
 

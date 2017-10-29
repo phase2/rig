@@ -11,10 +11,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// DataRestore is the command for restoring up the /data directory within the Docker Machine
 type DataRestore struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *DataRestore) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -37,6 +39,7 @@ func (cmd *DataRestore) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig data-restore` command
 func (cmd *DataRestore) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		return cmd.Success("Data Restore is not needed on Linux, please unarchive any data directly")

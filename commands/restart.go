@@ -8,10 +8,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Restart is the command for shutting down and starting a Docker Machine
 type Restart struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Restart) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -23,6 +25,7 @@ func (cmd *Restart) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig restart` command
 func (cmd *Restart) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() || cmd.machine.Exists() {
 		if util.SupportsNativeDocker() {

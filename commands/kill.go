@@ -8,10 +8,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Kill is the command killing a Docker Machine
 type Kill struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Kill) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -23,6 +25,7 @@ func (cmd *Kill) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig kill` command
 func (cmd *Kill) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		return cmd.Success("Kill is not needed on Linux")
@@ -44,11 +47,11 @@ func (cmd *Kill) Run(c *cli.Context) error {
 	// Ensure the underlying virtualization has stopped
 	driver := cmd.machine.GetDriver()
 	switch driver {
-	case "virtualbox":
+	case util.VirtualBox:
 		util.StreamCommand(exec.Command("controlvm", cmd.machine.Name, "poweroff"))
-	case "vmwarefusion":
+	case util.VMWare:
 		cmd.out.Warning.Println("Add vmrun suspend command.")
-	case "xhyve":
+	case util.Xhyve:
 		cmd.out.Warning.Println("Add equivalent xhyve kill command.")
 	default:
 		cmd.out.Warning.Printf("Driver not recognized: %s\n", driver)

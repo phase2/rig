@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os/exec"
-	"runtime"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
@@ -14,10 +13,12 @@ const (
 	dashboardImageName     = "outrigger/dashboard:latest"
 )
 
+// Dashboard is the command for launching the Outrigger Dashboard
 type Dashboard struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Dashboard) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -29,18 +30,17 @@ func (cmd *Dashboard) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig dashboard` command
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
 		cmd.out.Info.Println("Launching Dashboard")
 		return cmd.LaunchDashboard(cmd.machine)
-	} else {
-		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
-	return cmd.Success("")
+	return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 }
 
-// Launch the dashboard, stopping it first for a clean automatic update.
+// LaunchDashboard launches the dashboard, stopping it first for a clean automatic update
 func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	machine.SetEnv()
 
@@ -58,7 +58,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 	}
 
-	dockerApiVersion, _ := util.GetDockerServerApiVersion(cmd.machine.Name)
+	dockerAPIVersion, _ := util.GetDockerServerAPIVersion(cmd.machine.Name)
 	args := []string{
 		"run",
 		"-d",
@@ -66,16 +66,16 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-l", "com.dnsdock.name=dashboard",
 		"-l", "com.dnsdock.image=outrigger",
-		"-e", fmt.Sprintf("DOCKER_API_VERSION=%s", dockerApiVersion),
+		"-e", fmt.Sprintf("DOCKER_API_VERSION=%s", dockerAPIVersion),
 		"--name", dashboardContainerName,
 		dashboardImageName,
 	}
 
 	util.ForceStreamCommand(exec.Command("docker", args...))
 
-	if runtime.GOOS == "darwin" {
+	if util.IsMac() {
 		exec.Command("open", "http://dashboard.outrigger.vm").Run()
-	} else if runtime.GOOS == "windows" {
+	} else if util.IsWindows() {
 		exec.Command("start", "http://dashboard.outrigger.vm").Run()
 	} else {
 		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
@@ -84,7 +84,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	return nil
 }
 
-// Stop and remove the dashboard Docker image.
+// StopDashboard stops and removes the dashboard container
 func (cmd *Dashboard) StopDashboard() error {
 	exec.Command("docker", "stop", dashboardContainerName).Run()
 	exec.Command("docker", "rm", dashboardContainerName).Run()
