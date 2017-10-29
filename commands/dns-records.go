@@ -50,31 +50,34 @@ func (cmd *DNSRecords) Run(c *cli.Context) error {
 }
 
 // LoadRecords retrieves the records from DNSDock and processes/return them
-// nolint: golint
 func (cmd *DNSRecords) LoadRecords() ([]map[string]interface{}, error) {
-	if ip, ipErr := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", "dnsdock").Output(); ipErr == nil {
-		if response, httpErr := http.Get(fmt.Sprintf("http://%s/services", strings.Trim(string(ip), "\n"))); httpErr == nil && response.StatusCode == 200 {
-			defer response.Body.Close()
-			if body, readErr := ioutil.ReadAll(response.Body); readErr == nil {
-				if js, jsonErr := simplejson.NewJson(body); jsonErr == nil {
-					dnsdockMap, _ := js.Map()
-					records := []map[string]interface{}{}
-					for id, value := range dnsdockMap {
-						record := value.(map[string]interface{})
-						record["Id"] = id
-						records = append(records, record)
-					}
-					return records, nil
-				} else {
-					return nil, fmt.Errorf("Failed to parse dnsdock JSON: %s", jsonErr)
-				}
-			} else {
-				return nil, fmt.Errorf("Unable to get response from dnsdock. %s", readErr)
-			}
-		} else {
-			return nil, fmt.Errorf("Response from dnsdock: %s", httpErr)
-		}
-	} else {
-		return nil, fmt.Errorf("Failed to discover dnsdock IP address: %s", ipErr)
+	ip, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", "dnsdock").Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover dnsdock IP address: %s", err)
 	}
+
+	response, err := http.Get(fmt.Sprintf("http://%s/services", strings.Trim(string(ip), "\n")))
+	if err != nil || response.StatusCode != 200 {
+		return nil, fmt.Errorf("response from dnsdock: %s", err)
+	}
+
+	defer response.Body.Close()
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get response from dnsdock. %s", err)
+	}
+
+	js, err := simplejson.NewJson(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dnsdock JSON: %s", err)
+	}
+
+	dnsdockMap, _ := js.Map()
+	records := []map[string]interface{}{}
+	for id, value := range dnsdockMap {
+		record := value.(map[string]interface{})
+		record["Id"] = id
+		records = append(records, record)
+	}
+	return records, nil
 }
