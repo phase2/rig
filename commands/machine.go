@@ -14,50 +14,52 @@ import (
 	"github.com/phase2/rig/util"
 )
 
+// Machine is the struct for encapsulating operations on a Docker Machine
 type Machine struct {
 	Name        string
 	out         *util.RigLogger
 	inspectData *simplejson.Json
 }
 
+// Create will generate a new Docker Machine configured according to user specification
 func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) {
 	m.out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
-	boot2dockerUrl := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
+	boot2dockerURL := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
 
 	var create *exec.Cmd
 
 	switch driver {
-	case "virtualbox":
+	case util.VirtualBox:
 		create = exec.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=virtualbox",
-			"--virtualbox-boot2docker-url="+boot2dockerUrl,
+			"--virtualbox-boot2docker-url="+boot2dockerURL,
 			"--virtualbox-memory="+memSize,
 			"--virtualbox-cpu-count="+cpuCount,
 			"--virtualbox-disk-size="+diskSize,
 			"--virtualbox-host-dns-resolver=true",
 			"--engine-opt", "dns=172.17.0.1",
 		)
-	case "vmwarefusion":
+	case util.VMWare:
 		create = exec.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=vmwarefusion",
-			"--vmwarefusion-boot2docker-url="+boot2dockerUrl,
+			"--vmwarefusion-boot2docker-url="+boot2dockerURL,
 			"--vmwarefusion-memory-size="+memSize,
 			"--vmwarefusion-cpu-count="+cpuCount,
 			"--vmwarefusion-disk-size="+diskSize,
 			"--engine-opt", "dns=172.17.0.1",
 		)
-	case "xhyve":
+	case util.Xhyve:
 		m.CheckXhyveRequirements()
 		create = exec.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=xhyve",
-			"--xhyve-boot2docker-url="+boot2dockerUrl,
+			"--xhyve-boot2docker-url="+boot2dockerURL,
 			"--xhyve-memory-size="+memSize,
 			"--xhyve-cpu-count="+cpuCount,
 			"--xhyve-disk-size="+diskSize,
@@ -72,6 +74,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 	m.out.Info.Printf("Created docker-machine named '%s'...", m.Name)
 }
 
+// CheckXhyveRequirements verifies that the correct xhyve environment exists
 func (m Machine) CheckXhyveRequirements() {
 	// Is xhyve installed locally
 	if err := exec.Command("which", "xhyve").Run(); err != nil {
@@ -84,6 +87,7 @@ func (m Machine) CheckXhyveRequirements() {
 	}
 }
 
+// Start boots the Docker Machine
 func (m Machine) Start() {
 	if !m.IsRunning() {
 		m.out.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
@@ -96,15 +100,17 @@ func (m Machine) Start() {
 	}
 }
 
+// Stop halts the Docker Machine
 func (m Machine) Stop() {
 	util.StreamCommand(exec.Command("docker-machine", "stop", m.Name))
 }
 
+// Remove deleted the Docker Machine
 func (m Machine) Remove() {
 	util.StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
 }
 
-// Wait a period of time for communication with the docker daemon to be established
+// WaitForDev will wait a period of time for communication with the docker daemon to be established
 func (m Machine) WaitForDev() {
 	maxTries := 10
 	sleepSecs := 3
@@ -114,15 +120,14 @@ func (m Machine) WaitForDev() {
 		if err := exec.Command("docker", "ps").Run(); err == nil {
 			m.out.Verbose.Printf("Machine '%s' has started", m.Name)
 			return
-		} else {
-			m.out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
-			time.Sleep(time.Duration(sleepSecs) * time.Second)
 		}
+		m.out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
+		time.Sleep(time.Duration(sleepSecs) * time.Second)
 	}
 	m.out.Error.Fatal("Docker daemon failed to start!")
 }
 
-// Set the Docker proxy variables that determine which machine the docker command communicates
+// SetEnv will set the Docker proxy variables that determine which machine the docker command communicates
 func (m Machine) SetEnv() {
 	if js := m.GetData(); js != nil {
 		tlsVerify := 0
@@ -136,7 +141,7 @@ func (m Machine) SetEnv() {
 	}
 }
 
-// Remove the Docker proxy variables
+// UnsetEnv will remove the Docker proxy variables
 func (m Machine) UnsetEnv() {
 	os.Unsetenv("DOCKER_TLS_VERIFY")
 	os.Unsetenv("DOCKER_HOST")
@@ -144,7 +149,7 @@ func (m Machine) UnsetEnv() {
 	os.Unsetenv("DOCKER_MACHINE_NAME")
 }
 
-// Does the Docker Machine exist
+// Exists determines if the Docker Machine exist
 func (m Machine) Exists() bool {
 	if err := exec.Command("docker-machine", "status", m.Name).Run(); err != nil {
 		return false
@@ -152,7 +157,7 @@ func (m Machine) Exists() bool {
 	return true
 }
 
-// Is the Docker Machine running
+// IsRunning returns the Docker Machine running status
 func (m Machine) IsRunning() bool {
 	if err := exec.Command("docker-machine", "env", m.Name).Run(); err != nil {
 		return false
@@ -160,7 +165,7 @@ func (m Machine) IsRunning() bool {
 	return true
 }
 
-// Inspect the Docker Machine and return the parsed JSON describing the machine
+// GetData will inspect the Docker Machine and return the parsed JSON describing the machine
 func (m *Machine) GetData() *simplejson.Json {
 	if m.inspectData != nil {
 		return m.inspectData
@@ -177,18 +182,18 @@ func (m *Machine) GetData() *simplejson.Json {
 	return nil
 }
 
-// Return the IP address for the Docker Machine
+// GetIP returns the IP address for the Docker Machine
 func (m Machine) GetIP() string {
 	return m.GetData().Get("Driver").Get("IPAddress").MustString()
 }
 
-// Check if the VirtualBox host DNS resolver is working. This should work okay
+// GetHostDNSResolver checks if the VirtualBox host DNS resolver is working. This should work okay
 // for VMware or other machines without the option, too.
 func (m Machine) GetHostDNSResolver() bool {
 	return m.GetData().Get("Driver").Get("HostDNSResolver").MustBool(false)
 }
 
-// Return the Bridge IP by looking for a bip= option
+// GetBridgeIP returns the Bridge IP by looking for a bip= option
 func (m Machine) GetBridgeIP() string {
 	ip := "172.17.0.1"
 	r := regexp.MustCompile("bip=([0-9.]+)/[0-9+]")
@@ -206,49 +211,56 @@ func (m Machine) GetBridgeIP() string {
 	return ip
 }
 
+// GetDockerVersion returns the Version of Docker running within Docker Machine
 func (m Machine) GetDockerVersion() (*version.Version, error) {
-	if b2dOutput, err := exec.Command("docker-machine", "version", m.Name).CombinedOutput(); err == nil {
-		b2dVersion := strings.TrimSpace(string(b2dOutput))
-		return version.Must(version.NewVersion(b2dVersion)), nil
-	} else {
+	b2dOutput, err := exec.Command("docker-machine", "version", m.Name).CombinedOutput()
+	if err != nil {
 		return nil, errors.New(strings.TrimSpace(string(b2dOutput)))
 	}
+	b2dVersion := strings.TrimSpace(string(b2dOutput))
+	return version.Must(version.NewVersion(b2dVersion)), nil
 }
 
+// GetDriver returns the virtualization driver name
 func (m Machine) GetDriver() string {
 	return m.GetData().Get("DriverName").MustString()
 }
 
+// IsXhyve returns if the virt driver is xhyve
 func (m Machine) IsXhyve() bool {
-	return m.GetDriver() == "xhyve"
+	return m.GetDriver() == util.Xhyve
 }
 
+// GetCPU returns the number of configured CPU for this Docker Machine
 func (m Machine) GetCPU() int {
 	return m.GetData().Get("Driver").Get("CPU").MustInt()
 }
 
+// GetMemory returns the amount of configured memory for this Docker Machine
 func (m Machine) GetMemory() int {
 	return m.GetData().Get("Driver").Get("Memory").MustInt()
 }
 
-// Returns the disk size in MB
+// GetDisk returns the disk size in MB
 func (m Machine) GetDisk() int {
 	return m.GetData().Get("Driver").Get("DiskSize").MustInt()
 }
 
-// Returns the disk size in GB
+// GetDiskInGB returns the disk size in GB
 func (m Machine) GetDiskInGB() int {
 	return m.GetDisk() / 1000
 }
 
+// GetSysctl returns the configured value for the provided sysctl setting on the Docker Machine
 func (m Machine) GetSysctl(setting string) (string, error) {
-	if output, err := exec.Command("docker-machine", "ssh", m.Name, "sudo", "sysctl", "-n", setting).CombinedOutput(); err == nil {
-		return strings.TrimSpace(string(output)), nil
-	} else {
+	output, err := exec.Command("docker-machine", "ssh", m.Name, "sudo", "sysctl", "-n", setting).CombinedOutput()
+	if err != nil {
 		return "", err
 	}
+	return strings.TrimSpace(string(output)), nil
 }
 
+// SetSysctl sets the sysctl setting on the Docker Machine
 func (m Machine) SetSysctl(key string, val string) error {
 	cmd := fmt.Sprintf("sudo sysctl -w %s=%s", key, val)
 	m.out.Verbose.Printf("Modifying Docker Machine kernel settings: %s", cmd)

@@ -12,17 +12,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ProjectScript is the struct for project defined commands
 type ProjectScript struct {
 	Alias       string
 	Description string
 	Run         []string
 }
 
+// Sync is the struct for sync configuration
 type Sync struct {
 	Volume string
 	Ignore []string
 }
 
+// ProjectConfig is the struct for the outrigger.yml file
 type ProjectConfig struct {
 	File string
 	Path string
@@ -34,7 +37,7 @@ type ProjectConfig struct {
 	Bin       string
 }
 
-// Create a new ProjectConfig using configured or default locations
+// NewProjectConfig creates a new ProjectConfig using configured or default locations
 func NewProjectConfig() *ProjectConfig {
 	readyConfig := &ProjectConfig{}
 	projectConfigFile := os.Getenv("RIG_PROJECT_CONFIG_FILE")
@@ -52,14 +55,14 @@ func NewProjectConfig() *ProjectConfig {
 	return readyConfig
 }
 
-// Traverse directory structure looking for an outrigger project config file.
+// FindProjectConfigFilePath traverses directory structure looking for an outrigger project config file.
 func FindProjectConfigFilePath() (string, error) {
 	if cwd, err := os.Getwd(); err == nil {
 		var configFilePath string
 		for cwd != "." && cwd != string(filepath.Separator) {
 			for _, filename := range [2]string{"outrigger.yml", ".outrigger.yml"} {
 				configFilePath = filepath.Join(cwd, filename)
-				if _, err := os.Stat(configFilePath); !os.IsNotExist(err) {
+				if _, e := os.Stat(configFilePath); !os.IsNotExist(e) {
 					return configFilePath, nil
 				}
 			}
@@ -70,10 +73,10 @@ func FindProjectConfigFilePath() (string, error) {
 		return "", err
 	}
 
-	return "", errors.New("No outrigger configuration file found.")
+	return "", errors.New("no outrigger configuration file found")
 }
 
-// Create a new ProjectConfig from the specified file.
+// NewProjectConfigFromFile creates a new ProjectConfig from the specified file.
 // @todo do not use the logger here, instead return errors.
 // Use of the logger here initializes it in non-verbose mode.
 func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
@@ -111,15 +114,15 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	return config, nil
 }
 
-// Ensures our configuration data structure conforms to our ad hoc schema.
+// ValidateConfigVersion ensures our configuration data structure conforms to our ad hoc schema.
 // @TODO do this in a more formal way. See docker/libcompose for an example.
 func (c *ProjectConfig) ValidateConfigVersion() error {
 	if len(c.Version) == 0 {
-		return fmt.Errorf("No 'version' property detected.")
+		return fmt.Errorf("no 'version' property detected")
 	}
 
 	if c.Version != "1.0" {
-		return fmt.Errorf("Version '1.0' is the only supported value, found '%s'.", c.Version)
+		return fmt.Errorf("version '1.0' is the only supported value, found '%s'", c.Version)
 	}
 
 	return nil
@@ -134,7 +137,8 @@ func (c *ProjectConfig) NotEmpty() bool {
 	return true
 }
 
-// Validate the config scripts against a set of rules/norms
+// ValidateProjectScripts will validate the config scripts against a set of rules/norms
+// nolint: gocyclo
 func (c *ProjectConfig) ValidateProjectScripts(subcommands []cli.Command) {
 	logger := util.Logger()
 

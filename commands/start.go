@@ -2,17 +2,18 @@ package commands
 
 import (
 	"os/exec"
-	"runtime"
 	"strconv"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
 
+// Start is the command for creating and starting a Docker Machine and other core Outrigger services
 type Start struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Start) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -52,6 +53,7 @@ func (cmd *Start) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig start` command
 func (cmd *Start) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		cmd.out.Info.Println("Linux users should use Docker natively for best performance.")
@@ -88,11 +90,11 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.machine.SetEnv()
 
 	cmd.out.Info.Println("Setting up DNS...")
-	dns := Dns{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	dns.ConfigureDns(cmd.machine, c.String("nameservers"))
+	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dns.ConfigureDNS(cmd.machine, c.String("nameservers"))
 
 	// NFS mounts are Mac-only.
-	if runtime.GOOS == "darwin" {
+	if util.IsMac() {
 		cmd.out.Verbose.Println("Enabling NFS file sharing")
 		if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
 			cmd.out.Error.Printf("Error enabling NFS: %s", nfsErr)
@@ -133,11 +135,11 @@ func (cmd *Start) Run(c *cli.Context) error {
 	return cmd.Success("Outrigger is ready to use")
 }
 
-// Start "minimal" Outrigger operations, which refers to Linux environments where
-// a virtual machine and networking is not managed by Outrigger.
+// StartMinimal will start "minimal" Outrigger operations, which refers to environments where
+// a virtual machine and networking is not required or managed by Outrigger.
 func (cmd *Start) StartMinimal(nameservers string) error {
-	dns := Dns{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	dns.ConfigureDns(cmd.machine, nameservers)
+	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dns.ConfigureDNS(cmd.machine, nameservers)
 
 	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	dash.LaunchDashboard(cmd.machine)

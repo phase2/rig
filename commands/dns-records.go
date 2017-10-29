@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,11 +11,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-type DnsRecords struct {
+// DNSRecords is the command for exporting all DNS Records in Outrigger DNS in `hosts` file format
+type DNSRecords struct {
 	BaseCommand
 }
 
-func (cmd *DnsRecords) Commands() []cli.Command {
+// Commands returns the operations supported by this command
+func (cmd *DNSRecords) Commands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "dns-records",
@@ -27,7 +28,8 @@ func (cmd *DnsRecords) Commands() []cli.Command {
 	}
 }
 
-func (cmd *DnsRecords) Run(c *cli.Context) error {
+// Run executes the `rig dns-records` command
+func (cmd *DNSRecords) Run(c *cli.Context) error {
 
 	records, err := cmd.LoadRecords()
 	if err != nil {
@@ -47,8 +49,9 @@ func (cmd *DnsRecords) Run(c *cli.Context) error {
 	return cmd.Success("")
 }
 
-// Get the records from DNSDock and process/return them
-func (cmd *DnsRecords) LoadRecords() ([]map[string]interface{}, error) {
+// LoadRecords retrieves the records from DNSDock and processes/return them
+// nolint: golint
+func (cmd *DNSRecords) LoadRecords() ([]map[string]interface{}, error) {
 	if ip, ipErr := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", "dnsdock").Output(); ipErr == nil {
 		if response, httpErr := http.Get(fmt.Sprintf("http://%s/services", strings.Trim(string(ip), "\n"))); httpErr == nil && response.StatusCode == 200 {
 			defer response.Body.Close()
@@ -63,15 +66,15 @@ func (cmd *DnsRecords) LoadRecords() ([]map[string]interface{}, error) {
 					}
 					return records, nil
 				} else {
-					return nil, errors.New(fmt.Sprintf("Failed to parse dnsdock JSON: %s", jsonErr))
+					return nil, fmt.Errorf("Failed to parse dnsdock JSON: %s", jsonErr)
 				}
 			} else {
-				return nil, errors.New(fmt.Sprintf("Unable to get response from dnsdock. %s", readErr))
+				return nil, fmt.Errorf("Unable to get response from dnsdock. %s", readErr)
 			}
 		} else {
-			return nil, errors.New(fmt.Sprintf("Response from dnsdock: %s", httpErr))
+			return nil, fmt.Errorf("Response from dnsdock: %s", httpErr)
 		}
 	} else {
-		return nil, errors.New(fmt.Sprintf("Failed to discover dnsdock IP address: %s", ipErr))
+		return nil, fmt.Errorf("Failed to discover dnsdock IP address: %s", ipErr)
 	}
 }

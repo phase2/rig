@@ -10,6 +10,12 @@ services:
       - GITHUB_TOKEN
     entrypoint: [ "goreleaser" ]
 
+  # Lint the codebase
+  lint:
+    extends: base
+    entrypoint: [ "gometalinter", "--vendor", "--config=gometalinter.json"]
+    command: "./..."
+
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base

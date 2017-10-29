@@ -9,10 +9,12 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Status is the command for reporting on the status of the Docker Machine
 type Status struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Status) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -24,6 +26,7 @@ func (cmd *Status) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig status` command
 func (cmd *Status) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		return cmd.Success("Status is not needed on Linux")

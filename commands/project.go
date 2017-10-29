@@ -5,18 +5,19 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
 
+// Project is the command enabling projects to define their own custom commands in a project based configuration file
 type Project struct {
 	BaseCommand
 	Config *ProjectConfig
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Project) Commands() []cli.Command {
 	cmd.Config = NewProjectConfig()
 
@@ -42,7 +43,7 @@ func (cmd *Project) Commands() []cli.Command {
 	return []cli.Command{command}
 }
 
-// Processes script configuration into formal subcommands.
+// GetScriptsAsSubcommands Processes script configuration into formal subcommands.
 func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cli.Command {
 	cmd.Config.ValidateProjectScripts(otherSubcommands)
 
@@ -75,7 +76,7 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 	return commands
 }
 
-// Execute the selected projec script.
+// Run executes the specified `rig project` script
 func (cmd *Project) Run(c *cli.Context) error {
 	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
 	if cmd.Config.Scripts == nil {
@@ -97,7 +98,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, scriptCommands)
 		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-			return cmd.Error(fmt.Sprintf("Error running project script '%s': %d", key), "COMMAND-ERROR", exitCode)
+			return cmd.Error(fmt.Sprintf("Error running project script '%s'", key), "COMMAND-ERROR", exitCode)
 		}
 	} else {
 		return cmd.Error(fmt.Sprintf("Unrecognized script '%s'", key), "SCRIPT-NOT-FOUND", 12)
@@ -106,26 +107,26 @@ func (cmd *Project) Run(c *cli.Context) error {
 	return cmd.Success("")
 }
 
-// Construct a command to execute a configured script.
+// GetCommand constructs a command to execute a configured script.
 // @see https://github.com/medhoover/gom/blob/staging/config/command.go
 func (cmd *Project) GetCommand(val string) *exec.Cmd {
-	if runtime.GOOS == "windows" {
+	if util.IsWindows() {
 		return exec.Command("cmd", "/c", val)
 	}
 
 	return exec.Command("sh", "-c", val)
 }
 
-// Get command separator based on platform.
+// GetCommandSeparator returns the command separator based on platform.
 func (cmd *Project) GetCommandSeparator() string {
-	if runtime.GOOS == "windows" {
+	if util.IsWindows() {
 		return " & "
 	}
 
 	return " && "
 }
 
-// Override the PATH environment variable for further shell executions.
+// addCommandPath overrides the PATH environment variable for further shell executions.
 // This is used on POSIX systems for lookup of scripts.
 func (cmd *Project) addCommandPath() {
 	binDir := cmd.Config.Bin
@@ -136,7 +137,7 @@ func (cmd *Project) addCommandPath() {
 	}
 }
 
-// Generate help details based on script configuration.
+// ScriptRunHelp generates help details based on script configuration.
 func (cmd *Project) ScriptRunHelp(script *ProjectScript) string {
 	help := fmt.Sprintf("\n\nSCRIPT STEPS:\n\t- ")
 	help = help + strings.Join(script.Run, "\n\t- ") + " [args...]\n"

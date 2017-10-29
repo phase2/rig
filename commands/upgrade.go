@@ -9,10 +9,13 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Upgrade is the command for backing up Docker Machine /data, upgrading the Docker Machine
+// to the most recent release and restoring the Docker Machine /data
 type Upgrade struct {
 	BaseCommand
 }
 
+// Commands returns the operations supported by this command
 func (cmd *Upgrade) Commands() []cli.Command {
 	return []cli.Command{
 		{
@@ -36,6 +39,7 @@ func (cmd *Upgrade) Commands() []cli.Command {
 	}
 }
 
+// Run executes the `rig upgrade` command
 func (cmd *Upgrade) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
 		return cmd.Success("Upgrade is not needed on Linux")
