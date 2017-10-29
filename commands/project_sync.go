@@ -44,9 +44,8 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	start := cli.Command{
 		Name:        "sync:start",
 		Aliases:     []string{"sync"},
-		Usage:       "Start a Unison sync on local project directory. Optionally provide a volume name.",
-		ArgsUsage:   "[optional volume name]",
-		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
+		Usage:       "Start a Unison sync on local project directory.",
+		Description: "Volume name will be discovered in the following order: outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
@@ -74,9 +73,8 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 	}
 	stop := cli.Command{
 		Name:        "sync:stop",
-		Usage:       "Stops a Unison sync on local project directory. Optionally provide a volume name.",
-		ArgsUsage:   "[optional volume name]",
-		Description: "Volume name will be discovered in the following order: argument to this command > outrigger project config > docker-compose file > current directory name",
+		Usage:       "Stops a Unison sync on local project directory.",
+		Description: "Volume name will be discovered in the following order: outrigger project config > docker-compose file > current directory name",
 		Flags: []cli.Flag{
 			// Override the local sync path.
 			cli.StringFlag{
@@ -107,7 +105,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 	// Determine the volume name to be used across all operating systems.
 	// For cross-compatibility the way this volume is set up will vary.
-	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+	volumeName := cmd.GetVolumeName(cmd.Config, workingDir)
 
 	switch platform := runtime.GOOS; platform {
 	case "linux":
@@ -232,7 +230,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		return cmd.Error(err.Error(), "SYNC-PATH-ERROR", 12)
 	}
 
-	volumeName := cmd.GetVolumeName(ctx, cmd.Config, workingDir)
+	volumeName := cmd.GetVolumeName(cmd.Config, workingDir)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 	cmd.out.Info.Println("Stopping Unison container")
 	if err := exec.Command("docker", "container", "stop", volumeName).Run(); err != nil {
@@ -243,18 +241,13 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 }
 
 // GetVolumeName will find the volume name through a variety of fall backs
-func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config *ProjectConfig, workingDir string) string {
-	// 1. Check for argument
-	if ctx.Args().Present() {
-		return ctx.Args().First()
-	}
-
-	// 2. Check for config
+func (cmd *ProjectSync) GetVolumeName(config *ProjectConfig, workingDir string) string {
+	// 1. Check for config
 	if config.Sync != nil && config.Sync.Volume != "" {
 		return config.Sync.Volume
 	}
 
-	// 3. Parse compose file looking for an external volume named *-sync
+	// 2. Parse compose file looking for an external volume named *-sync
 	if composeConfig, err := cmd.LoadComposeFile(); err == nil {
 		for name, volume := range composeConfig.Volumes {
 			if strings.HasSuffix(name, "-sync") && volume.External {
@@ -263,7 +256,7 @@ func (cmd *ProjectSync) GetVolumeName(ctx *cli.Context, config *ProjectConfig, w
 		}
 	}
 
-	// 4. Use local dir for the volume name
+	// 3. Use local dir for the volume name
 	var _, folder = path.Split(workingDir)
 	return fmt.Sprintf("%s-sync", folder)
 }
