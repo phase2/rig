@@ -81,13 +81,11 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
 
-	return nil
+	return cmd.Success("")
 }
 
 // StopDashboard stops and removes the dashboard container
-func (cmd *Dashboard) StopDashboard() error {
+func (cmd *Dashboard) StopDashboard() {
 	exec.Command("docker", "stop", dashboardContainerName).Run()
 	exec.Command("docker", "rm", dashboardContainerName).Run()
-
-	return nil
 }

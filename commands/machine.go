@@ -22,7 +22,7 @@ type Machine struct {
 }
 
 // Create will generate a new Docker Machine configured according to user specification
-func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) {
+func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) error {
 	m.out.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
 	boot2dockerURL := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
@@ -54,7 +54,9 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 			"--engine-opt", "dns=172.17.0.1",
 		)
 	case util.Xhyve:
-		m.CheckXhyveRequirements()
+		if err := m.CheckXhyveRequirements(); err != nil {
+			return err
+		}
 		create = exec.Command(
 			"docker-machine",
 			"create", m.Name,
@@ -68,50 +70,58 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 	}
 
 	if err := util.StreamCommand(create); err != nil {
-		m.out.Error.Fatalf("Error creating machine '%s': %s", m.Name, err)
+		return fmt.Errorf("error creating machine '%s': %s", m.Name, err)
 	}
 
 	m.out.Info.Printf("Created docker-machine named '%s'...", m.Name)
+	return nil
 }
 
 // CheckXhyveRequirements verifies that the correct xhyve environment exists
-func (m Machine) CheckXhyveRequirements() {
+func (m Machine) CheckXhyveRequirements() error {
 	// Is xhyve installed locally
 	if err := exec.Command("which", "xhyve").Run(); err != nil {
-		m.out.Error.Fatal("xhyve is not installed. Install it with 'brew install xhyve'")
+		return fmt.Errorf("xhyve is not installed. Install it with 'brew install xhyve'")
 	}
 
 	// Is docker-machine-driver-xhyve installed locally
 	if err := exec.Command("which", "docker-machine-driver-xhyve").Run(); err != nil {
-		m.out.Error.Fatal("docker-machine-driver-xhyve is not installed. Install it with 'brew install docker-machine-driver-xhyve'")
+		return fmt.Errorf("docker-machine-driver-xhyve is not installed. Install it with 'brew install docker-machine-driver-xhyve'")
 	}
+
+	return nil
 }
 
 // Start boots the Docker Machine
-func (m Machine) Start() {
+func (m Machine) Start() error {
 	if !m.IsRunning() {
 		m.out.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
 
 		if err := util.StreamCommand(exec.Command("docker-machine", "start", m.Name)); err != nil {
-			m.out.Error.Fatalf("Error starting machine '%s': %s", m.Name, err)
+			return fmt.Errorf("error starting machine '%s': %s", m.Name, err)
 		}
 
-		m.WaitForDev()
+		return m.WaitForDev()
 	}
+
+	return nil
 }
 
 // Stop halts the Docker Machine
-func (m Machine) Stop() {
-	util.StreamCommand(exec.Command("docker-machine", "stop", m.Name))
+func (m Machine) Stop() error {
+	if m.IsRunning() {
+		return util.StreamCommand(exec.Command("docker-machine", "stop", m.Name))
+	}
+	return nil
 }
 
 // Remove deleted the Docker Machine
-func (m Machine) Remove() {
-	util.StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
+func (m Machine) Remove() error {
+	return util.StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
 }
 
 // WaitForDev will wait a period of time for communication with the docker daemon to be established
-func (m Machine) WaitForDev() {
+func (m Machine) WaitForDev() error {
 	maxTries := 10
 	sleepSecs := 3
 
@@ -119,12 +129,13 @@ func (m Machine) WaitForDev() {
 		m.SetEnv()
 		if err := exec.Command("docker", "ps").Run(); err == nil {
 			m.out.Verbose.Printf("Machine '%s' has started", m.Name)
-			return
+			return nil
 		}
 		m.out.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
 		time.Sleep(time.Duration(sleepSecs) * time.Second)
 	}
-	m.out.Error.Fatal("Docker daemon failed to start!")
+
+	return fmt.Errorf("docker daemon failed to start")
 }
 
 // SetEnv will set the Docker proxy variables that determine which machine the docker command communicates
