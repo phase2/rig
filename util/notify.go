@@ -11,8 +11,6 @@ package util
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/martinlindhe/notify"
 	"github.com/urfave/cli"
@@ -40,25 +38,20 @@ func NotifyInit(label string) error {
 
 // NotifySuccess send a notification for a successful command run
 func NotifySuccess(ctx *cli.Context, message string) {
-	if shouldNotify() {
+	if shouldNotify(ctx) {
 		notify.Notify(config.Label, fmt.Sprintf("Success: %s", ctx.Command.Name), message, config.Icon)
 	}
 }
 
 // NotifyError send a notification for a failed command run
 func NotifyError(ctx *cli.Context, message string) error {
-	if shouldNotify() {
+	if shouldNotify(ctx) {
 		notify.Notify(config.Label, fmt.Sprintf("Error: %s", ctx.Command.Name), message, config.Icon)
 	}
 	return nil
 }
 
 // shouldNotify returns a boolean if notifications are enabled
-func shouldNotify() bool {
-	env, isSet := os.LookupEnv("RIG_NOTIFY_SILENCE")
-	if !isSet {
-		return true
-	}
-	val, err := strconv.ParseBool(env)
-	return err == nil && !val
+func shouldNotify(ctx *cli.Context) bool {
+	return !ctx.GlobalBool("quiet")
 }

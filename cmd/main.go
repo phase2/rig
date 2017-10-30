@@ -31,6 +31,11 @@ func main() {
 			Usage:  "Show verbose output. Learning Mode!",
 			EnvVar: "RIG_VERBOSE",
 		},
+		cli.BoolFlag{
+			Name:   "quiet",
+			Usage:  "Disable all desktop notifications",
+			EnvVar: "RIG_NOTIFY_QUIET",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
