@@ -54,7 +54,9 @@ func (cmd *Stop) StopMinimal() error {
 // StopOutrigger will halt all Outrigger and Docker-related operations.
 func (cmd *Stop) StopOutrigger() error {
 	cmd.out.Info.Printf("Stopping machine '%s'", cmd.machine.Name)
-	cmd.machine.Stop()
+	if err := cmd.machine.Stop(); err != nil {
+		return cmd.Error(err.Error(), "MACHINE-STOP-FAILED", 12)
+	}
 
 	cmd.out.Info.Println("Cleaning up local networking (may require your admin password)")
 	if util.IsWindows() {

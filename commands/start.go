@@ -84,7 +84,9 @@ func (cmd *Start) Run(c *cli.Context) error {
 		cmd.machine.Create(driver, cpuCount, memSize, diskSize)
 	}
 
-	cmd.machine.Start()
+	if err := cmd.machine.Start(); err != nil {
+		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
+	}
 
 	cmd.out.Verbose.Println("Configuring the local Docker environment")
 	cmd.machine.SetEnv()
@@ -103,7 +105,9 @@ func (cmd *Start) Run(c *cli.Context) error {
 	}
 
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
-	cmd.machine.WaitForDev()
+	if err := cmd.machine.WaitForDev(); err != nil {
+		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
+	}
 
 	cmd.out.Verbose.Println("Setting up persistent /data volume...")
 	dataMountSetup := `if [ ! -d /mnt/sda1/data ];
@@ -120,7 +124,9 @@ func (cmd *Start) Run(c *cli.Context) error {
 		then echo '===> Creating symlink from /data to /mnt/sda1/data';
 		sudo ln -s /mnt/sda1/data /data;
 	fi;`
-	util.StreamCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name, dataMountSetup))
+	if err := util.StreamCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name, dataMountSetup)); err != nil {
+		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
+	}
 
 	dns.ConfigureRoutes(cmd.machine)
 

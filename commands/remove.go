@@ -60,7 +60,9 @@ func (cmd *Remove) Run(c *cli.Context) error {
 	}
 
 	cmd.out.Info.Println("Removing the docker-machine")
-	cmd.machine.Remove()
+	if err := cmd.machine.Remove(); err != nil {
+		return cmd.Error(err.Error(), "MACHINE-REMOVE-FAILED", 12)
+	}
 
 	return cmd.Success(fmt.Sprintf("Machine '%s' removed", cmd.machine.Name))
 }
