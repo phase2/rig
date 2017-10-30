@@ -18,6 +18,7 @@ type BaseCommand struct {
 	RigCommand
 	out     *util.RigLogger
 	machine Machine
+	context *cli.Context
 }
 
 // Before configure the function to run before all commands to setup core services.
@@ -27,6 +28,12 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	util.LoggerInit(c.GlobalBool("verbose"))
 	cmd.out = util.Logger()
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
+
+	util.NotifyInit(fmt.Sprintf("Outrigger (rig) %s", c.App.Version))
+
+	// Hold onto Context so that we can use it later without having to pass it around everywhere
+	cmd.context = c
+
 	return nil
 }
 
@@ -34,12 +41,14 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 func (cmd *BaseCommand) Success(message string) error {
 	if message != "" {
 		cmd.out.Info.Println(message)
+		util.NotifySuccess(cmd.context, message)
 	}
 	return nil
 }
 
 // Error encapsulates the functionality for reporting command failure
 func (cmd *BaseCommand) Error(message string, errorName string, exitCode int) error {
+	util.NotifyError(cmd.context, message)
 	return cli.NewExitError(fmt.Sprintf("ERROR: %s [%s] (%d)", message, errorName, exitCode), exitCode)
 }
 

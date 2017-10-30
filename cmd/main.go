@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// GoReleaser will override with the latest tag on build
 var version = "master"
 
 // It all starts here
@@ -29,6 +30,11 @@ func main() {
 			Name:   "verbose",
 			Usage:  "Show verbose output. Learning Mode!",
 			EnvVar: "RIG_VERBOSE",
+		},
+		cli.BoolFlag{
+			Name:   "quiet",
+			Usage:  "Disable all desktop notifications",
+			EnvVar: "RIG_NOTIFY_QUIET",
 		},
 	}
 

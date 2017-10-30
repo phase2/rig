@@ -48,3 +48,8 @@
 [[constraint]]
   name = "gopkg.in/yaml.v2"
   branch = "v2"
+
+[[constraint]]
+  name = "github.com/martinlindhe/notify"
+  branch = "master"
+
