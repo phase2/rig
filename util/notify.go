@@ -32,8 +32,8 @@ type NotifyConfig struct {
 // NotifyInit initializes notification config
 func NotifyInit(label string) error {
 	config = &NotifyConfig{
-		Icon:     "util/logo.png",
-		Label:    label,
+		Icon:  "util/logo.png",
+		Label: label,
 	}
 	return nil
 }
