@@ -30,6 +30,8 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
 
 	util.NotifyInit(fmt.Sprintf("Outrigger (rig) %s", c.App.Version))
+
+	// Hold onto Context so that we can use it later without having to pass it around everywhere
 	cmd.context = c
 
 	return nil

@@ -55,7 +55,7 @@ func NotifyError(ctx *cli.Context, message string) error {
 
 // shouldNotify returns a boolean if notifications are enabled
 func shouldNotify() bool {
-	env, isSet := os.LookupEnv("RIG_SILENCE_NOTIFY")
+	env, isSet := os.LookupEnv("RIG_NOTIFY_SILENCE")
 	if !isSet {
 		return true
 	}
