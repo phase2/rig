@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// GoReleaser will override with the latest tag on build
 var version = "master"
 
 // It all starts here
