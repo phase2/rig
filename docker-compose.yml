@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
 
-  # Install project dependencies.
+  # Run the release process.
   goreleaser:
     extends: base
     environment:
@@ -27,7 +27,8 @@ services:
   # Install project dependencies.
   install:
     extends: base
-    command: dep ensure
+    entrypoint: [ "dep", "ensure" ]
+    command: ""
 
   # Update project dependencies.
   # Will update all if no arguments are provided. To update a particular package use:
