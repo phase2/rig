@@ -2,8 +2,10 @@ package util
 
 import (
 	"io/ioutil"
+	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	"github.com/fatih/color"
@@ -31,9 +33,16 @@ func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
 	}
 
 	color.Set(color.FgCyan)
-	err := cmd.Run()
+
+	err := Run(cmd)
 	color.Unset()
 	return err
+}
+
+// Run provides a wrapper to os/exec.Run() that verbose logs the executed command invocation.
+func Run(cmd *exec.Cmd) error {
+	Logger().Verbose.Printf("Executing: %s", CmdToString(cmd))
+	return cmd.Run()
 }
 
 // PassthruCommand is similar to ForceStreamCommand in that it will issue all output
@@ -68,4 +77,22 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	}
 
 	return
+}
+
+// CmdToString converts a Command to a human-readable string with key context details.
+func CmdToString(cmd *exec.Cmd) string {
+	context := ""
+	if cmd.Dir != "" {
+		context = fmt.Sprintf("(WD: %s", cmd.Dir)
+	}
+	if cmd.Env != nil {
+		env := strings.Join(cmd.Env, " ")
+		if context == "" {
+			context = fmt.Sprintf("(Env: %s", env)
+		} else {
+			context = fmt.Sprintf("%s, Env: %s)", context, env)
+		}
+	}
+
+	return fmt.Sprintf("%s %s %s", cmd.Path, strings.Join(cmd.Args[1:], " "), context)
 }

@@ -74,9 +74,9 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	util.ForceStreamCommand(exec.Command("docker", args...))
 
 	if util.IsMac() {
-		exec.Command("open", "http://dashboard.outrigger.vm").Run()
+		util.Run(exec.Command("open", "http://dashboard.outrigger.vm"))
 	} else if util.IsWindows() {
-		exec.Command("start", "http://dashboard.outrigger.vm").Run()
+		util.Run(exec.Command("start", "http://dashboard.outrigger.vm"))
 	} else {
 		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
@@ -86,6 +86,6 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 
 // StopDashboard stops and removes the dashboard container
 func (cmd *Dashboard) StopDashboard() {
-	exec.Command("docker", "stop", dashboardContainerName).Run()
-	exec.Command("docker", "rm", dashboardContainerName).Run()
+	util.Run(exec.Command("docker", "stop", dashboardContainerName))
+	util.Run(exec.Command("docker", "rm", dashboardContainerName))
 }
