@@ -146,7 +146,6 @@ func (cmd *DNS) ConfigureLinux() error {
 	return nil
 }
 
-
 // StartDNS will start the dnsdock service
 func (cmd *DNS) StartDNS(machine Machine, nameservers string) {
 	dnsServers := strings.Split(nameservers, ",")
