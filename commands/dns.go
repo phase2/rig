@@ -163,7 +163,6 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	return resolverReturn
 }
 
-
 // configureMacResolver configures DNS resolution and network routing
 func (cmd *DNS) configureMacResolver(machine Machine) error {
 	cmd.out.Verbose.Print("Configuring DNS resolution for macOS")
