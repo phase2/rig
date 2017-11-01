@@ -128,7 +128,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
 	}
 
-	dns.ConfigureDNS(cmd.machine)
+	dns.ConfigureRoutes(cmd.machine)
 
 	cmd.out.Verbose.Println("Use docker-machine to interact with your virtual machine.")
 	cmd.out.Verbose.Printf("For example, to SSH into it: docker-machine ssh %s", cmd.machine.Name)
