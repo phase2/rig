@@ -68,7 +68,6 @@ func (cmd *DNS) ConfigureRoutes(machine Machine) {
 
 // ConfigureMac configures DNS resolution and network routing
 func (cmd *DNS) configureMacRoutes(machine Machine) {
-	cmd.out.Verbose.Print("Configuring network routing for macOS")
 	machineIP := machine.GetIP()
 
 	if machine.IsXhyve() {
@@ -114,7 +113,6 @@ func (cmd *DNS) removeHostFilter(ipAddr string) {
 
 // ConfigureWindowsRoutes configures network routing
 func (cmd *DNS) configureWindowsRoutes(machine Machine) {
-	cmd.out.Verbose.Print("Configuring network routing for windows")
 	exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 	util.StreamCommand(exec.Command("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machine.GetIP()))
 }
