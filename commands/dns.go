@@ -121,9 +121,11 @@ func (cmd *DNS) configureWindowsRoutes(machine Machine) {
 func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	dnsServers := strings.Split(nameservers, ",")
 
-	// Linux uses standard bridge IP
-	// May need to make this configurable is there are local linux/docker customizations?
-	var bridgeIP = "172.17.0.1"
+	bridgeIP, err := util.GetBridgeIP()
+	if err != nil {
+		return err
+	}
+
 	if !util.SupportsNativeDocker() {
 		machine.SetEnv()
 		bridgeIP = machine.GetBridgeIP()
