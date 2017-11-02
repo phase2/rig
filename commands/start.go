@@ -93,7 +93,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	cmd.out.Info.Println("Setting up DNS...")
 	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	dns.ConfigureDNS(cmd.machine, c.String("nameservers"))
+	dns.StartDNS(cmd.machine, c.String("nameservers"))
 
 	// NFS mounts are Mac-only.
 	if util.IsMac() {
@@ -145,7 +145,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 // a virtual machine and networking is not required or managed by Outrigger.
 func (cmd *Start) StartMinimal(nameservers string) error {
 	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
-	dns.ConfigureDNS(cmd.machine, nameservers)
+	dns.StartDNS(cmd.machine, nameservers)
 
 	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
 	dash.LaunchDashboard(cmd.machine)

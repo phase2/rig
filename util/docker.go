@@ -64,3 +64,17 @@ func ImageOlderThan(image string, elapsedSeconds float64) (bool, float64, error)
 	seconds := time.Since(datetime).Seconds()
 	return seconds > elapsedSeconds, seconds, nil
 }
+
+// GetBridgeIP returns the IP address of the Docker bridge network gateway
+func GetBridgeIP() (string, error) {
+	output, err := exec.Command("docker", "network", "inspect", "bridge", "--format", "{{(index .IPAM.Config 0).Gateway}}").Output()
+	if err != nil {
+		return "", err
+	}
+
+	bip := strings.Trim(string(output), "\n")
+	if bip == "" {
+		bip = "172.17.0.1"
+	}
+	return bip, nil
+}
