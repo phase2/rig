@@ -54,7 +54,7 @@ func (cmd *Remove) Run(c *cli.Context) error {
 	}
 
 	// Run kill first
-	kill := Kill{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	kill := Kill{cmd.BaseCommand}
 	if err := kill.Run(c); err != nil {
 		return err
 	}

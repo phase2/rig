@@ -92,7 +92,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.machine.SetEnv()
 
 	cmd.out.Info.Println("Setting up DNS...")
-	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dns := DNS{cmd.BaseCommand}
 	dns.StartDNS(cmd.machine, c.String("nameservers"))
 
 	// NFS mounts are Mac-only.
@@ -135,7 +135,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Info.Println("To run Docker commands, your terminal session should be initialized with: 'eval \"$(rig config)\"'")
 
 	cmd.out.Info.Println("Launching Dashboard...")
-	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dash := Dashboard{cmd.BaseCommand}
 	dash.LaunchDashboard(cmd.machine)
 
 	return cmd.Success("Outrigger is ready to use")
@@ -144,10 +144,10 @@ func (cmd *Start) Run(c *cli.Context) error {
 // StartMinimal will start "minimal" Outrigger operations, which refers to environments where
 // a virtual machine and networking is not required or managed by Outrigger.
 func (cmd *Start) StartMinimal(nameservers string) error {
-	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dns := DNS{cmd.BaseCommand}
 	dns.StartDNS(cmd.machine, nameservers)
 
-	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dash := Dashboard{cmd.BaseCommand}
 	dash.LaunchDashboard(cmd.machine)
 
 	return cmd.Success("Outrigger services started")
