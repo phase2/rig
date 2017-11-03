@@ -62,19 +62,19 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	}
 
 	cmd.out.Info.Printf("Backing up to prepare for upgrade...")
-	backup := &DataBackup{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	backup := &DataBackup{cmd.BaseCommand}
 	if err := backup.Run(c); err != nil {
 		return err
 	}
 
-	remove := &Remove{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	remove := &Remove{cmd.BaseCommand}
 	removeCtx := cmd.NewContext(remove.Commands()[0].Name, remove.Commands()[0].Flags, c)
 	cmd.SetContextFlag(removeCtx, "force", strconv.FormatBool(true))
 	if err := remove.Run(removeCtx); err != nil {
 		return err
 	}
 
-	start := &Start{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	start := &Start{cmd.BaseCommand}
 	startCtx := cmd.NewContext(start.Commands()[0].Name, start.Commands()[0].Flags, c)
 	cmd.SetContextFlag(startCtx, "driver", cmd.machine.GetDriver())
 	cmd.SetContextFlag(startCtx, "cpu-count", strconv.FormatInt(int64(cmd.machine.GetCPU()), 10))
@@ -84,7 +84,7 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 		return err
 	}
 
-	restore := &DataRestore{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	restore := &DataRestore{cmd.BaseCommand}
 	restoreCtx := cmd.NewContext(restore.Commands()[0].Name, restore.Commands()[0].Flags, c)
 	cmd.SetContextFlag(restoreCtx, "data-dir", c.String("data-dir"))
 	backupFile := fmt.Sprintf("%s%c%s.tgz", c.String("backup-dir"), os.PathSeparator, cmd.machine.Name)

@@ -42,10 +42,10 @@ func (cmd *Stop) StopMinimal() error {
 	cmd.out.Verbose.Printf("Skipping Step: Linux does not have a docker-machine to stop.")
 	cmd.out.Verbose.Printf("Skipping Step: Outrigger does not manage Linux networking.")
 
-	dash := Dashboard{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dash := Dashboard{cmd.BaseCommand}
 	dash.StopDashboard()
 
-	dns := DNS{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dns := DNS{cmd.BaseCommand}
 	dns.StopDNS()
 
 	return cmd.Success("")
