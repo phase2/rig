@@ -63,7 +63,7 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 		return cmd.Error(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
 	}
 
-	cmd.out.Info.Printf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile)
+	cmd.progress.Start(fmt.Sprintf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile))
 
 	// Stream the archive to stdout and capture it in a local file so we don't waste
 	// space storing an archive on the VM filesystem. There may not be enough space.
@@ -76,8 +76,10 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	color.Unset()
 
 	if err != nil {
+		cmd.progress.Fail("Backup failed")
 		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
 	}
 
+	cmd.progress.Complete(fmt.Sprintf("Backup complete: %s", backupFile))
 	return cmd.Success("Data Backup completed with no errors")
 }

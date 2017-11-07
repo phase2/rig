@@ -34,7 +34,12 @@ func (cmd *Dashboard) Commands() []cli.Command {
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
 		cmd.out.Info.Println("Launching Dashboard")
-		return cmd.LaunchDashboard(cmd.machine)
+		err := cmd.LaunchDashboard(cmd.machine)
+		if err != nil {
+			// Success may be presumed to only execute once per command execution.
+			// This allows calling LaunchDashboard() from start.go without success.
+			return cmd.Success("")
+		}
 	}
 
 	return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
@@ -71,7 +76,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		dashboardImageName,
 	}
 
-	util.ForceStreamCommand(exec.Command("docker", args...))
+	util.StreamCommand(exec.Command("docker", args...))
 
 	if util.IsMac() {
 		exec.Command("open", "http://dashboard.outrigger.vm").Run()
@@ -81,7 +86,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
 
-	return cmd.Success("")
+	return nil
 }
 
 // StopDashboard stops and removes the dashboard container

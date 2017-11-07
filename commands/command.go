@@ -17,6 +17,7 @@ type RigCommand interface {
 type BaseCommand struct {
 	RigCommand
 	out     *util.RigLogger
+	progress *util.RigSpinner
 	machine Machine
 	context *cli.Context
 }
@@ -27,6 +28,7 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	// initialized the logger without the verbose flag if present.
 	util.LoggerInit(c.GlobalBool("verbose"))
 	cmd.out = util.Logger()
+	cmd.progress = util.Spinner()
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
 
 	util.NotifyInit(fmt.Sprintf("Outrigger (rig) %s", c.App.Version))
@@ -39,16 +41,25 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 
 // Success encapsulates the functionality for reporting command success
 func (cmd *BaseCommand) Success(message string) error {
+	// Make sure any running spinner halts.
+	cmd.progress.Spins.Stop()
+
+	// Handle success messaging.
 	if message != "" {
 		cmd.out.Info.Println(message)
 		util.NotifySuccess(cmd.context, message)
 	}
+
 	return nil
 }
 
 // Error encapsulates the functionality for reporting command failure
 func (cmd *BaseCommand) Error(message string, errorName string, exitCode int) error {
+	// Make sure any running spinner halts.
+	cmd.progress.Spins.Stop()
+	// Handle error messaging.
 	util.NotifyError(cmd.context, message)
+
 	return cli.NewExitError(fmt.Sprintf("ERROR: %s [%s] (%d)", message, errorName, exitCode), exitCode)
 }
 

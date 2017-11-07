@@ -45,6 +45,7 @@ func (cmd *DNS) Run(c *cli.Context) error {
 	}
 
 	if err := cmd.StartDNS(cmd.machine, c.String("nameservers")); err != nil {
+		cmd.progress.Fail("DNS is ready")
 		return cmd.Error(err.Error(), "DNS-SETUP-FAILED", 13)
 	}
 
@@ -57,13 +58,15 @@ func (cmd *DNS) Run(c *cli.Context) error {
 // ConfigureRoutes will configure routing to allow access to containers on IP addresses
 // within the Docker Machine bridge network
 func (cmd *DNS) ConfigureRoutes(machine Machine) {
-	cmd.out.Info.Println("Setting up local networking (may require your admin password)")
+	cmd.progress.Start("Setting up local networking (may require your admin password)")
 
 	if util.IsMac() {
 		cmd.configureMacRoutes(machine)
 	} else if util.IsWindows() {
 		cmd.configureWindowsRoutes(machine)
 	}
+
+	cmd.progress.Complete("Local networking is ready")
 }
 
 // ConfigureMac configures DNS resolution and network routing
@@ -119,6 +122,7 @@ func (cmd *DNS) configureWindowsRoutes(machine Machine) {
 
 // StartDNS will start the dnsdock service
 func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
+	cmd.progress.Start("Setting up DNS resolver...")
 	dnsServers := strings.Split(nameservers, ",")
 
 	bridgeIP, err := util.GetBridgeIP()
@@ -149,7 +153,7 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	for _, server := range dnsServers {
 		args = append(args, "--nameserver="+server)
 	}
-	util.ForceStreamCommand(exec.Command("docker", args...))
+	util.StreamCommand(exec.Command("docker", args...))
 
 	// Configure the resolvers based on platform
 	var resolverReturn error
@@ -160,6 +164,8 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	} else if util.IsWindows() {
 		resolverReturn = cmd.configureWindowsResolver(machine)
 	}
+	cmd.progress.Complete("DNS resolution is ready")
+
 	return resolverReturn
 }
 

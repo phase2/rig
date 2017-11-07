@@ -53,12 +53,14 @@ func (cmd *Stop) StopMinimal() error {
 
 // StopOutrigger will halt all Outrigger and Docker-related operations.
 func (cmd *Stop) StopOutrigger() error {
-	cmd.out.Info.Printf("Stopping machine '%s'", cmd.machine.Name)
+	cmd.progress.Start(fmt.Sprintf("Stopping machine '%s'...", cmd.machine.Name))
 	if err := cmd.machine.Stop(); err != nil {
 		return cmd.Error(err.Error(), "MACHINE-STOP-FAILED", 12)
 	}
+	cmd.progress.Complete(fmt.Sprintf("Stopped machine '%s'", cmd.machine.Name))
 
-	cmd.out.Info.Println("Cleaning up local networking (may require your admin password)")
+
+	cmd.progress.Start("Cleaning up local networking (may require your admin password)")
 	if util.IsWindows() {
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
@@ -67,6 +69,7 @@ func (cmd *Stop) StopOutrigger() error {
 		exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
 	}
 	color.Unset()
-
+	cmd.progress.Complete("Networking cleanup completed")
+	cmd.progress.Spins.Finish()
 	return cmd.Success(fmt.Sprintf("Machine '%s' stopped", cmd.machine.Name))
 }

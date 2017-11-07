@@ -53,16 +53,18 @@ func (cmd *Remove) Run(c *cli.Context) error {
 		}
 	}
 
-	// Run kill first
+	// Run kill first.
 	kill := Kill{cmd.BaseCommand}
 	if err := kill.Run(c); err != nil {
 		return err
 	}
 
-	cmd.out.Info.Println("Removing the docker-machine")
+	cmd.progress.Start("Removing the docker Virtual Machine")
 	if err := cmd.machine.Remove(); err != nil {
+		cmd.progress.Fail("Failed to remove the docker Virtual Machine")
 		return cmd.Error(err.Error(), "MACHINE-REMOVE-FAILED", 12)
 	}
 
+	cmd.progress.Complete("Failed to remove the docker Virtual Machine")
 	return cmd.Success(fmt.Sprintf("Machine '%s' removed", cmd.machine.Name))
 }
