@@ -16,10 +16,10 @@ type RigCommand interface {
 // BaseCommand is parent for all rig commands
 type BaseCommand struct {
 	RigCommand
-	out     *util.RigLogger
+	out      *util.RigLogger
 	progress *util.RigSpinner
-	machine Machine
-	context *cli.Context
+	machine  Machine
+	context  *cli.Context
 }
 
 // Before configure the function to run before all commands to setup core services.

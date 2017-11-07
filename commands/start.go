@@ -4,9 +4,9 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/urfave/cli"
-	"github.com/phase2/rig/util"
 	"fmt"
+	"github.com/phase2/rig/util"
+	"github.com/urfave/cli"
 )
 
 // Start is the command for creating and starting a Docker Machine and other core Outrigger services
