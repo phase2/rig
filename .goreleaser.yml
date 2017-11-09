@@ -6,6 +6,7 @@ builds:
   - binary: rig
     main: ./cmd/main.go
     ldflags: -d -s -w -X main.build={{.Version}}
+    flags: -tags netgo -installsuffix netgo
     env:
       - CGO_ENABLED=0
     goos:
