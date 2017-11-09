@@ -1,4 +1,5 @@
 # One release file to rule them all
+project_name: outrigger-cli
 
 # Platforms/architectures to target
 builds:
@@ -26,6 +27,7 @@ release:
   github:
     owner: phase2
     name: rig
+  draft: true
 
 # Publishing Homebrew Formula to the Tap repo
 brew:
