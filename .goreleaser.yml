@@ -5,6 +5,7 @@ project_name: outrigger-cli
 builds:
   - binary: rig
     main: ./cmd/main.go
+    ldflags: -d -s -w -X main.build={{.Version}}
     goos:
       - windows
       - darwin
