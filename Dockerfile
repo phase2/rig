@@ -10,12 +10,16 @@ RUN wget https://cache.ruby-lang.org/pub/ruby/2.4/ruby-2.4.2.tar.gz \
     && ./configure --prefix=/usr/local \
     && make \
     && make install
-RUN gem install --no-rdoc --no-ri fpm
+
+# Install fpm for package building
+RUN apt-get install -y rpm \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists \
+    && gem install --no-rdoc --no-ri fpm
 
 # Back to the Go thingies
 WORKDIR /go
 RUN go get -u github.com/golang/dep/... \
   && go get -u github.com/alecthomas/gometalinter \
   && go get -u github.com/goreleaser/goreleaser
-
 RUN gometalinter --install --update
