@@ -74,35 +74,45 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		}
 	}
 
-	// 2. Check Docker API Version compatibility
+	// 1.5 Ensure docker / machine is running
 	if !util.SupportsNativeDocker() {
-		clientAPIVersion := util.GetDockerClientAPIVersion()
-		serverAPIVersion, err := util.GetDockerServerAPIVersion(cmd.machine.Name)
-		serverMinAPIVersion, _ := util.GetDockerServerMinAPIVersion(cmd.machine.Name)
-
-		// Older clients can talk to newer servers, and when you ask a newer server
-		// it's version in the presence of an older server it will downgrade it's
-		// compatability as far as possible. So as long as the client API is not greater
-		// than the servers current version or less than the servers minimum api version
-		// then we are compatible
-		constraintString := fmt.Sprintf("<= %s", serverAPIVersion)
-		if serverMinAPIVersion != nil {
-			constraintString = fmt.Sprintf(">= %s", serverMinAPIVersion)
-		}
-		apiConstraint, _ := version.NewConstraint(constraintString)
-
-		if err != nil {
-			cmd.out.Error.Println("Could not determine Docker Machine Docker versions: ", err)
-		} else if clientAPIVersion.Equal(serverAPIVersion) {
-			cmd.out.Info.Printf("Docker Client (%s) and Server (%s) have equal API Versions", clientAPIVersion, serverAPIVersion)
-		} else if apiConstraint.Check(clientAPIVersion) {
-			cmd.out.Info.Printf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientAPIVersion, constraintString, serverAPIVersion, serverMinAPIVersion)
+		if !cmd.machine.IsRunning() {
+			cmd.out.Error.Fatalf("Machine '%s' is not running. You may need to run 'rig start'", cmd.machine.Name)
 		} else {
-			cmd.out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientAPIVersion, serverAPIVersion, serverMinAPIVersion)
+			cmd.out.Info.Printf("Docker Machine (%s) is running", cmd.machine.Name)
 		}
 	} else {
-		dockerAPIVersion := util.GetDockerClientAPIVersion()
-		cmd.out.Info.Printf("Docker API Version: %s", dockerAPIVersion)
+		if err := exec.Command("docker", "version").Run(); err != nil {
+			cmd.out.Error.Fatalf("Docker is not running. You may need to run 'systemctl start docker'")
+		} else {
+			cmd.out.Info.Println("Docker is running")
+		}
+	}
+
+	// 2. Check Docker API Version compatibility
+	clientAPIVersion := util.GetDockerClientAPIVersion()
+	serverAPIVersion, err := util.GetDockerServerAPIVersion()
+	serverMinAPIVersion, _ := util.GetDockerServerMinAPIVersion()
+
+	// Older clients can talk to newer servers, and when you ask a newer server
+	// it's version in the presence of an older server it will downgrade it's
+	// compatability as far as possible. So as long as the client API is not greater
+	// than the servers current version or less than the servers minimum api version
+	// then we are compatible
+	constraintString := fmt.Sprintf("<= %s", serverAPIVersion)
+	if serverMinAPIVersion != nil {
+		constraintString = fmt.Sprintf(">= %s", serverMinAPIVersion)
+	}
+	apiConstraint, _ := version.NewConstraint(constraintString)
+
+	if err != nil {
+		cmd.out.Error.Println("Could not determine Docker versions: ", err)
+	} else if clientAPIVersion.Equal(serverAPIVersion) {
+		cmd.out.Info.Printf("Docker Client (%s) and Server (%s) have equal API Versions", clientAPIVersion, serverAPIVersion)
+	} else if apiConstraint.Check(clientAPIVersion) {
+		cmd.out.Info.Printf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientAPIVersion, constraintString, serverAPIVersion, serverMinAPIVersion)
+	} else {
+		cmd.out.Error.Printf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientAPIVersion, serverAPIVersion, serverMinAPIVersion)
 	}
 
 	// 3. Pull down the data from DNSDock. This will confirm we can resolve names as well

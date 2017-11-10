@@ -58,7 +58,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 	}
 
-	dockerAPIVersion, _ := util.GetDockerServerAPIVersion(cmd.machine.Name)
+	dockerAPIVersion, _ := util.GetDockerServerAPIVersion()
 	args := []string{
 		"run",
 		"-d",
