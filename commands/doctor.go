@@ -81,6 +81,12 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		} else {
 			cmd.out.Info.Printf("Docker Machine (%s) is running", cmd.machine.Name)
 		}
+	} else {
+		if err := exec.Command("docker", "version").Run(); err != nil {
+			cmd.out.Error.Fatalf("Docker is not running. You may need to run 'systemctl start docker'")
+		} else {
+			cmd.out.Info.Println("Docker is running")
+		}
 	}
 
 	// 2. Check Docker API Version compatibility
