@@ -13,36 +13,22 @@ import (
 
 const defaultFailedCode = 1
 
+type Executor struct {
+	cmd *exec.Cmd
+}
+
 // StreamCommand sets up the output streams (and colors) to stream command output if verbose is configured
 func StreamCommand(cmd *exec.Cmd) error {
-	return RunCommand(cmd, false)
+	return Executor{cmd}.Execute(false)
 }
 
 // ForceStreamCommand sets up the output streams (and colors) to stream command output regardless of verbosity
 func ForceStreamCommand(cmd *exec.Cmd) error {
-	return RunCommand(cmd, true)
+	return Executor{cmd}.Execute(true)
 }
 
-// RunCommand executes the provided command, it also can sspecify if the output should be forced to print to the console
-func RunCommand(cmd *exec.Cmd, forceOutput bool) error {
-	cmd.Stderr = os.Stderr
-	if Logger().IsVerbose || forceOutput {
-		cmd.Stdout = os.Stdout
-	} else {
-		cmd.Stdout = ioutil.Discard
-	}
-
-	color.Set(color.FgCyan)
-
-	err := Run(cmd)
-	color.Unset()
-	return err
-}
-
-// Run provides a wrapper to os/exec.Run() that verbose logs the executed command invocation.
-func Run(cmd *exec.Cmd) error {
-	Logger().Verbose.Printf("Executing: %s", CmdToString(cmd))
-	return cmd.Run()
+func Command(path string, arg ...string) Executor {
+	return Executor{exec.Command(path, arg...)}
 }
 
 // PassthruCommand is similar to ForceStreamCommand in that it will issue all output
@@ -79,14 +65,42 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	return
 }
 
-// CmdToString converts a Command to a human-readable string with key context details.
-func CmdToString(cmd *exec.Cmd) string {
-	context := ""
-	if cmd.Dir != "" {
-		context = fmt.Sprintf("(WD: %s", cmd.Dir)
+// RunCommand executes the provided command, it also can sspecify if the output should be forced to print to the console
+func (x Executor) Execute(forceOutput bool) error {
+	x.cmd.Stderr = os.Stderr
+	if Logger().IsVerbose || forceOutput {
+		x.cmd.Stdout = os.Stdout
+	} else {
+		x.cmd.Stdout = ioutil.Discard
 	}
-	if cmd.Env != nil {
-		env := strings.Join(cmd.Env, " ")
+
+	x.Log("Executing")
+	color.Set(color.FgCyan)
+	err := x.Run()
+	color.Unset()
+	return err
+}
+
+// Run runs a command via exec.Run() without modification or output of the underlying command.
+func (x Executor) Run() error {
+	return x.cmd.Run()
+}
+
+// Log verbosely logs the command.
+func (x Executor) Log(tag string) {
+	color.Set(color.FgYellow)
+	Logger().Verbose.Printf("%s: %s", tag, x.ToString())
+	color.Unset()
+}
+
+// CmdToString converts a Command to a human-readable string with key context details.
+func (x Executor) ToString() string {
+	context := ""
+	if x.cmd.Dir != "" {
+		context = fmt.Sprintf("(WD: %s", x.cmd.Dir)
+	}
+	if x.cmd.Env != nil {
+		env := strings.Join(x.cmd.Env, " ")
 		if context == "" {
 			context = fmt.Sprintf("(Env: %s", env)
 		} else {
@@ -94,5 +108,5 @@ func CmdToString(cmd *exec.Cmd) string {
 		}
 	}
 
-	return fmt.Sprintf("%s %s %s", cmd.Path, strings.Join(cmd.Args[1:], " "), context)
+	return fmt.Sprintf("%s %s %s", x.cmd.Path, strings.Join(x.cmd.Args[1:], " "), context)
 }
