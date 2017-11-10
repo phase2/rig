@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
@@ -42,13 +41,13 @@ func (cmd *Kill) Run(c *cli.Context) error {
 	}
 
 	cmd.out.Info.Printf("Killing machine '%s'", cmd.machine.Name)
-	util.StreamCommand(exec.Command("docker-machine", "kill", cmd.machine.Name))
+	util.StreamCommand("docker-machine", "kill", cmd.machine.Name)
 
 	// Ensure the underlying virtualization has stopped
 	driver := cmd.machine.GetDriver()
 	switch driver {
 	case util.VirtualBox:
-		util.StreamCommand(exec.Command("controlvm", cmd.machine.Name, "poweroff"))
+		util.StreamCommand("controlvm", cmd.machine.Name, "poweroff")
 	case util.VMWare:
 		cmd.out.Warning.Println("Add vmrun suspend command.")
 	case util.Xhyve:

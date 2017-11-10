@@ -18,15 +18,16 @@ type Executor struct {
 }
 
 // StreamCommand sets up the output streams (and colors) to stream command output if verbose is configured
-func StreamCommand(cmd *exec.Cmd) error {
-	return Executor{cmd}.Execute(false)
+func StreamCommand(path string, arg ...string) error {
+	return Command(path, arg...).Execute(false)
 }
 
 // ForceStreamCommand sets up the output streams (and colors) to stream command output regardless of verbosity
-func ForceStreamCommand(cmd *exec.Cmd) error {
-	return Executor{cmd}.Execute(true)
+func ForceStreamCommand(path string, arg ...string) error {
+	return Command(path, arg...).Execute(true)
 }
 
+// Command creates a new Executor instance from the execution arguments.
 func Command(path string, arg ...string) Executor {
 	return Executor{exec.Command(path, arg...)}
 }
@@ -93,7 +94,7 @@ func (x Executor) Log(tag string) {
 	color.Unset()
 }
 
-// CmdToString converts a Command to a human-readable string with key context details.
+// ToString converts a Command to a human-readable string with key context details.
 func (x Executor) ToString() string {
 	context := ""
 	if x.cmd.Dir != "" {

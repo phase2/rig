@@ -98,7 +98,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	// NFS mounts are Mac-only.
 	if util.IsMac() {
 		cmd.out.Verbose.Println("Enabling NFS file sharing")
-		if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
+		if nfsErr := util.StreamCommand("docker-machine-nfs", cmd.machine.Name); nfsErr != nil {
 			cmd.out.Error.Printf("Error enabling NFS: %s", nfsErr)
 		}
 		cmd.out.Verbose.Println("NFS is ready to use")
@@ -124,7 +124,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 		then echo '===> Creating symlink from /data to /mnt/sda1/data';
 		sudo ln -s /mnt/sda1/data /data;
 	fi;`
-	if err := util.StreamCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name, dataMountSetup)); err != nil {
+	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, dataMountSetup); err != nil {
 		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
 	}
 

@@ -27,11 +27,11 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 
 	boot2dockerURL := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
 
-	var create *exec.Cmd
+	var create util.Executor
 
 	switch driver {
 	case util.VirtualBox:
-		create = exec.Command(
+		create = util.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=virtualbox",
@@ -43,7 +43,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 			"--engine-opt", "dns=172.17.0.1",
 		)
 	case util.VMWare:
-		create = exec.Command(
+		create = util.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=vmwarefusion",
@@ -57,7 +57,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 		if err := m.CheckXhyveRequirements(); err != nil {
 			return err
 		}
-		create = exec.Command(
+		create = util.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=xhyve",
@@ -69,7 +69,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 		)
 	}
 
-	if err := util.StreamCommand(create); err != nil {
+	if err := create.Execute(false); err != nil {
 		return fmt.Errorf("error creating machine '%s': %s", m.Name, err)
 	}
 
@@ -97,7 +97,7 @@ func (m Machine) Start() error {
 	if !m.IsRunning() {
 		m.out.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
 
-		if err := util.StreamCommand(exec.Command("docker-machine", "start", m.Name)); err != nil {
+		if err := util.StreamCommand("docker-machine", "start", m.Name); err != nil {
 			return fmt.Errorf("error starting machine '%s': %s", m.Name, err)
 		}
 
@@ -110,14 +110,14 @@ func (m Machine) Start() error {
 // Stop halts the Docker Machine
 func (m Machine) Stop() error {
 	if m.IsRunning() {
-		return util.StreamCommand(exec.Command("docker-machine", "stop", m.Name))
+		return util.StreamCommand("docker-machine", "stop", m.Name)
 	}
 	return nil
 }
 
 // Remove deleted the Docker Machine
 func (m Machine) Remove() error {
-	return util.StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
+	return util.StreamCommand("docker-machine", "rm", "-y", m.Name)
 }
 
 // WaitForDev will wait a period of time for communication with the docker daemon to be established

@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
@@ -54,7 +53,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	}
 
 	cmd.out.Verbose.Printf("Attempting to update %s", dashboardImageName)
-	if err := util.StreamCommand(exec.Command("docker", "pull", dashboardImageName)); err != nil {
+	if err := util.StreamCommand("docker", "pull", dashboardImageName); err != nil {
 		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 	}
 
@@ -71,7 +70,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		dashboardImageName,
 	}
 
-	util.ForceStreamCommand(exec.Command("docker", args...))
+	util.ForceStreamCommand("docker", args...)
 
 	if util.IsMac() {
 		util.Command("open", "http://dashboard.outrigger.vm").Run()
