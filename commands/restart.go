@@ -34,14 +34,14 @@ func (cmd *Restart) Run(c *cli.Context) error {
 			cmd.out.Info.Printf("Restarting Outrigger machine '%s' and services", cmd.machine.Name)
 		}
 
-		stop := Stop{BaseCommand{machine: cmd.machine, out: cmd.out}}
+		stop := Stop{cmd.BaseCommand}
 		if err := stop.Run(c); err != nil {
 			return err
 		}
 
 		time.Sleep(time.Duration(5) * time.Second)
 
-		start := Start{BaseCommand{machine: cmd.machine, out: cmd.out}}
+		start := Start{cmd.BaseCommand}
 		if err := start.Run(c); err != nil {
 			return err
 		}

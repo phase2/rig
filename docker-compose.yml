@@ -19,10 +19,10 @@ services:
   # Build rig, dropping off a working binary in build/darwin/rig.
   compile:
     extends: base
-    command: go build -o build/darwin/rig cmd/main.go
+    command: go build -o build/${GOOS:-darwin}/rig cmd/main.go
     environment:
-      - GOOS=darwin
-      - GOARCH=amd64
+      GOOS: ${GOOS:-darwin}
+      GOARCH: ${GOARCH:-amd64}
 
   # Install project dependencies.
   install:

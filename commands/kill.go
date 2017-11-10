@@ -36,7 +36,7 @@ func (cmd *Kill) Run(c *cli.Context) error {
 	}
 
 	// First stop it (and cleanup)
-	stop := Stop{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	stop := Stop{cmd.BaseCommand}
 	if err := stop.Run(c); err != nil {
 		return err
 	}

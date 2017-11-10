@@ -107,7 +107,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 
 	// 3. Pull down the data from DNSDock. This will confirm we can resolve names as well
 	//    as route to the appropriate IP addresses via the added route commands
-	dnsRecords := DNSRecords{BaseCommand{machine: cmd.machine, out: cmd.out}}
+	dnsRecords := DNSRecords{cmd.BaseCommand}
 	if records, err := dnsRecords.LoadRecords(); err == nil {
 		resolved := false
 		for _, record := range records {
