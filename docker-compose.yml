@@ -23,6 +23,7 @@ services:
     environment:
       GOOS: ${GOOS:-darwin}
       GOARCH: ${GOARCH:-amd64}
+      CGO_ENABLED: 0
 
   # Install project dependencies.
   install:
