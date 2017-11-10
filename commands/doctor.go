@@ -74,6 +74,15 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		}
 	}
 
+	// 1.5 Ensure docker / machine is running
+	if !util.SupportsNativeDocker() {
+		if !cmd.machine.IsRunning() {
+			cmd.out.Error.Fatalf("Machine '%s' is not running. You may need to run 'rig start'", cmd.machine.Name)
+		} else {
+			cmd.out.Info.Printf("Docker Machine (%s) is running", cmd.machine.Name)
+		}
+	}
+
 	// 2. Check Docker API Version compatibility
 	if !util.SupportsNativeDocker() {
 		clientAPIVersion := util.GetDockerClientAPIVersion()
