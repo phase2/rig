@@ -8,7 +8,7 @@ builds:
     ldflags: -s -w -X main.build={{.Version}} -linkmode external -extldflags "-static"
     flags: --tags netgo
     env:
-      CGO_ENABLED: 0
+      - CGO_ENABLED=0
     goos:
       - windows
       - darwin
