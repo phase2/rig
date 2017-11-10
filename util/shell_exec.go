@@ -1,8 +1,8 @@
 package util
 
 import (
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
