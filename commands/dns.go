@@ -209,7 +209,7 @@ func (cmd *DNS) configureLinuxResolver() error {
 	// Is libnss-resolver in use
 	if _, err := os.Stat("/etc/resolver"); err == nil {
 		// Install for libnss-resolver connection to dnsdock
-		exec.Command("bash", "-c", fmt.Sprintf("echo 'nameserver %s' | sudo tee /etc/resolver/vm", bridgeIP)).Run()
+		exec.Command("bash", "-c", fmt.Sprintf("echo 'nameserver %s:53' | sudo tee /etc/resolver/vm", bridgeIP)).Run()
 	}
 
 	return nil
