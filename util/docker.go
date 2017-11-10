@@ -1,7 +1,6 @@
 package util
 
 import (
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -11,7 +10,7 @@ import (
 
 // GetRawCurrentDockerVersion returns the entire semver string from the docker version cli
 func GetRawCurrentDockerVersion() string {
-	output, _ := exec.Command("docker", "--version").Output()
+	output, _ := Command("docker", "--version").Output()
 	re := regexp.MustCompile("Docker version (.*),")
 	return re.FindAllStringSubmatch(string(output), -1)[0][1]
 }
@@ -24,7 +23,7 @@ func GetCurrentDockerVersion() *version.Version {
 
 // GetDockerClientAPIVersion returns a Version for the docker client API version
 func GetDockerClientAPIVersion() *version.Version {
-	output, _ := exec.Command("docker", "version", "--format", "{{.Client.APIVersion}}").Output()
+	output, _ := Command("docker", "version", "--format", "{{.Client.APIVersion}}").Output()
 	re := regexp.MustCompile(`^([\d|\.]+)`)
 	versionNumber := re.FindAllStringSubmatch(string(output), -1)[0][1]
 	return version.Must(version.NewVersion(versionNumber))
@@ -32,7 +31,8 @@ func GetDockerClientAPIVersion() *version.Version {
 
 // GetDockerServerAPIVersion returns a Version for the docker server API version
 func GetDockerServerAPIVersion() (*version.Version, error) {
-	output, err := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}").Output()
+	output, err := Command("docker", "version", "--format", "{{.Server.APIVersion}}").Output()
+
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,8 @@ func GetDockerServerAPIVersion() (*version.Version, error) {
 
 // GetDockerServerMinAPIVersion returns the minimum compatability version for the docker server
 func GetDockerServerMinAPIVersion() (*version.Version, error) {
-	output, err := exec.Command("docker", "version", "--format", "{{.Server.MinAPIVersion}}").Output()
+	output, err := Command("docker", "version", "--format", "{{.Server.MinAPIVersion}}").Output()
+
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func GetDockerServerMinAPIVersion() (*version.Version, error) {
 
 // ImageOlderThan determines the age of the Docker Image and whether the image is older than the designated timestamp.
 func ImageOlderThan(image string, elapsedSeconds float64) (bool, float64, error) {
-	output, err := exec.Command("docker", "inspect", "--format", "{{.Created}}", image).Output()
+	output, err := Command("docker", "inspect", "--format", "{{.Created}}", image).Output()
 	if err != nil {
 		return false, 0, err
 	}
@@ -67,7 +68,7 @@ func ImageOlderThan(image string, elapsedSeconds float64) (bool, float64, error)
 
 // GetBridgeIP returns the IP address of the Docker bridge network gateway
 func GetBridgeIP() (string, error) {
-	output, err := exec.Command("docker", "network", "inspect", "bridge", "--format", "{{(index .IPAM.Config 0).Gateway}}").Output()
+	output, err := Command("docker", "network", "inspect", "bridge", "--format", "{{(index .IPAM.Config 0).Gateway}}").Output()
 	if err != nil {
 		return "", err
 	}

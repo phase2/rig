@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
@@ -37,9 +36,9 @@ func (cmd *Status) Run(c *cli.Context) error {
 	}
 
 	if cmd.out.IsVerbose {
-		util.StreamCommand(exec.Command("docker-machine", "ls", "--filter", "name="+cmd.machine.Name))
+		util.StreamCommand("docker-machine", "ls", "--filter", "name="+cmd.machine.Name)
 	} else {
-		output, _ := exec.Command("docker-machine", "status", cmd.machine.Name).CombinedOutput()
+		output, _ := util.Command("docker-machine", "status", cmd.machine.Name).CombinedOutput()
 		os.Stdout.Write(output)
 	}
 

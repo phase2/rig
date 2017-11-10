@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/fatih/color"
 	"github.com/phase2/rig/util"
@@ -60,11 +59,11 @@ func (cmd *Stop) StopOutrigger() error {
 
 	cmd.out.Info.Println("Cleaning up local networking (may require your admin password)")
 	if util.IsWindows() {
-		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
-		exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
+		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
+		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
 	} else {
-		exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
-		exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
+		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
+		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
 	}
 	color.Unset()
 

@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -27,11 +26,11 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 
 	boot2dockerURL := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
 
-	var create *exec.Cmd
+	var create util.Executor
 
 	switch driver {
 	case util.VirtualBox:
-		create = exec.Command(
+		create = util.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=virtualbox",
@@ -43,7 +42,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 			"--engine-opt", "dns=172.17.0.1",
 		)
 	case util.VMWare:
-		create = exec.Command(
+		create = util.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=vmwarefusion",
@@ -57,7 +56,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 		if err := m.CheckXhyveRequirements(); err != nil {
 			return err
 		}
-		create = exec.Command(
+		create = util.Command(
 			"docker-machine",
 			"create", m.Name,
 			"--driver=xhyve",
@@ -69,7 +68,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 		)
 	}
 
-	if err := util.StreamCommand(create); err != nil {
+	if err := create.Execute(false); err != nil {
 		return fmt.Errorf("error creating machine '%s': %s", m.Name, err)
 	}
 
@@ -80,12 +79,12 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 // CheckXhyveRequirements verifies that the correct xhyve environment exists
 func (m Machine) CheckXhyveRequirements() error {
 	// Is xhyve installed locally
-	if err := exec.Command("which", "xhyve").Run(); err != nil {
+	if err := util.Command("which", "xhyve").Run(); err != nil {
 		return fmt.Errorf("xhyve is not installed. Install it with 'brew install xhyve'")
 	}
 
 	// Is docker-machine-driver-xhyve installed locally
-	if err := exec.Command("which", "docker-machine-driver-xhyve").Run(); err != nil {
+	if err := util.Command("which", "docker-machine-driver-xhyve").Run(); err != nil {
 		return fmt.Errorf("docker-machine-driver-xhyve is not installed. Install it with 'brew install docker-machine-driver-xhyve'")
 	}
 
@@ -97,7 +96,7 @@ func (m Machine) Start() error {
 	if !m.IsRunning() {
 		m.out.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
 
-		if err := util.StreamCommand(exec.Command("docker-machine", "start", m.Name)); err != nil {
+		if err := util.StreamCommand("docker-machine", "start", m.Name); err != nil {
 			return fmt.Errorf("error starting machine '%s': %s", m.Name, err)
 		}
 
@@ -110,14 +109,14 @@ func (m Machine) Start() error {
 // Stop halts the Docker Machine
 func (m Machine) Stop() error {
 	if m.IsRunning() {
-		return util.StreamCommand(exec.Command("docker-machine", "stop", m.Name))
+		return util.StreamCommand("docker-machine", "stop", m.Name)
 	}
 	return nil
 }
 
 // Remove deleted the Docker Machine
 func (m Machine) Remove() error {
-	return util.StreamCommand(exec.Command("docker-machine", "rm", "-y", m.Name))
+	return util.StreamCommand("docker-machine", "rm", "-y", m.Name)
 }
 
 // WaitForDev will wait a period of time for communication with the docker daemon to be established
@@ -127,7 +126,7 @@ func (m Machine) WaitForDev() error {
 
 	for i := 1; i <= maxTries; i++ {
 		m.SetEnv()
-		if err := exec.Command("docker", "ps").Run(); err == nil {
+		if err := util.Command("docker", "ps").Run(); err == nil {
 			m.out.Verbose.Printf("Machine '%s' has started", m.Name)
 			return nil
 		}
@@ -162,7 +161,7 @@ func (m Machine) UnsetEnv() {
 
 // Exists determines if the Docker Machine exist
 func (m Machine) Exists() bool {
-	if err := exec.Command("docker-machine", "status", m.Name).Run(); err != nil {
+	if err := util.Command("docker-machine", "status", m.Name).Run(); err != nil {
 		return false
 	}
 	return true
@@ -170,7 +169,7 @@ func (m Machine) Exists() bool {
 
 // IsRunning returns the Docker Machine running status
 func (m Machine) IsRunning() bool {
-	if err := exec.Command("docker-machine", "env", m.Name).Run(); err != nil {
+	if err := util.Command("docker-machine", "env", m.Name).Run(); err != nil {
 		return false
 	}
 	return true
@@ -182,7 +181,7 @@ func (m *Machine) GetData() *simplejson.Json {
 		return m.inspectData
 	}
 
-	if inspect, inspectErr := exec.Command("docker-machine", "inspect", m.Name).Output(); inspectErr == nil {
+	if inspect, inspectErr := util.Command("docker-machine", "inspect", m.Name).Output(); inspectErr == nil {
 		if js, jsonErr := simplejson.NewJson(inspect); jsonErr != nil {
 			m.out.Error.Fatalf("Failed to parse '%s' JSON: %s", m.Name, jsonErr)
 		} else {
@@ -224,7 +223,7 @@ func (m Machine) GetBridgeIP() string {
 
 // GetDockerVersion returns the Version of Docker running within Docker Machine
 func (m Machine) GetDockerVersion() (*version.Version, error) {
-	b2dOutput, err := exec.Command("docker-machine", "version", m.Name).CombinedOutput()
+	b2dOutput, err := util.Command("docker-machine", "version", m.Name).CombinedOutput()
 	if err != nil {
 		return nil, errors.New(strings.TrimSpace(string(b2dOutput)))
 	}
@@ -264,7 +263,7 @@ func (m Machine) GetDiskInGB() int {
 
 // GetSysctl returns the configured value for the provided sysctl setting on the Docker Machine
 func (m Machine) GetSysctl(setting string) (string, error) {
-	output, err := exec.Command("docker-machine", "ssh", m.Name, "sudo", "sysctl", "-n", setting).CombinedOutput()
+	output, err := util.Command("docker-machine", "ssh", m.Name, "sudo", "sysctl", "-n", setting).CombinedOutput()
 	if err != nil {
 		return "", err
 	}
@@ -275,6 +274,6 @@ func (m Machine) GetSysctl(setting string) (string, error) {
 func (m Machine) SetSysctl(key string, val string) error {
 	cmd := fmt.Sprintf("sudo sysctl -w %s=%s", key, val)
 	m.out.Verbose.Printf("Modifying Docker Machine kernel settings: %s", cmd)
-	_, err := exec.Command("docker-machine", "ssh", m.Name, cmd).CombinedOutput()
+	_, err := util.Command("docker-machine", "ssh", m.Name, cmd).CombinedOutput()
 	return err
 }

@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -73,24 +72,24 @@ func (cmd *DNS) configureMacRoutes(machine Machine) {
 	if machine.IsXhyve() {
 		cmd.removeHostFilter(machineIP)
 	}
-	exec.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
-	util.StreamCommand(exec.Command("sudo", "route", "-n", "add", "172.17.0.0/16", machineIP))
+	util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
+	util.StreamCommand("sudo", "route", "-n", "add", "172.17.0.0/16", machineIP)
 	if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
 		cmd.out.Verbose.Println("Restarting discoveryutil to flush DNS caches")
-		util.StreamCommand(exec.Command("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
-		util.StreamCommand(exec.Command("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
+		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
+		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
 		cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
-		util.StreamCommand(exec.Command("sudo", "killall", "-HUP", "mDNSResponder"))
+		util.StreamCommand("sudo", "killall", "-HUP", "mDNSResponder")
 	}
 }
 
 // removeHostFilter removes the host filter from the xhyve bridge interface
 func (cmd *DNS) removeHostFilter(ipAddr string) {
 	// #1: route -n get <machineIP> to find the interface name
-	routeData, err := exec.Command("route", "-n", "get", ipAddr).CombinedOutput()
+	routeData, err := util.Command("route", "-n", "get", ipAddr).CombinedOutput()
 	if err != nil {
 		cmd.out.Warning.Println("Unable to determine bridge interface to remove hostfilter")
 		return
@@ -99,7 +98,7 @@ func (cmd *DNS) removeHostFilter(ipAddr string) {
 	iface := ifaceRegexp.FindStringSubmatch(string(routeData))[1]
 
 	// #2: ifconfig <interface name> to get the details
-	ifaceData, err := exec.Command("ifconfig", iface).CombinedOutput()
+	ifaceData, err := util.Command("ifconfig", iface).CombinedOutput()
 	if err != nil {
 		cmd.out.Warning.Println("Unable to determine member to remove hostfilter")
 		return
@@ -108,13 +107,13 @@ func (cmd *DNS) removeHostFilter(ipAddr string) {
 	member := memberRegexp.FindStringSubmatch(string(ifaceData))[1]
 
 	// #4: ifconfig <bridge> -hostfilter <member>
-	util.StreamCommand(exec.Command("sudo", "ifconfig", iface, "-hostfilter", member))
+	util.StreamCommand("sudo", "ifconfig", iface, "-hostfilter", member)
 }
 
 // ConfigureWindowsRoutes configures network routing
 func (cmd *DNS) configureWindowsRoutes(machine Machine) {
-	exec.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
-	util.StreamCommand(exec.Command("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machine.GetIP()))
+	util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
+	util.StreamCommand("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machine.GetIP())
 }
 
 // StartDNS will start the dnsdock service
@@ -149,7 +148,7 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	for _, server := range dnsServers {
 		args = append(args, "--nameserver="+server)
 	}
-	util.ForceStreamCommand(exec.Command("docker", args...))
+	util.ForceStreamCommand("docker", args...)
 
 	// Configure the resolvers based on platform
 	var resolverReturn error
@@ -168,21 +167,21 @@ func (cmd *DNS) configureMacResolver(machine Machine) error {
 	cmd.out.Verbose.Print("Configuring DNS resolution for macOS")
 	bridgeIP := machine.GetBridgeIP()
 
-	if err := exec.Command("sudo", "mkdir", "-p", "/etc/resolver").Run(); err != nil {
+	if err := util.Command("sudo", "mkdir", "-p", "/etc/resolver").Run(); err != nil {
 		return err
 	}
-	if err := exec.Command("bash", "-c", fmt.Sprintf("echo 'nameserver %s' | sudo tee /etc/resolver/vm", bridgeIP)).Run(); err != nil {
+	if err := util.Command("bash", "-c", fmt.Sprintf("echo 'nameserver %s' | sudo tee /etc/resolver/vm", bridgeIP)).Run(); err != nil {
 		return err
 	}
 	if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
 		cmd.out.Verbose.Println("Restarting discoveryutil to flush DNS caches")
-		util.StreamCommand(exec.Command("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
-		util.StreamCommand(exec.Command("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist"))
+		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
+		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
 		cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
-		util.StreamCommand(exec.Command("sudo", "killall", "-HUP", "mDNSResponder"))
+		util.StreamCommand("sudo", "killall", "-HUP", "mDNSResponder")
 	}
 	return nil
 }
@@ -198,18 +197,18 @@ func (cmd *DNS) configureLinuxResolver() error {
 	// Is NetworkManager in use
 	if _, err := os.Stat("/etc/NetworkManager/dnsmasq.d"); err == nil {
 		// Install for NetworkManager/dnsmasq connection to dnsdock
-		util.StreamCommand(exec.Command("bash", "-c", fmt.Sprintf("echo 'server=/vm/%s' | sudo tee /etc/NetworkManager/dnsmasq.d/dnsdock.conf", bridgeIP)))
+		util.StreamCommand("bash", "-c", fmt.Sprintf("echo 'server=/vm/%s' | sudo tee /etc/NetworkManager/dnsmasq.d/dnsdock.conf", bridgeIP))
 
 		// Restart NetworkManager if it is running
-		if err := exec.Command("systemctl", "is-active", "NetworkManager").Run(); err != nil {
-			util.StreamCommand(exec.Command("sudo", "systemctl", "restart", "NetworkManager"))
+		if err := util.Command("systemctl", "is-active", "NetworkManager").Run(); err != nil {
+			util.StreamCommand("sudo", "systemctl", "restart", "NetworkManager")
 		}
 	}
 
 	// Is libnss-resolver in use
 	if _, err := os.Stat("/etc/resolver"); err == nil {
 		// Install for libnss-resolver connection to dnsdock
-		exec.Command("bash", "-c", fmt.Sprintf("echo 'nameserver %s:53' | sudo tee /etc/resolver/vm", bridgeIP)).Run()
+		util.Command("bash", "-c", fmt.Sprintf("echo 'nameserver %s:53' | sudo tee /etc/resolver/vm", bridgeIP)).Run()
 	}
 
 	return nil
@@ -224,6 +223,6 @@ func (cmd *DNS) configureWindowsResolver(machine Machine) error {
 
 // StopDNS stops the dnsdock service and cleans up
 func (cmd *DNS) StopDNS() {
-	exec.Command("docker", "stop", "dnsdock").Run()
-	exec.Command("docker", "rm", "dnsdock").Run()
+	util.Command("docker", "stop", "dnsdock").Run()
+	util.Command("docker", "rm", "dnsdock").Run()
 }

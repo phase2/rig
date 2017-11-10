@@ -3,9 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 
-	"github.com/fatih/color"
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
@@ -54,7 +52,7 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	backupFile := fmt.Sprintf("%s%c%s.tgz", backupDir, os.PathSeparator, cmd.machine.Name)
 	if _, err := os.Stat(backupDir); err != nil {
 		cmd.out.Info.Printf("Creating backup directory: %s...", backupDir)
-		if mkdirErr := exec.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
+		if mkdirErr := util.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
 			cmd.out.Error.Println(mkdirErr)
 			return cmd.Error(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
 		}
@@ -68,14 +66,7 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	// Stream the archive to stdout and capture it in a local file so we don't waste
 	// space storing an archive on the VM filesystem. There may not be enough space.
 	archiveCmd := fmt.Sprintf("sudo tar czf - -C %s .", dataDir)
-	backup := exec.Command("docker-machine", "ssh", cmd.machine.Name, archiveCmd, ">", backupFile)
-	backup.Stderr = os.Stderr
-
-	color.Set(color.FgCyan)
-	err := backup.Run()
-	color.Unset()
-
-	if err != nil {
+	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, archiveCmd, ">", backupFile); err != nil {
 		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
 	}
 

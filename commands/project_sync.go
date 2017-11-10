@@ -125,7 +125,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	}
 
 	cmd.out.Info.Printf("Starting sync volume: %s", volumeName)
-	if err := exec.Command("docker", "volume", "create", volumeName).Run(); err != nil {
+	if err := util.Command("docker", "volume", "create", volumeName).Run(); err != nil {
 		return cmd.Error(fmt.Sprintf("Failed to create sync volume: %s", volumeName), "VOLUME-CREATE-FAILED", 13)
 	}
 
@@ -133,7 +133,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	unisonMinorVersion := cmd.GetUnisonMinorVersion()
 
 	cmd.out.Verbose.Printf("Local Unison version for compatibilty: %s", unisonMinorVersion)
-	exec.Command("docker", "container", "stop", volumeName).Run()
+	util.Command("docker", "container", "stop", volumeName).Run()
 	containerArgs := []string{
 		"container", "run", "--detach", "--rm",
 		"-v", fmt.Sprintf("%s:/unison", volumeName),
@@ -143,7 +143,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 		"--name", volumeName,
 		fmt.Sprintf("outrigger/unison:%s", unisonMinorVersion),
 	}
-	if err := exec.Command("docker", containerArgs...).Run(); err != nil {
+	if err := util.Command("docker", containerArgs...).Run(); err != nil {
 		cmd.Error(fmt.Sprintf("Error starting sync container %s: %v", volumeName, err), "SYNC-CONTAINER-START-FAILED", 13)
 	}
 
@@ -183,7 +183,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	command := exec.Command("unison", unisonArgs...)
 	command.Dir = workingDir
 	cmd.out.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
-	if err = command.Start(); err != nil {
+	if err = util.Convert(command).Start(); err != nil {
 		return cmd.Error(fmt.Sprintf("Failure starting local Unison process: %v", err), "UNISON-START-FAILED", 13)
 	}
 
@@ -197,7 +197,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 // SetupBindVolume will create minimal Docker Volumes for systems that have native container/volume support
 func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) error {
 	cmd.out.Info.Printf("Starting local bind volume: %s", volumeName)
-	exec.Command("docker", "volume", "rm", volumeName).Run()
+	util.Command("docker", "volume", "rm", volumeName).Run()
 
 	volumeArgs := []string{
 		"volume", "create",
@@ -207,7 +207,7 @@ func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) er
 		volumeName,
 	}
 
-	if err := exec.Command("docker", volumeArgs...).Run(); err != nil {
+	if err := util.Command("docker", volumeArgs...).Run(); err != nil {
 		return cmd.Error(err.Error(), "BIND-VOLUME-FAILURE", 13)
 	}
 
@@ -233,7 +233,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	volumeName := cmd.GetVolumeName(cmd.Config, workingDir)
 	cmd.out.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 	cmd.out.Info.Println("Stopping Unison container")
-	if err := exec.Command("docker", "container", "stop", volumeName).Run(); err != nil {
+	if err := util.Command("docker", "container", "stop", volumeName).Run(); err != nil {
 		return cmd.Error(err.Error(), "SYNC-CONTAINER-FAILURE", 13)
 	}
 
@@ -288,7 +288,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 	// * 10 here because we loop once every 100 ms and we want to get to seconds
 	var timeoutLoops = timeoutSeconds * 10
 
-	output, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName).Output()
+	output, err := util.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName).Output()
 	if err != nil {
 		return "", fmt.Errorf("error inspecting sync container %s: %v", containerName, err)
 	}
@@ -378,7 +378,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 // GetUnisonMinorVersion will return the local Unison version to try to load a compatible unison image
 // This function discovers a semver like 2.48.4 and return 2.48
 func (cmd *ProjectSync) GetUnisonMinorVersion() string {
-	output, _ := exec.Command("unison", "-version").Output()
+	output, _ := util.Command("unison", "-version").Output()
 	re := regexp.MustCompile(`unison version (\d+\.\d+\.\d+)`)
 	rawVersion := re.FindAllStringSubmatch(string(output), -1)[0][1]
 	v := version.Must(version.NewVersion(rawVersion))

@@ -80,7 +80,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 	// or that docker operations failed and things will likely go wrong anyway.
 	if err == nil && !ctx.Bool("no-update") {
 		cmd.out.Verbose.Printf("Attempting to update %s", image)
-		if e := util.StreamCommand(exec.Command("docker", "pull", image)); e != nil {
+		if e := util.StreamCommand("docker", "pull", image); e != nil {
 			cmd.out.Verbose.Println("Failed to update generator image. Will use local cache if available.")
 		}
 	} else if err == nil && ctx.Bool("no-update") {
