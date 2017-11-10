@@ -75,7 +75,6 @@ func (x Executor) Execute(forceOutput bool) error {
 		x.cmd.Stdout = ioutil.Discard
 	}
 
-	x.Log("Executing")
 	color.Set(color.FgCyan)
 	err := x.Run()
 	color.Unset()
@@ -84,7 +83,20 @@ func (x Executor) Execute(forceOutput bool) error {
 
 // Run runs a command via exec.Run() without modification or output of the underlying command.
 func (x Executor) Run() error {
+	x.Log("Executing")
 	return x.cmd.Run()
+}
+
+// Output runs a command via exec.Output() without modification or output of the underlying command.
+func (x Executor) Output() ([]byte, error) {
+	x.Log("Executing")
+	return x.cmd.Output()
+}
+
+// CombinedOutput runs a command via exec.CombinedOutput() without modification or output of the underlying command.
+func (x Executor) CombinedOutput() ([]byte, error) {
+	x.Log("Executing")
+	return x.cmd.CombinedOutput()
 }
 
 // Log verbosely logs the command.

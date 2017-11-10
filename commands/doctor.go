@@ -61,7 +61,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 			} else {
 				cmd.out.Info.Printf("Docker Machine (%s) name matches your environment configuration.", cmd.machine.Name)
 			}
-			if output, err := exec.Command("docker-machine", "url", cmd.machine.Name).Output(); err == nil {
+			if output, err := util.Command("docker-machine", "url", cmd.machine.Name).Output(); err == nil {
 				hostURL := strings.TrimSpace(string(output))
 				if hostURL != os.Getenv("DOCKER_HOST") {
 					cmd.out.Error.Fatalf("Docker Host configuration should be '%s' but got '%s'. Please re-run 'eval \"$(rig config)\"'.", os.Getenv("DOCKER_HOST"), hostURL)
@@ -128,7 +128,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 
 	// 4. Ensure that docker-machine-nfs script is available for our NFS mounts (Mac ONLY)
 	if util.IsMac() {
-		if err := exec.Command("which", "docker-machine-nfs").Run(); err != nil {
+		if err := util.Command("which", "docker-machine-nfs").Run(); err != nil {
 			cmd.out.Error.Println("Docker Machine NFS is not installed.")
 		} else {
 			cmd.out.Info.Println("Docker Machine NFS is installed.")
@@ -137,7 +137,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 
 	// 5. Check for storage on VM volume
 	if !util.SupportsNativeDocker() {
-		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
+		output, err := util.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			dataUsage := strings.TrimSpace(string(output))
 			if i, e := strconv.Atoi(dataUsage); e == nil {
@@ -158,7 +158,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 
 	// 6. Check for storage on /Users
 	if !util.SupportsNativeDocker() {
-		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
+		output, err := util.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			userUsage := strings.TrimSpace(string(output))
 			if i, e := strconv.Atoi(userUsage); e == nil {

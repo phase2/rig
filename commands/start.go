@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"os/exec"
 	"strconv"
 
 	"github.com/phase2/rig/util"
@@ -66,7 +65,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Verbose.Println("If something goes wrong, run 'rig doctor'")
 	cmd.out.Verbose.Println("Pre-flight check...")
 
-	if err := exec.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
+	if err := util.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
 		return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
 	}
 

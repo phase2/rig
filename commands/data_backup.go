@@ -54,7 +54,7 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	backupFile := fmt.Sprintf("%s%c%s.tgz", backupDir, os.PathSeparator, cmd.machine.Name)
 	if _, err := os.Stat(backupDir); err != nil {
 		cmd.out.Info.Printf("Creating backup directory: %s...", backupDir)
-		if mkdirErr := exec.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
+		if mkdirErr := util.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
 			cmd.out.Error.Println(mkdirErr)
 			return cmd.Error(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
 		}
