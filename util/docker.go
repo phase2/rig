@@ -32,7 +32,7 @@ func GetDockerClientAPIVersion() *version.Version {
 
 // GetDockerServerAPIVersion returns a Version for the docker server API version
 func GetDockerServerAPIVersion(name string) (*version.Version, error) {
-	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.APIVersion}}").Output()
+	output, err := exec.Command("docker", "version", "--format", "{{.Server.APIVersion}}").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func GetDockerServerAPIVersion(name string) (*version.Version, error) {
 
 // GetDockerServerMinAPIVersion returns the minimum compatability version for the docker server
 func GetDockerServerMinAPIVersion(name string) (*version.Version, error) {
-	output, err := exec.Command("docker-machine", "ssh", name, "docker version --format {{.Server.MinAPIVersion}}").Output()
+	output, err := exec.Command("docker", "version", "--format", "{{.Server.MinAPIVersion}}").Output()
 	if err != nil {
 		return nil, err
 	}
