@@ -5,6 +5,8 @@ project_name: outrigger-cli
 builds:
   - binary: rig
     main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=0
     goos:
       - windows
       - darwin
