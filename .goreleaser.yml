@@ -5,6 +5,10 @@ project_name: outrigger-cli
 builds:
   - binary: rig
     main: ./cmd/main.go
+    ldflags: -s -w -X main.build={{.Version}} -linkmode external -extldfalgs "-static"
+    flags: --tags netgo
+    env:
+      - CGO_ENABLED=0
     goos:
       - windows
       - darwin
