@@ -183,7 +183,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	command := exec.Command("unison", unisonArgs...)
 	command.Dir = workingDir
 	cmd.out.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
-	if err = command.Start(); err != nil {
+	if err = util.Convert(command).Start(); err != nil {
 		return cmd.Error(fmt.Sprintf("Failure starting local Unison process: %v", err), "UNISON-START-FAILED", 13)
 	}
 

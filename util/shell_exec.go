@@ -13,6 +13,7 @@ import (
 
 const defaultFailedCode = 1
 
+// Executor wraps exec.Cmd to allow consistent manipulation of executed commands.
 type Executor struct {
 	cmd *exec.Cmd
 }
@@ -32,6 +33,11 @@ func Command(path string, arg ...string) Executor {
 	return Executor{exec.Command(path, arg...)}
 }
 
+// Convert takes a exec.Cmd pointer and wraps it in an executor object.
+func Convert(cmd *exec.Cmd) Executor {
+	return Executor{cmd}
+}
+
 // PassthruCommand is similar to ForceStreamCommand in that it will issue all output
 // regardless of verbose mode. Further, this version of the command captures the
 // exit status of any executed command. This function is intended to simulate
@@ -43,7 +49,8 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 
-	err := cmd.Run()
+	bin := Executor{cmd}
+	err := bin.Run()
 
 	if err != nil {
 		// Try to get the exit code.
@@ -66,7 +73,7 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	return
 }
 
-// RunCommand executes the provided command, it also can sspecify if the output should be forced to print to the console
+// Execute executes the provided command, it also can sspecify if the output should be forced to print to the console
 func (x Executor) Execute(forceOutput bool) error {
 	x.cmd.Stderr = os.Stderr
 	if Logger().IsVerbose || forceOutput {
@@ -81,6 +88,12 @@ func (x Executor) Execute(forceOutput bool) error {
 	return err
 }
 
+// CombinedOutput runs a command via exec.CombinedOutput() without modification or output of the underlying command.
+func (x Executor) CombinedOutput() ([]byte, error) {
+	x.Log("Executing")
+	return x.cmd.CombinedOutput()
+}
+
 // Run runs a command via exec.Run() without modification or output of the underlying command.
 func (x Executor) Run() error {
 	x.Log("Executing")
@@ -93,10 +106,10 @@ func (x Executor) Output() ([]byte, error) {
 	return x.cmd.Output()
 }
 
-// CombinedOutput runs a command via exec.CombinedOutput() without modification or output of the underlying command.
-func (x Executor) CombinedOutput() ([]byte, error) {
+// Start runs a command via exec.Start() without modification or output of the underlying command.
+func (x Executor) Start() error {
 	x.Log("Executing")
-	return x.cmd.CombinedOutput()
+	return x.cmd.Start()
 }
 
 // Log verbosely logs the command.

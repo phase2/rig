@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 
@@ -33,19 +32,19 @@ func (cmd *Doctor) Commands() []cli.Command {
 // nolint: gocyclo
 func (cmd *Doctor) Run(c *cli.Context) error {
 	// 0. Ensure all of rig's dependencies are available in the PATH.
-	if err := exec.Command("docker", "-h").Start(); err == nil {
+	if err := util.Command("docker", "-h").Start(); err == nil {
 		cmd.out.Info.Println("Docker is installed.")
 	} else {
 		cmd.out.Error.Fatal("Docker (docker) is not installed.")
 	}
 	if !util.SupportsNativeDocker() {
-		if err := exec.Command("docker-machine", "-h").Start(); err == nil {
+		if err := util.Command("docker-machine", "-h").Start(); err == nil {
 			cmd.out.Info.Println("Docker Machine is installed.")
 		} else {
 			cmd.out.Error.Fatal("Docker Machine (docker-machine) is not installed.")
 		}
 	}
-	if err := exec.Command("docker-compose", "-h").Start(); err == nil {
+	if err := util.Command("docker-compose", "-h").Start(); err == nil {
 		cmd.out.Info.Println("Docker Compose is installed.")
 	} else {
 		cmd.out.Warning.Printf("Docker Compose (docker-compose) is not installed.")
