@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 	"strings"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/urfave/cli"
+
+	"github.com/phase2/rig/util"
 )
 
 // DNSRecords is the command for exporting all DNS Records in Outrigger DNS in `hosts` file format
@@ -51,7 +52,7 @@ func (cmd *DNSRecords) Run(c *cli.Context) error {
 
 // LoadRecords retrieves the records from DNSDock and processes/return them
 func (cmd *DNSRecords) LoadRecords() ([]map[string]interface{}, error) {
-	ip, err := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", "dnsdock").Output()
+	ip, err := util.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", "dnsdock").Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover dnsdock IP address: %s", err)
 	}

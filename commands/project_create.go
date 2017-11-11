@@ -80,7 +80,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 	// or that docker operations failed and things will likely go wrong anyway.
 	if err == nil && !ctx.Bool("no-update") {
 		cmd.progress.Start(fmt.Sprintf("Attempting to update project generator docker image: %s", image))
-		if e := util.StreamCommand(exec.Command("docker", "pull", image)); e != nil {
+		if e := util.StreamCommand("docker", "pull", image); e != nil {
 			cmd.progress.Fail(fmt.Sprintf("Project generator docker image failed to update. Using local cache if available: %s", image))
 		} else {
 			cmd.progress.Complete(fmt.Sprintf("Project generator docker image is up-to-date: %s", image))

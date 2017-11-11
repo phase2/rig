@@ -3,10 +3,8 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
@@ -63,17 +61,9 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 
 	// Send the archive via stdin and extract inline. Saves on disk & performance
 	extractCmd := fmt.Sprintf("cat %s | docker-machine ssh %s \"sudo tar xzf - -C %s\"", backupFile, cmd.machine.Name, dataDir)
-	cmd.out.Info.Printf(extractCmd)
-	backup := exec.Command("bash", "-c", extractCmd)
-	backup.Stderr = os.Stderr
-
-	color.Set(color.FgCyan)
-	err := backup.Run()
-	color.Unset()
-
-	if err != nil {
-		cmd.progress.Fail("Data restore failed")
-		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
+	if err := util.StreamCommand("bash", "-c", extractCmd); err != nil {
+		cmd.progress.Fail(fmt.Sprintf("Data restore failed: %s", err.Error()))
+		return cmd.Error("Data restore failed", "COMMAND-ERROR", 13)
 	}
 
 	cmd.progress.Complete("Data restore complete")

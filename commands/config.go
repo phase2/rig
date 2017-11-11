@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/phase2/rig/util"
@@ -44,13 +43,13 @@ func (cmd *Config) Run(c *cli.Context) error {
 	}
 
 	// Clear out any previous environment variables
-	if output, err := exec.Command("docker-machine", "env", "-u").Output(); err == nil {
+	if output, err := util.Command("docker-machine", "env", "-u").Output(); err == nil {
 		os.Stdout.Write(output)
 	}
 
 	if cmd.machine.Exists() {
 		// Setup new values if machine is running
-		if output, err := exec.Command("docker-machine", "env", cmd.machine.Name).Output(); err == nil {
+		if output, err := util.Command("docker-machine", "env", cmd.machine.Name).Output(); err == nil {
 			os.Stdout.Write(output)
 		}
 	} else {

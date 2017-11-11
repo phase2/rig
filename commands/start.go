@@ -1,12 +1,11 @@
 package commands
 
 import (
-	"os/exec"
+	"fmt"
 	"strconv"
 
-	"fmt"
-	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
+	"github.com/phase2/rig/util"
 )
 
 // Start is the command for creating and starting a Docker Machine and other core Outrigger services
@@ -68,7 +67,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	cmd.out.Verbose.Println("Pre-flight check...")
 
-	if err := exec.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
+	if err := util.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
 		cmd.progress.Fail("Docker could not be started")
 		return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
 	}
@@ -102,11 +101,11 @@ func (cmd *Start) Run(c *cli.Context) error {
 	// NFS mounts are Mac-only.
 	if util.IsMac() {
 		cmd.progress.Start("Enabling NFS file sharing...")
-		if nfsErr := util.StreamCommand(exec.Command("docker-machine-nfs", cmd.machine.Name)); nfsErr != nil {
+		if nfsErr := util.StreamCommand("docker-machine-nfs", cmd.machine.Name); nfsErr != nil {
 			cmd.progress.Warn(fmt.Sprintf("Error enabling NFS: %s", nfsErr))
 		} else {
 			cmd.progress.Complete("NFS is ready")
-		}
+ 		}
 	}
 
 	cmd.progress.Start("Preparing /data filesystem...")
@@ -130,7 +129,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 		then echo '===> Creating symlink from /data to /mnt/sda1/data';
 		sudo ln -s /mnt/sda1/data /data;
 	fi;`
-	if err := util.StreamCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name, dataMountSetup)); err != nil {
+	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, dataMountSetup); err != nil {
 		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
 	}
 	cmd.progress.Complete("/data filesystem is ready")

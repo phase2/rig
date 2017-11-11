@@ -1,9 +1,12 @@
 # One release file to rule them all
+project_name: outrigger-cli
 
 # Platforms/architectures to target
 builds:
   - binary: rig
     main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=0
     goos:
       - windows
       - darwin
@@ -26,6 +29,7 @@ release:
   github:
     owner: phase2
     name: rig
+  draft: true
 
 # Publishing Homebrew Formula to the Tap repo
 brew:

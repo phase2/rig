@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os/exec"
 
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
@@ -59,11 +58,11 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	}
 
 	cmd.out.Verbose.Printf("Attempting to update %s", dashboardImageName)
-	if err := util.StreamCommand(exec.Command("docker", "pull", dashboardImageName)); err != nil {
+	if err := util.StreamCommand("docker", "pull", dashboardImageName); err != nil {
 		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
 	}
 
-	dockerAPIVersion, _ := util.GetDockerServerAPIVersion(cmd.machine.Name)
+	dockerAPIVersion, _ := util.GetDockerServerAPIVersion()
 	args := []string{
 		"run",
 		"-d",
@@ -76,12 +75,11 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		dashboardImageName,
 	}
 
-	util.StreamCommand(exec.Command("docker", args...))
-
+	util.ForceStreamCommand("docker", args...)
 	if util.IsMac() {
-		exec.Command("open", "http://dashboard.outrigger.vm").Run()
+		util.Command("open", "http://dashboard.outrigger.vm").Run()
 	} else if util.IsWindows() {
-		exec.Command("start", "http://dashboard.outrigger.vm").Run()
+		util.Command("start", "http://dashboard.outrigger.vm").Run()
 	} else {
 		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
@@ -91,6 +89,6 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 
 // StopDashboard stops and removes the dashboard container
 func (cmd *Dashboard) StopDashboard() {
-	exec.Command("docker", "stop", dashboardContainerName).Run()
-	exec.Command("docker", "rm", dashboardContainerName).Run()
+	util.Command("docker", "stop", dashboardContainerName).Run()
+	util.Command("docker", "rm", dashboardContainerName).Run()
 }

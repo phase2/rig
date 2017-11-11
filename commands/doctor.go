@@ -81,36 +81,47 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		}
 	}
 
+	// 1.5 Ensure docker / machine is running
+	if !util.SupportsNativeDocker() {
+		cmd.progress.Start("Checking Docker Machine is operational...")
+		if !cmd.machine.IsRunning() {
+			cmd.progress.Fail(fmt.Sprintf("Docker Machine '%s' is not running. You may need to run 'rig start'.", cmd.machine.Name))
+			return cmd.Error(fmt.Sprintf("Machine '%s' is not running. ", cmd.machine.Name), "DOCTOR-FATAL", 1)
+		}
+		cmd.progress.Complete(fmt.Sprintf("Docker Machine (%s) is running", cmd.machine.Name))
+	} else {
+		if err := util.Command("docker", "version").Run(); err != nil {
+			cmd.progress.Fail("Docker is not running. You may need to run 'systemctl start docker'")
+			return cmd.Error("Docker is not running.", "DOCTOR-FATAL", 1)
+		}
+		cmd.progress.Complete("Docker is running")
+	}
+
 	// 2. Check Docker API Version compatibility
 	cmd.progress.Start("Checking Docker version...")
-	if !util.SupportsNativeDocker() {
-		clientAPIVersion := util.GetDockerClientAPIVersion()
-		serverAPIVersion, err := util.GetDockerServerAPIVersion(cmd.machine.Name)
-		serverMinAPIVersion, _ := util.GetDockerServerMinAPIVersion(cmd.machine.Name)
+	clientAPIVersion := util.GetDockerClientAPIVersion()
+	serverAPIVersion, err := util.GetDockerServerAPIVersion()
+	serverMinAPIVersion, _ := util.GetDockerServerMinAPIVersion()
 
-		// Older clients can talk to newer servers, and when you ask a newer server
-		// it's version in the presence of an older server it will downgrade it's
-		// compatability as far as possible. So as long as the client API is not greater
-		// than the servers current version or less than the servers minimum api version
-		// then we are compatible
-		constraintString := fmt.Sprintf("<= %s", serverAPIVersion)
-		if serverMinAPIVersion != nil {
-			constraintString = fmt.Sprintf(">= %s", serverMinAPIVersion)
-		}
-		apiConstraint, _ := version.NewConstraint(constraintString)
+	// Older clients can talk to newer servers, and when you ask a newer server
+	// it's version in the presence of an older server it will downgrade it's
+	// compatability as far as possible. So as long as the client API is not greater
+	// than the servers current version or less than the servers minimum api version
+	// then we are compatible
+	constraintString := fmt.Sprintf("<= %s", serverAPIVersion)
+	if serverMinAPIVersion != nil {
+		constraintString = fmt.Sprintf(">= %s", serverMinAPIVersion)
+	}
+	apiConstraint, _ := version.NewConstraint(constraintString)
 
-		if err != nil {
-			cmd.progress.Fail(fmt.Sprintln("Could not determine Docker Machine Docker versions: ", err))
-		} else if clientAPIVersion.Equal(serverAPIVersion) {
-			cmd.progress.Complete(fmt.Sprintf("Docker Client (%s) and Server (%s) have equal API Versions", clientAPIVersion, serverAPIVersion))
-		} else if apiConstraint.Check(clientAPIVersion) {
-			cmd.progress.Complete(fmt.Sprintf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientAPIVersion, constraintString, serverAPIVersion, serverMinAPIVersion))
-		} else {
-			cmd.progress.Fail(fmt.Sprintf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientAPIVersion, serverAPIVersion, serverMinAPIVersion))
-		}
+	if err != nil {
+		cmd.progress.Fail(fmt.Sprintln("Could not determine Docker Machine Docker versions: ", err))
+	} else if clientAPIVersion.Equal(serverAPIVersion) {
+		cmd.progress.Complete(fmt.Sprintf("Docker Client (%s) and Server (%s) have equal API Versions", clientAPIVersion, serverAPIVersion))
+	} else if apiConstraint.Check(clientAPIVersion) {
+		cmd.progress.Complete(fmt.Sprintf("Docker Client (%s) has Server compatible API version (%s). Server current (%s), Server min compat (%s)", clientAPIVersion, constraintString, serverAPIVersion, serverMinAPIVersion))
 	} else {
-		dockerAPIVersion := util.GetDockerClientAPIVersion()
-		cmd.progress.Complete(fmt.Sprintln("Docker API Version:", dockerAPIVersion))
+		cmd.progress.Fail(fmt.Sprintf("Docker Client (%s) is incompatible with Server. Server current (%s), Server min compat (%s). Use `rig upgrade` to fix this.", clientAPIVersion, serverAPIVersion, serverMinAPIVersion))
 	}
 
 	// 3. Pull down the data from DNSDock. This will confirm we can resolve names as well
