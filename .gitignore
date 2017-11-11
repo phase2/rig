@@ -3,3 +3,5 @@ build
 vendor
 .idea
 .outrigger.yml
+.DS_Store
+

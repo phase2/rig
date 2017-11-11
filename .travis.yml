@@ -4,7 +4,7 @@ os: linux
 
 language: go
 go:
-  - 1.7
+  - 1.9
   - tip
 
 matrix:
@@ -12,13 +12,16 @@ matrix:
   allow_failures:
     - go: tip
 
-env:
-  - GO15VENDOREXPERIMENT="0"
-
-before_install: cd cli
+install:
+  - "go get -u github.com/golang/dep/..."
+  - "go get -u github.com/alecthomas/gometalinter"
+  - "gometalinter --install --update"
+  - "dep ensure"
 
 script:
-  - "../scripts/test-go-fmt.sh"
+  - "scripts/test-go-fmt.sh"
+  - "gometalinter --vendor --config=gometalinter.json ./..."
+  - "go run cmd/main.go"
 
 notifications:
   flowdock:
