@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0
+
+This was a big one
+
+- **Linux Compatibility**
+  - Full Linux compatibility (steps not needed on Linux are skipped)
+  - Linux packages (`.deb` and `.rpm`)
+  - Manage Linux configuration of Outrigger DNS
+
+- **New Features**
+  - Desktop Notifications
+  - Recursively look up through project directory structure for `outrigger.yml`
+  - Output `rig project run` script steps in help message
+  - Added `--dir` to `rig project sync:start` to be able to customize the source for unison sync volumes
+  - Consistent error reporting and exit codes
+
+- **Deprecations/Removals**
+  - Removed `rig watch` (deprecated as of v1.3.0)
+  - Removed CLI argument to name the volume for `rig project sync`
+  
+- **Technical Plumbing**
+  - Migrated to using `dep` for package management
+  - Reorganized and linted codebase using gometalinter
+  - Expanded test coverage to include gometalinter and a rig build & execution
+  - Use GoReleaser to package and distribute new releases
+
+
 ## 1.3.2
 
  - Added support for outrigger.yml (non-hidden)
