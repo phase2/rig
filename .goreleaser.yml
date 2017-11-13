@@ -29,7 +29,7 @@ release:
   github:
     owner: phase2
     name: rig
-  draft: true
+#  draft: true  # This also prevents a homebrew release from getting generated
 
 # Publishing Homebrew Formula to the Tap repo
 brew:
