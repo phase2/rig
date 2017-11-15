@@ -37,14 +37,14 @@ func (cmd *DNS) Commands() []cli.Command {
 
 // Run executes the `rig dns` command
 func (cmd *DNS) Run(c *cli.Context) error {
-	cmd.out.Info.Println("Configuring DNS")
+	cmd.out.Status("Configuring DNS")
 
 	if !util.SupportsNativeDocker() && !cmd.machine.IsRunning() {
 		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
 	if err := cmd.StartDNS(cmd.machine, c.String("nameservers")); err != nil {
-		cmd.progress.Fail("DNS is ready")
+		cmd.out.Oops("DNS is ready")
 		return cmd.Error(err.Error(), "DNS-SETUP-FAILED", 13)
 	}
 
@@ -57,7 +57,7 @@ func (cmd *DNS) Run(c *cli.Context) error {
 // ConfigureRoutes will configure routing to allow access to containers on IP addresses
 // within the Docker Machine bridge network
 func (cmd *DNS) ConfigureRoutes(machine Machine) {
-	cmd.progress.Start("Setting up local networking (may require your admin password)")
+	cmd.out.Spin("Setting up local networking (may require your admin password)")
 
 	if util.IsMac() {
 		cmd.configureMacRoutes(machine)
@@ -65,7 +65,7 @@ func (cmd *DNS) ConfigureRoutes(machine Machine) {
 		cmd.configureWindowsRoutes(machine)
 	}
 
-	cmd.progress.Complete("Local networking is ready")
+	cmd.out.Success("Local networking is ready")
 }
 
 // ConfigureMac configures DNS resolution and network routing
@@ -121,7 +121,7 @@ func (cmd *DNS) configureWindowsRoutes(machine Machine) {
 
 // StartDNS will start the dnsdock service
 func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
-	cmd.progress.Start("Setting up DNS resolver...")
+	cmd.out.Spin("Setting up DNS resolver...")
 	dnsServers := strings.Split(nameservers, ",")
 
 	bridgeIP, err := util.GetBridgeIP()
@@ -163,14 +163,14 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	} else if util.IsWindows() {
 		resolverReturn = cmd.configureWindowsResolver(machine)
 	}
-	cmd.progress.Complete("DNS resolution is ready")
+	cmd.out.Success("DNS resolution is ready")
 
 	return resolverReturn
 }
 
 // configureMacResolver configures DNS resolution and network routing
 func (cmd *DNS) configureMacResolver(machine Machine) error {
-	cmd.out.Verbose.Print("Configuring DNS resolution for macOS")
+	cmd.out.Details("Configuring DNS resolution for macOS")
 	bridgeIP := machine.GetBridgeIP()
 
 	if err := util.Command("sudo", "mkdir", "-p", "/etc/resolver").Run(); err != nil {
@@ -181,12 +181,12 @@ func (cmd *DNS) configureMacResolver(machine Machine) error {
 	}
 	if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
-		cmd.out.Verbose.Println("Restarting discoveryutil to flush DNS caches")
+		cmd.out.Details("Restarting discoveryutil to flush DNS caches")
 		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
-		cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
+		cmd.out.Details("Restarting mDNSResponder to flush DNS caches")
 		util.StreamCommand("sudo", "killall", "-HUP", "mDNSResponder")
 	}
 	return nil
@@ -194,7 +194,7 @@ func (cmd *DNS) configureMacResolver(machine Machine) error {
 
 // configureLinuxResolver configures DNS resolution
 func (cmd *DNS) configureLinuxResolver() error {
-	cmd.out.Verbose.Print("Configuring DNS resolution for linux")
+	cmd.out.Details("Configuring DNS resolution for linux")
 	bridgeIP, err := util.GetBridgeIP()
 	if err != nil {
 		return err
@@ -223,7 +223,7 @@ func (cmd *DNS) configureLinuxResolver() error {
 // configureWindowsResolver configures DNS resolution and network routing
 func (cmd *DNS) configureWindowsResolver(machine Machine) error {
 	// TODO: Figure out Windows resolver configuration
-	cmd.out.Verbose.Print("TODO: Configuring DNS resolution for windows")
+	cmd.out.Details("TODO: Configuring DNS resolution for windows")
 	return nil
 }
 

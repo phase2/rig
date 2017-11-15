@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/urfave/cli"
 	"github.com/phase2/rig/util"
+	"github.com/urfave/cli"
 )
 
 // Start is the command for creating and starting a Docker Machine and other core Outrigger services
@@ -62,13 +62,13 @@ func (cmd *Start) Run(c *cli.Context) error {
 		return cmd.StartMinimal(c.String("nameservers"))
 	}
 
-	cmd.progress.Start(fmt.Sprintf("Starting Docker & Docker Machine (%s)", cmd.machine.Name))
+	cmd.out.Spin(fmt.Sprintf("Starting Docker & Docker Machine (%s)", cmd.machine.Name))
 	cmd.out.Verbose.Println("If something goes wrong, run 'rig doctor'")
 
 	cmd.out.Verbose.Println("Pre-flight check...")
 
 	if err := util.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
-		cmd.progress.Fail("Docker could not be started")
+		cmd.out.Oops("Docker could not be started")
 		return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
 	}
 
@@ -77,7 +77,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	// Does the docker-machine exist
 	if !cmd.machine.Exists() {
-		cmd.progress.Start(fmt.Sprintf("Creating Docker & Docker Machine (%s)", cmd.machine.Name))
+		cmd.out.Spin(fmt.Sprintf("Creating Docker & Docker Machine (%s)", cmd.machine.Name))
 		driver := c.String("driver")
 		diskSize := strconv.Itoa(c.Int("disk-size") * 1000)
 		memSize := strconv.Itoa(c.Int("memory-size"))
@@ -86,29 +86,29 @@ func (cmd *Start) Run(c *cli.Context) error {
 	}
 
 	if err := cmd.machine.Start(); err != nil {
-		cmd.progress.Fail("Docker could not be started")
+		cmd.out.Oops("Docker could not be started")
 		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
 	}
-	cmd.progress.Complete(fmt.Sprintf("Docker Machine (%s) Created", cmd.machine.Name))
+	cmd.out.Success(fmt.Sprintf("Docker Machine (%s) Created", cmd.machine.Name))
 
 	cmd.out.Verbose.Println("Configuring the local Docker environment")
 	cmd.machine.SetEnv()
-	cmd.progress.Complete("Docker Machine is ready")
+	cmd.out.Success("Docker Machine is ready")
 
 	dns := DNS{cmd.BaseCommand}
 	dns.StartDNS(cmd.machine, c.String("nameservers"))
 
 	// NFS mounts are Mac-only.
 	if util.IsMac() {
-		cmd.progress.Start("Enabling NFS file sharing...")
+		cmd.out.Spin("Enabling NFS file sharing...")
 		if nfsErr := util.StreamCommand("docker-machine-nfs", cmd.machine.Name); nfsErr != nil {
-			cmd.progress.Warn(fmt.Sprintf("Error enabling NFS: %s", nfsErr))
+			cmd.out.Warn(fmt.Sprintf("Error enabling NFS: %s", nfsErr))
 		} else {
-			cmd.progress.Complete("NFS is ready")
- 		}
+			cmd.out.Success("NFS is ready")
+		}
 	}
 
-	cmd.progress.Start("Preparing /data filesystem...")
+	cmd.out.Spin("Preparing /data filesystem...")
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
 	if err := cmd.machine.WaitForDev(); err != nil {
 		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
@@ -132,7 +132,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, dataMountSetup); err != nil {
 		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
 	}
-	cmd.progress.Complete("/data filesystem is ready")
+	cmd.out.Success("/data filesystem is ready")
 
 	// Route configuration needs to be finalized after NFS-triggered reboots.
 	// This rebooting may change key details such as IP Address of the Dev machine.
@@ -141,10 +141,10 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Verbose.Println("Use docker-machine to interact with your virtual machine.")
 	cmd.out.Verbose.Printf("For example, to SSH into it: docker-machine ssh %s", cmd.machine.Name)
 
-	cmd.progress.Start("Launching Dashboard...")
+	cmd.out.Spin("Launching Dashboard...")
 	dash := Dashboard{cmd.BaseCommand}
 	dash.LaunchDashboard(cmd.machine)
-	cmd.progress.Complete("Dashboard is ready")
+	cmd.out.Success("Dashboard is ready")
 
 	cmd.out.Info.Println("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
 	return cmd.Success("Outrigger is ready to use")

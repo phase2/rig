@@ -57,15 +57,14 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 		return cmd.Error(fmt.Sprintf("Backup archive %s doesn't exists.", backupFile), "BACKUP-ARCHIVE-NOT-FOUND", 12)
 	}
 
-	cmd.progress.Start(fmt.Sprintf("Restoring %s to %s on '%s'...", backupFile, dataDir, cmd.machine.Name))
-
+	cmd.out.Spin(fmt.Sprintf("Restoring %s to %s on '%s'...", backupFile, dataDir, cmd.machine.Name))
 	// Send the archive via stdin and extract inline. Saves on disk & performance
 	extractCmd := fmt.Sprintf("cat %s | docker-machine ssh %s \"sudo tar xzf - -C %s\"", backupFile, cmd.machine.Name, dataDir)
 	if err := util.StreamCommand("bash", "-c", extractCmd); err != nil {
-		cmd.progress.Fail(fmt.Sprintf("Data restore failed: %s", err.Error()))
+		cmd.out.Oops(fmt.Sprintf("Data restore failed: %s", err.Error()))
 		return cmd.Error("Data restore failed", "COMMAND-ERROR", 13)
 	}
 
-	cmd.progress.Complete("Data restore complete")
+	cmd.out.Success("Data restore complete")
 	return cmd.Success("Data Restore was successful")
 }

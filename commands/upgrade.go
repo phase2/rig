@@ -45,10 +45,10 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 		return cmd.Success("Upgrade is not needed on Linux")
 	}
 
-	cmd.progress.Start(fmt.Sprintf("Upgrading '%s'...", cmd.machine.Name))
+	cmd.out.Spin(fmt.Sprintf("Upgrading '%s'...", cmd.machine.Name))
 
 	if cmd.machine.GetData().Get("Driver").Get("Boot2DockerURL").MustString() == "" {
-		cmd.progress.Fail(fmt.Sprintf("Machine %s not compatible with rig upgrade", cmd.machine.Name))
+		cmd.out.Oops(fmt.Sprintf("Machine %s not compatible with rig upgrade", cmd.machine.Name))
 		return cmd.Error(fmt.Sprintf("Machine '%s' was not created with a boot2docker URL. Run `docker-machine upgrade %s` directly", cmd.machine.Name, cmd.machine.Name), "MACHINE-CREATED-MANUALLY", 12)
 	}
 

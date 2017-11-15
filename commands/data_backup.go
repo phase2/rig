@@ -61,16 +61,15 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 		return cmd.Error(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
 	}
 
-	cmd.progress.Start(fmt.Sprintf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile))
-
 	// Stream the archive to stdout and capture it in a local file so we don't waste
 	// space storing an archive on the VM filesystem. There may not be enough space.
+	cmd.out.Spin(fmt.Sprintf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile))
 	archiveCmd := fmt.Sprintf("sudo tar czf - -C %s .", dataDir)
 	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, archiveCmd, ">", backupFile); err != nil {
-		cmd.progress.Fail(fmt.Sprintf("Backup failed: %s", err.Error()))
+		cmd.out.Oops(fmt.Sprintf("Backup failed: %s", err.Error()))
 		return cmd.Error("Backup failed", "COMMAND-ERROR", 13)
 	}
 
-	cmd.progress.Complete(fmt.Sprintf("Backup complete: %s", backupFile))
-	return cmd.Success("Data Backup completed with no errors")
+	cmd.out.Success(fmt.Sprintf("Backup complete: %s", backupFile))
+	return cmd.Success("Data Backup completed")
 }
