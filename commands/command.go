@@ -41,7 +41,7 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 func (cmd *BaseCommand) Success(message string) error {
 	// Handle success messaging.
 	if message != "" {
-		cmd.out.Success(message)
+		cmd.out.Info(message)
 		util.NotifySuccess(cmd.context, message)
 	}
 
@@ -73,6 +73,6 @@ func (cmd *BaseCommand) NewContext(name string, flags []cli.Flag, parent *cli.Co
 // SetContextFlag set a flag on the provided context
 func (cmd *BaseCommand) SetContextFlag(ctx *cli.Context, name string, value string) {
 	if err := ctx.Set(name, value); err != nil {
-		cmd.out.Error.Fatal(err)
+		cmd.out.Channel.Error.Fatal(err)
 	}
 }

@@ -9,15 +9,21 @@ import (
 	spun "github.com/slok/gospinner"
 )
 
+// logger is the global logger data structure. Retrieve via Logger().
 var logger *RigLogger
 
-// RigLogger is the global logger object
-type RigLogger struct {
+// logChannels defines various log channels. This nests within the RigLogger to expose the loggers directly for
+// advanced use cases.
+type logChannels struct {
 	Info      *log.Logger
 	Warning   *log.Logger
 	Error     *log.Logger
 	Verbose   *log.Logger
-	Message   *log.Logger
+}
+
+// RigLogger is the global logger object
+type RigLogger struct {
+	Channel   logChannels
 	Progress  *RigSpinner
 	IsVerbose bool
 	Spinning  bool
@@ -38,11 +44,12 @@ func LoggerInit(verbose bool) {
 
 	s, _ := spun.NewSpinner(spun.Dots)
 	logger = &RigLogger{
-		Info:      log.New(os.Stdout, color.BlueString("[INFO] "), 0),
-		Warning:   log.New(os.Stdout, color.YellowString("[WARN] "), 0),
-		Error:     log.New(os.Stderr, color.RedString("[ERROR] "), 0),
-		Verbose:   log.New(verboseWriter, "[VERBOSE] ", 0),
-		Message:   log.New(os.Stdout, " - ", 0),
+		Channel: logChannels{
+			Info:    log.New(os.Stdout, color.BlueString("[INFO] "), 0),
+			Warning: log.New(os.Stdout, color.YellowString("[WARN] "), 0),
+			Error:   log.New(os.Stderr, color.RedString("[ERROR] "), 0),
+			Verbose: log.New(verboseWriter, "[VERBOSE] ", 0),
+		},
 		IsVerbose: verbose,
 		Progress:  &RigSpinner{s},
 		Spinning:  false,
@@ -73,9 +80,9 @@ func (log *RigLogger) NoSpin() {
 }
 
 // Success indicates success behavior of the spinner-associated task.
-func (log *RigLogger) Success(message string) {
+func (log *RigLogger) Info(message string) {
 	if log.IsVerbose || !log.Spinning {
-		log.Info.Println(message)
+		log.Channel.Info.Println(message)
 	} else {
 		log.Progress.Spins.SetMessage(message)
 		log.Progress.Spins.Succeed()
@@ -83,9 +90,9 @@ func (log *RigLogger) Success(message string) {
 }
 
 // Warn indicates a warning in the resolution of the spinner-associated task.
-func (log *RigLogger) Warn(message string) {
+func (log *RigLogger) Warning(message string) {
 	if log.IsVerbose || !log.Spinning {
-		log.Warning.Println(message)
+		log.Channel.Warning.Println(message)
 	} else {
 		log.Progress.Spins.SetMessage(message)
 		log.Progress.Spins.Warn()
@@ -93,26 +100,22 @@ func (log *RigLogger) Warn(message string) {
 }
 
 // Error indicates an error in the spinner-associated task.
-func (log *RigLogger) Oops(message string) {
+func (log *RigLogger) Error(message string) {
 	if log.IsVerbose || !log.Spinning {
-		log.Error.Println(message)
+		log.Channel.Error.Println(message)
 	} else {
 		log.Progress.Spins.SetMessage(message)
 		log.Progress.Spins.Fail()
 	}
 }
 
-// Status allows output of an info log.
-func (log *RigLogger) Status(message string) {
-	log.Info.Println(message)
-}
-
-// Note allows output of a simple message.
-func (log *RigLogger) Note(message string) {
-	log.Message.Println(message)
-}
-
 // Details allows Verbose logging of more advanced activities/information.
-func (log *RigLogger) Details(message string) {
-	log.Verbose.Println(message)
+// In practice, if the spinner can be in use verbose is a no-op.
+func (log *RigLogger) Verbose(message string) {
+	log.Channel.Verbose.Println(message)
+}
+
+// Note allows output of an info log, bypassing the spinner if in use.
+func (log *RigLogger) Note(message string) {
+	log.Channel.Info.Println(message)
 }

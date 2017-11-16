@@ -29,9 +29,9 @@ func (cmd *Restart) Commands() []cli.Command {
 func (cmd *Restart) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() || cmd.machine.Exists() {
 		if util.SupportsNativeDocker() {
-			cmd.out.Info.Println("Restarting Outrigger services")
+			cmd.out.Info("Restarting Outrigger services")
 		} else {
-			cmd.out.Info.Printf("Restarting Outrigger machine '%s' and services", cmd.machine.Name)
+			cmd.out.Channel.Info.Printf("Restarting Outrigger machine '%s' and services", cmd.machine.Name)
 		}
 
 		stop := Stop{cmd.BaseCommand}

@@ -61,10 +61,10 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 	// Send the archive via stdin and extract inline. Saves on disk & performance
 	extractCmd := fmt.Sprintf("cat %s | docker-machine ssh %s \"sudo tar xzf - -C %s\"", backupFile, cmd.machine.Name, dataDir)
 	if err := util.StreamCommand("bash", "-c", extractCmd); err != nil {
-		cmd.out.Oops(fmt.Sprintf("Data restore failed: %s", err.Error()))
+		cmd.out.Error(fmt.Sprintf("Data restore failed: %s", err.Error()))
 		return cmd.Error("Data restore failed", "COMMAND-ERROR", 13)
 	}
 
-	cmd.out.Success("Data restore complete")
+	cmd.out.Info("Data restore complete")
 	return cmd.Success("Data Restore was successful")
 }

@@ -48,7 +48,7 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 	cmd.out.Spin(fmt.Sprintf("Upgrading '%s'...", cmd.machine.Name))
 
 	if cmd.machine.GetData().Get("Driver").Get("Boot2DockerURL").MustString() == "" {
-		cmd.out.Oops(fmt.Sprintf("Machine %s not compatible with rig upgrade", cmd.machine.Name))
+		cmd.out.Error(fmt.Sprintf("Machine %s not compatible with rig upgrade", cmd.machine.Name))
 		return cmd.Error(fmt.Sprintf("Machine '%s' was not created with a boot2docker URL. Run `docker-machine upgrade %s` directly", cmd.machine.Name, cmd.machine.Name), "MACHINE-CREATED-MANUALLY", 12)
 	}
 
@@ -62,7 +62,7 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 		return cmd.Success(fmt.Sprintf("Machine '%s' has the same Docker version (%s) as your local Docker binary (%s). There is nothing to upgrade. If you wish to upgrade you'll need to install a newer version of the Docker binary before running the upgrade command.", cmd.machine.Name, machineDockerVersion, currentDockerVersion))
 	}
 
-	cmd.out.Info.Printf("Backing up to prepare for upgrade...")
+	cmd.out.Channel.Info.Printf("Backing up to prepare for upgrade...")
 	backup := &DataBackup{cmd.BaseCommand}
 	if err := backup.Run(c); err != nil {
 		return err

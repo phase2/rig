@@ -26,17 +26,17 @@ Here are a few conventions:
 * **Starting a task that could take more than 5 seconds:**
   * `cmd.out.Spin("Preparing the sauce")`
 * **Use the correct method to log operational results: (Pick one)**
-  * `cmd.out.Success("Sauce is Ready.")`
-  * `cmd.out.Warn("Sauce is burnt on the bottom.")`
-  * `cmd.out.Oops("Discard this sauce and try again.")`
+  * `cmd.out.Info("Sauce is Ready.")`
+  * `cmd.out.Warning("Sauce is burnt on the bottom.")`
+  * `cmd.out.Error("Discard this sauce and try again.")`
 * **Going to send some contextual notes to the user**:
   1. `cmd.out.NoSpin()` if currently using the spinner.
   2. `cmd.out.Status("Sauce exists.")`
   3. `cmd.out.Note("This is a list item.")`
-  4. `cmd.out.Details("The ingredients of the sauce include tomato, salt, black pepper, garlic...")`
+  4. `cmd.out.Verbose("The ingredients of the sauce include tomato, salt, black pepper, garlic...")`
 * **Command has executed and is successful. We do not want a notification:**
   ```
-  cmd.out.Success("Enjoy your dinner.")
+  cmd.out.Info("Enjoy your dinner.")
   return cmd.Success("")
   ```
 * **Command has executed and is successful. Get a notification too!**
@@ -46,7 +46,7 @@ Here are a few conventions:
 * **Command failed:**
   ```
   message := "Cooking sauce is hard, we failed"
-  cmd.out.Oops(fmt.Sprintf("%s: %s", message, err.Error()))
+  cmd.out.Error(fmt.Sprintf("%s: %s", message, err.Error()))
   return cmd.Error(message)
   ```
 

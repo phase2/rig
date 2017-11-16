@@ -38,8 +38,8 @@ func (cmd *Stop) Run(c *cli.Context) error {
 // StopMinimal will stop "minimal" Outrigger operations, which refers to environments where
 // a virtual machine and networking are not required or managed by Outrigger.
 func (cmd *Stop) StopMinimal() error {
-	cmd.out.Verbose.Printf("Skipping Step: Linux does not have a docker-machine to stop.")
-	cmd.out.Verbose.Printf("Skipping Step: Outrigger does not manage Linux networking.")
+	cmd.out.Channel.Verbose.Printf("Skipping Step: Linux does not have a docker-machine to stop.")
+	cmd.out.Channel.Verbose.Printf("Skipping Step: Outrigger does not manage Linux networking.")
 
 	dash := Dashboard{cmd.BaseCommand}
 	dash.StopDashboard()
@@ -56,7 +56,7 @@ func (cmd *Stop) StopOutrigger() error {
 	if err := cmd.machine.Stop(); err != nil {
 		return cmd.Error(err.Error(), "MACHINE-STOP-FAILED", 12)
 	}
-	cmd.out.Success(fmt.Sprintf("Stopped machine '%s'", cmd.machine.Name))
+	cmd.out.Info(fmt.Sprintf("Stopped machine '%s'", cmd.machine.Name))
 
 	cmd.out.Spin("Cleaning up local networking (may require your admin password)")
 	if util.IsWindows() {
@@ -67,8 +67,7 @@ func (cmd *Stop) StopOutrigger() error {
 		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
 	}
 	color.Unset()
-	cmd.out.Success("Networking cleanup completed")
-	cmd.out.NoSpin()
+	cmd.out.Info("Networking cleanup completed")
 
 	return cmd.Success(fmt.Sprintf("Machine '%s' stopped", cmd.machine.Name))
 }

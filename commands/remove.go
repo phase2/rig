@@ -40,11 +40,11 @@ func (cmd *Remove) Run(c *cli.Context) error {
 		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
-	cmd.out.Status(fmt.Sprintf("Removing '%s'", cmd.machine.Name))
+	cmd.out.Info(fmt.Sprintf("Removing '%s'", cmd.machine.Name))
 	force := c.Bool("force")
 	if !force {
-		cmd.out.Warn("!!!!! This operation is destructive. You may lose important data. !!!!!!!")
-		cmd.out.Warn("Run 'rig data-backup' if you want to save your /data volume.")
+		cmd.out.Warning("!!!!! This operation is destructive. You may lose important data. !!!!!!!")
+		cmd.out.Warning("Run 'rig data-backup' if you want to save your /data volume.")
 
 		if !util.AskYesNo("Are you sure you want to remove '" + cmd.machine.Name + "'") {
 			return cmd.Success("Remove was aborted")
@@ -59,10 +59,10 @@ func (cmd *Remove) Run(c *cli.Context) error {
 
 	cmd.out.Spin("Removing the docker Virtual Machine")
 	if err := cmd.machine.Remove(); err != nil {
-		cmd.out.Oops("Failed to remove the docker Virtual Machine")
+		cmd.out.Error("Failed to remove the docker Virtual Machine")
 		return cmd.Error(err.Error(), "MACHINE-REMOVE-FAILED", 12)
 	}
 
-	cmd.out.Success("Failed to remove the docker Virtual Machine")
+	cmd.out.Info("Failed to remove the docker Virtual Machine")
 	return cmd.Success(fmt.Sprintf("Machine '%s' removed", cmd.machine.Name))
 }

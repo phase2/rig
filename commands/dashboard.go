@@ -32,7 +32,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 // Run executes the `rig dashboard` command
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
-		cmd.out.Success("Launching Dashboard")
+		cmd.out.Info("Launching Dashboard")
 		err := cmd.LaunchDashboard(cmd.machine)
 		if err != nil {
 			// Success may be presumed to only execute once per command execution.
@@ -54,16 +54,16 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	// except to indicate the age of the image before update in the next section.
 	_, seconds, err := util.ImageOlderThan(dashboardImageName, 86400*30)
 	if err == nil {
-		cmd.out.Details(fmt.Sprintf("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400))
+		cmd.out.Verbose(fmt.Sprintf("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400))
 	}
 
 	// Updating the dashboard is rarely of interest to users so uses verbose logging.
 	// Per our user interaction practices, we would normally use a spinner here.
-	cmd.out.Details(fmt.Sprintf("Attempting to update %s", dashboardImageName))
+	cmd.out.Verbose(fmt.Sprintf("Attempting to update %s", dashboardImageName))
 	if err := util.StreamCommand("docker", "pull", dashboardImageName); err != nil {
-		cmd.out.Details("Failed to update dashboard image. Will use local cache if available.")
+		cmd.out.Verbose("Failed to update dashboard image. Will use local cache if available.")
 	} else {
-		cmd.out.Details("Successfully updated dashboard.")
+		cmd.out.Verbose("Successfully updated dashboard.")
 	}
 
 	dockerAPIVersion, _ := util.GetDockerServerAPIVersion()
@@ -85,7 +85,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	} else if util.IsWindows() {
 		util.Command("start", "http://dashboard.outrigger.vm").Run()
 	} else {
-		cmd.out.Success("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
+		cmd.out.Info("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
 
 	return nil

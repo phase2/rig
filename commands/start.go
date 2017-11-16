@@ -56,23 +56,23 @@ func (cmd *Start) Commands() []cli.Command {
 // Run executes the `rig start` command
 func (cmd *Start) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
-		cmd.out.Info.Println("Linux users should use Docker natively for best performance.")
-		cmd.out.Info.Println("Please ensure your local Docker setup is compatible with Outrigger.")
-		cmd.out.Info.Println("See http://docs.outrigger.sh/getting-started/linux-installation/")
+		cmd.out.Info("Linux users should use Docker natively for best performance.")
+		cmd.out.Info("Please ensure your local Docker setup is compatible with Outrigger.")
+		cmd.out.Info("See http://docs.outrigger.sh/getting-started/linux-installation/")
 		return cmd.StartMinimal(c.String("nameservers"))
 	}
 
 	cmd.out.Spin(fmt.Sprintf("Starting Docker & Docker Machine (%s)", cmd.machine.Name))
-	cmd.out.Verbose.Println("If something goes wrong, run 'rig doctor'")
+	cmd.out.Verbose("If something goes wrong, run 'rig doctor'")
 
-	cmd.out.Verbose.Println("Pre-flight check...")
+	cmd.out.Verbose("Pre-flight check...")
 
 	if err := util.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
-		cmd.out.Oops("Docker could not be started")
+		cmd.out.Error("Docker could not be started")
 		return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
 	}
 
-	cmd.out.Verbose.Println("Resetting Docker environment variables...")
+	cmd.out.Verbose("Resetting Docker environment variables...")
 	cmd.machine.UnsetEnv()
 
 	// Does the docker-machine exist
@@ -86,14 +86,14 @@ func (cmd *Start) Run(c *cli.Context) error {
 	}
 
 	if err := cmd.machine.Start(); err != nil {
-		cmd.out.Oops("Docker could not be started")
+		cmd.out.Error("Docker could not be started")
 		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
 	}
-	cmd.out.Success(fmt.Sprintf("Docker Machine (%s) Created", cmd.machine.Name))
+	cmd.out.Info(fmt.Sprintf("Docker Machine (%s) Created", cmd.machine.Name))
 
-	cmd.out.Verbose.Println("Configuring the local Docker environment")
+	cmd.out.Verbose("Configuring the local Docker environment")
 	cmd.machine.SetEnv()
-	cmd.out.Success("Docker Machine is ready")
+	cmd.out.Info("Docker Machine is ready")
 
 	dns := DNS{cmd.BaseCommand}
 	dns.StartDNS(cmd.machine, c.String("nameservers"))
@@ -102,9 +102,9 @@ func (cmd *Start) Run(c *cli.Context) error {
 	if util.IsMac() {
 		cmd.out.Spin("Enabling NFS file sharing...")
 		if nfsErr := util.StreamCommand("docker-machine-nfs", cmd.machine.Name); nfsErr != nil {
-			cmd.out.Warn(fmt.Sprintf("Error enabling NFS: %s", nfsErr))
+			cmd.out.Warning(fmt.Sprintf("Error enabling NFS: %s", nfsErr))
 		} else {
-			cmd.out.Success("NFS is ready")
+			cmd.out.Info("NFS is ready")
 		}
 	}
 
@@ -114,7 +114,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
 	}
 
-	cmd.out.Verbose.Println("Setting up persistent /data volume...")
+	cmd.out.Verbose("Setting up persistent /data volume...")
 	dataMountSetup := `if [ ! -d /mnt/sda1/data ];
 		then echo '===> Creating /mnt/sda1/data directory';
 		sudo mkdir /mnt/sda1/data;
@@ -132,21 +132,21 @@ func (cmd *Start) Run(c *cli.Context) error {
 	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, dataMountSetup); err != nil {
 		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
 	}
-	cmd.out.Success("/data filesystem is ready")
+	cmd.out.Info("/data filesystem is ready")
 
 	// Route configuration needs to be finalized after NFS-triggered reboots.
 	// This rebooting may change key details such as IP Address of the Dev machine.
 	dns.ConfigureRoutes(cmd.machine)
 
-	cmd.out.Verbose.Println("Use docker-machine to interact with your virtual machine.")
-	cmd.out.Verbose.Printf("For example, to SSH into it: docker-machine ssh %s", cmd.machine.Name)
+	cmd.out.Verbose("Use docker-machine to interact with your virtual machine.")
+	cmd.out.Verbose(fmt.Sprintf("For example, to SSH into it: docker-machine ssh %s", cmd.machine.Name))
 
 	cmd.out.Spin("Launching Dashboard...")
 	dash := Dashboard{cmd.BaseCommand}
 	dash.LaunchDashboard(cmd.machine)
-	cmd.out.Success("Dashboard is ready")
+	cmd.out.Info("Dashboard is ready")
 
-	cmd.out.Info.Println("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
+	cmd.out.Info("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
 	return cmd.Success("Outrigger is ready to use")
 
 }

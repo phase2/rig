@@ -78,14 +78,14 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 
 // Run executes the specified `rig project` script
 func (cmd *Project) Run(c *cli.Context) error {
-	cmd.out.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+	cmd.out.Verbose(fmt.Sprintf("Loaded project configuration from %s", cmd.Config.Path))
 	if cmd.Config.Scripts == nil {
-		cmd.out.Error.Fatal("There are no scripts discovered in: %s", cmd.Config.File)
+		cmd.out.Channel.Error.Fatal("There are no scripts discovered in: %s", cmd.Config.File)
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
 	if script, ok := cmd.Config.Scripts[key]; ok {
-		cmd.out.Verbose.Printf("Initializing project script '%s': %s", key, script.Description)
+		cmd.out.Verbose(fmt.Sprintf("Initializing project script '%s': %s", key, script.Description))
 		cmd.addCommandPath()
 		dir := filepath.Dir(cmd.Config.Path)
 
@@ -94,9 +94,9 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 		shellCmd := cmd.GetCommand(scriptCommands)
 		shellCmd.Dir = dir
-		cmd.out.Verbose.Printf("Script execution - Working Directory: %s", dir)
+		cmd.out.Verbose(fmt.Sprintf("Script execution - Working Directory: %s", dir))
 
-		cmd.out.Verbose.Printf("Executing '%s' as '%s'", key, scriptCommands)
+		cmd.out.Verbose(fmt.Sprintf("Executing '%s' as '%s'", key, scriptCommands))
 		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
 			return cmd.Error(fmt.Sprintf("Error running project script '%s'", key), "COMMAND-ERROR", exitCode)
 		}
@@ -131,7 +131,7 @@ func (cmd *Project) GetCommandSeparator() string {
 func (cmd *Project) addCommandPath() {
 	binDir := cmd.Config.Bin
 	if binDir != "" {
-		cmd.out.Verbose.Printf("Script execution - Adding to $PATH: %s", binDir)
+		cmd.out.Verbose(fmt.Sprintf("Script execution - Adding to $PATH: %s", binDir))
 		path := os.Getenv("PATH")
 		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path))
 	}
