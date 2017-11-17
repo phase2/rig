@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-        "fmt"
+	"fmt"
 	"github.com/fatih/color"
 	spun "github.com/slok/gospinner"
 )
@@ -16,10 +16,10 @@ var logger *RigLogger
 // logChannels defines various log channels. This nests within the RigLogger to expose the loggers directly for
 // advanced use cases.
 type logChannels struct {
-        Info    *log.Logger
-        Warning *log.Logger
-        Error   *log.Logger
-        Verbose *log.Logger
+	Info    *log.Logger
+	Warning *log.Logger
+	Error   *log.Logger
+	Verbose *log.Logger
 }
 
 // RigLogger is the global logger object
@@ -102,7 +102,7 @@ func (log *RigLogger) Warning(format string, a ...interface{}) {
 
 // Warn is a convenience wrapper for Warning.
 func (log *RigLogger) Warn(format string, a ...interface{}) {
-    log.Warning(format, a...)
+	log.Warning(format, a...)
 }
 
 // Error indicates an error in the spinner-associated task.
