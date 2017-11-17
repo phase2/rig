@@ -31,10 +31,9 @@ Here are a few conventions:
   * `cmd.out.Error("Discard this sauce and try again.")`
 * **Going to send some contextual notes to the user**:
   1. `cmd.out.NoSpin()` if currently using the spinner.
-  2. `cmd.out.Status("Sauce exists.")`
-  3. `cmd.out.Note("This is a list item.")`
+  2. `cmd.out.Info("Sauce exists.")`
   4. `cmd.out.Verbose("The ingredients of the sauce include tomato, salt, black pepper, garlic...")`
-* **Command has executed and is successful. We do not want a notification:**
+* **Command has executed and is successful. Please no notification:**
   ```
   cmd.out.Info("Enjoy your dinner.")
   return cmd.Success("")
@@ -47,7 +46,7 @@ Here are a few conventions:
   ```
   message := "Cooking sauce is hard, we failed"
   cmd.out.Error("%s: %s", message, err.Error())
-  return cmd.Error(message)
+  return cmd.Failure(message)
   ```
 
 ## Development Environment Setup
