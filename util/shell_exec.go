@@ -115,7 +115,7 @@ func (x Executor) Start() error {
 // Log verbosely logs the command.
 func (x Executor) Log(tag string) {
 	color.Set(color.FgMagenta)
-	Logger().Verbose.Printf("%s: %s", tag, x.ToString())
+	Logger().Verbose("%s: %s", tag, x.ToString())
 	color.Unset()
 }
 

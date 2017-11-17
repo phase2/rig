@@ -53,3 +53,7 @@
   name = "github.com/martinlindhe/notify"
   branch = "master"
 
+[[constraint]]
+  name = "github.com/slok/gospinner"
+  version = "0.1.0"
+

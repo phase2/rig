@@ -39,16 +39,25 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 
 // Success encapsulates the functionality for reporting command success
 func (cmd *BaseCommand) Success(message string) error {
+	// Handle success messaging.
 	if message != "" {
-		cmd.out.Info.Println(message)
+		cmd.out.Info(message)
 		util.NotifySuccess(cmd.context, message)
 	}
+
+	// If there is an active spinner wrap it up.
+	cmd.out.NoSpin()
+
 	return nil
 }
 
-// Error encapsulates the functionality for reporting command failure
-func (cmd *BaseCommand) Error(message string, errorName string, exitCode int) error {
+// Failure encapsulates the functionality for reporting command failure
+func (cmd *BaseCommand) Failure(message string, errorName string, exitCode int) error {
+	// Make sure any running spinner halts.
+	cmd.out.NoSpin()
+	// Handle error messaging.
 	util.NotifyError(cmd.context, message)
+
 	return cli.NewExitError(fmt.Sprintf("ERROR: %s [%s] (%d)", message, errorName, exitCode), exitCode)
 }
 
@@ -64,6 +73,6 @@ func (cmd *BaseCommand) NewContext(name string, flags []cli.Flag, parent *cli.Co
 // SetContextFlag set a flag on the provided context
 func (cmd *BaseCommand) SetContextFlag(ctx *cli.Context, name string, value string) {
 	if err := ctx.Set(name, value); err != nil {
-		cmd.out.Error.Fatal(err)
+		cmd.out.Channel.Error.Fatal(err)
 	}
 }

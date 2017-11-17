@@ -44,7 +44,7 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 	}
 
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	dataDir := c.String("data-dir")
@@ -54,17 +54,17 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 	}
 
 	if _, err := os.Stat(backupFile); err != nil {
-		return cmd.Error(fmt.Sprintf("Backup archive %s doesn't exists.", backupFile), "BACKUP-ARCHIVE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("Backup archive %s doesn't exists.", backupFile), "BACKUP-ARCHIVE-NOT-FOUND", 12)
 	}
 
-	cmd.out.Info.Printf("Restoring %s to %s on '%s'...", backupFile, dataDir, cmd.machine.Name)
-
+	cmd.out.Spin(fmt.Sprintf("Restoring %s to %s on '%s'...", backupFile, dataDir, cmd.machine.Name))
 	// Send the archive via stdin and extract inline. Saves on disk & performance
 	extractCmd := fmt.Sprintf("cat %s | docker-machine ssh %s \"sudo tar xzf - -C %s\"", backupFile, cmd.machine.Name, dataDir)
-	cmd.out.Info.Printf(extractCmd)
 	if err := util.StreamCommand("bash", "-c", extractCmd); err != nil {
-		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
+		cmd.out.Error("Data restore failed: %s", err.Error())
+		return cmd.Failure("Data restore failed", "COMMAND-ERROR", 13)
 	}
 
+	cmd.out.Info("Data restore complete")
 	return cmd.Success("Data Restore was successful")
 }

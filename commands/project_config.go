@@ -89,16 +89,16 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 
 	yamlFile, err := ioutil.ReadFile(config.File)
 	if err != nil {
-		logger.Verbose.Printf("No project configuration file could be read at: %s", config.File)
+		logger.Verbose("No project configuration file could be read at: %s", config.File)
 		return config, err
 	}
 
 	if err := yaml.Unmarshal(yamlFile, config); err != nil {
-		logger.Error.Fatalf("Error parsing YAML config: %v", err)
+		logger.Channel.Error.Fatalf("Failure parsing YAML config: %v", err)
 	}
 
 	if err := config.ValidateConfigVersion(); err != nil {
-		logger.Error.Fatalf("Error in %s: %s", filename, err)
+		logger.Channel.Error.Fatalf("Failure in %s: %s", filename, err)
 	}
 
 	if len(config.Bin) == 0 {
@@ -147,21 +147,21 @@ func (c *ProjectConfig) ValidateProjectScripts(subcommands []cli.Command) {
 
 			// Check for an empty script
 			if script == nil {
-				logger.Error.Fatalf("Project script '%s' has no configuration", id)
+				logger.Channel.Error.Fatalf("Project script '%s' has no configuration", id)
 			}
 
 			// Check for scripts with conflicting aliases with existing subcommands or subcommand aliases
 			for _, subcommand := range subcommands {
 				if id == subcommand.Name {
-					logger.Error.Fatalf("Project script name '%s' conflicts with command name '%s'. Please choose a different script name", id, subcommand.Name)
+					logger.Channel.Error.Fatalf("Project script name '%s' conflicts with command name '%s'. Please choose a different script name", id, subcommand.Name)
 				} else if script.Alias == subcommand.Name {
-					logger.Error.Fatalf("Project script alias '%s' on script '%s' conflicts with command name '%s'. Please choose a different script alias", script.Alias, id, subcommand.Name)
+					logger.Channel.Error.Fatalf("Project script alias '%s' on script '%s' conflicts with command name '%s'. Please choose a different script alias", script.Alias, id, subcommand.Name)
 				} else if subcommand.Aliases != nil {
 					for _, alias := range subcommand.Aliases {
 						if id == alias {
-							logger.Error.Fatalf("Project script name '%s' conflicts with command alias '%s' on command '%s'. Please choose a different script name", id, alias, subcommand.Name)
+							logger.Channel.Error.Fatalf("Project script name '%s' conflicts with command alias '%s' on command '%s'. Please choose a different script name", id, alias, subcommand.Name)
 						} else if script.Alias == alias {
-							logger.Error.Fatalf("Project script alias '%s' on script '%s' conflicts with command alias '%s' on command '%s'. Please choose a different script alias", script.Alias, id, alias, subcommand.Name)
+							logger.Channel.Error.Fatalf("Project script alias '%s' on script '%s' conflicts with command alias '%s' on command '%s'. Please choose a different script alias", script.Alias, id, alias, subcommand.Name)
 						}
 					}
 				}
@@ -169,10 +169,10 @@ func (c *ProjectConfig) ValidateProjectScripts(subcommands []cli.Command) {
 
 			// Check for scripts with no run commands
 			if script.Run == nil || len(script.Run) == 0 {
-				logger.Error.Fatalf("Project script '%s' does not have any run commands.", id)
+				logger.Channel.Error.Fatalf("Project script '%s' does not have any run commands.", id)
 			} else if len(script.Run) > 10 {
 				// Check for scripts with more than 10 run commands
-				logger.Warning.Printf("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run))
+				logger.Warning("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run))
 			}
 		}
 	}
