@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
+        "fmt"
 	"github.com/fatih/color"
 	spun "github.com/slok/gospinner"
-	"fmt"
 )
 
 // logger is the global logger data structure. Retrieve via Logger().
@@ -16,10 +16,10 @@ var logger *RigLogger
 // logChannels defines various log channels. This nests within the RigLogger to expose the loggers directly for
 // advanced use cases.
 type logChannels struct {
-	Info      *log.Logger
-	Warning   *log.Logger
-	Error     *log.Logger
-	Verbose   *log.Logger
+        Info    *log.Logger
+        Warning *log.Logger
+        Error   *log.Logger
+        Verbose *log.Logger
 }
 
 // RigLogger is the global logger object
@@ -80,7 +80,7 @@ func (log *RigLogger) NoSpin() {
 	log.Spinning = false
 }
 
-// Success indicates success behavior of the spinner-associated task.
+// Info indicates success behavior of the spinner-associated task.
 func (log *RigLogger) Info(format string, a ...interface{}) {
 	if log.IsVerbose || !log.Spinning {
 		log.Channel.Info.Println(fmt.Sprintf(format, a...))
@@ -90,7 +90,7 @@ func (log *RigLogger) Info(format string, a ...interface{}) {
 	}
 }
 
-// Warn indicates a warning in the resolution of the spinner-associated task.
+// Warning indicates a warning in the resolution of the spinner-associated task.
 func (log *RigLogger) Warning(format string, a ...interface{}) {
 	if log.IsVerbose || !log.Spinning {
 		log.Channel.Warning.Println(fmt.Sprintf(format, a...))
@@ -98,6 +98,11 @@ func (log *RigLogger) Warning(format string, a ...interface{}) {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Warn()
 	}
+}
+
+// Warn is a convenience wrapper for Warning.
+func (log *RigLogger) Warn(format string, a ...interface{}) {
+    log.Warning(format, a...)
 }
 
 // Error indicates an error in the spinner-associated task.
@@ -110,7 +115,7 @@ func (log *RigLogger) Error(format string, a ...interface{}) {
 	}
 }
 
-// Details allows Verbose logging of more advanced activities/information.
+// Verbose allows Verbose logging of more advanced activities/information.
 // In practice, if the spinner can be in use verbose is a no-op.
 func (log *RigLogger) Verbose(format string, a ...interface{}) {
 	log.Channel.Verbose.Println(fmt.Sprintf(format, a...))
