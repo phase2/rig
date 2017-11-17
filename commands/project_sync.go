@@ -160,7 +160,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	// up and running. If the logfile does not exist, do not complain. If the
 	// filesystem cannot delete the file when it exists, it will lead to errors.
 	if err := util.RemoveFile(logFile, workingDir); err != nil {
-		cmd.out.Channel.Verbose.Printf("Could not remove Unison log file: %s: %s", logFile, err.Error())
+		cmd.out.Verbose("Could not remove Unison log file: %s: %s", logFile, err.Error())
 	}
 
 	// Initiate local Unison process.
@@ -179,10 +179,10 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 			unisonArgs = append(unisonArgs, "-ignore", ignore)
 		}
 	}
-	cmd.out.Channel.Verbose.Printf("Unison Args: %s", strings.Join(unisonArgs[:], " "))
+	cmd.out.Verbose("Unison Args: %s", strings.Join(unisonArgs[:], " "))
 	command := exec.Command("unison", unisonArgs...)
 	command.Dir = workingDir
-	cmd.out.Channel.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
+	cmd.out.Verbose("Sync execution - Working Directory: %s", workingDir)
 	if err = util.Convert(command).Start(); err != nil {
 		return cmd.Failure(fmt.Sprintf("Failure starting local Unison process: %v", err), "UNISON-START-FAILED", 13)
 	}
@@ -196,7 +196,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 
 // SetupBindVolume will create minimal Docker Volumes for systems that have native container/volume support
 func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) error {
-	cmd.out.Channel.Info.Printf("Starting local bind volume: %s", volumeName)
+	cmd.out.Info("Starting local bind volume: %s", volumeName)
 	util.Command("docker", "volume", "rm", volumeName).Run()
 
 	volumeArgs := []string{
@@ -219,9 +219,10 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if runtime.GOOS == "linux" {
 		return cmd.Success("No Unison container to stop, using local bind volume")
 	}
+
 	cmd.Config = NewProjectConfig()
 	if cmd.Config.NotEmpty() {
-		cmd.out.Channel.Verbose.Printf("Loaded project configuration from %s", cmd.Config.Path)
+		cmd.out.Verbose("Loaded project configuration from %s", cmd.Config.Path)
 	}
 
 	// Determine the working directory for CWD-sensitive operations.
@@ -231,13 +232,12 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	}
 
 	volumeName := cmd.GetVolumeName(cmd.Config, workingDir)
-	cmd.out.Channel.Verbose.Printf("Stopping sync with volume: %s", volumeName)
-	cmd.out.Info("Stopping Unison container")
+	cmd.out.Spin(fmt.Sprintf("Stopping Unison container (%s)", volumeName))
 	if err := util.Command("docker", "container", "stop", volumeName).Run(); err != nil {
 		return cmd.Failure(err.Error(), "SYNC-CONTAINER-FAILURE", 13)
 	}
 
-	return cmd.Success("Unison container stopped")
+	return cmd.Success(fmt.Sprintf("Unison container %s stopped", volumeName))
 }
 
 // GetVolumeName will find the volume name through a variety of fall backs
@@ -294,7 +294,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 	}
 	ip := strings.Trim(string(output), "\n")
 
-	cmd.out.Channel.Verbose.Printf("Checking for Unison network connection on %s %d", ip, unisonPort)
+	cmd.out.Verbose("Checking for Unison network connection on %s %d", ip, unisonPort)
 	for i := 1; i <= timeoutLoops; i++ {
 		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, unisonPort))
 		if err == nil {
@@ -302,7 +302,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 			return ip, nil
 		}
 
-		cmd.out.Channel.Info.Printf("Failure: %v", err)
+		cmd.out.Info("Failure: %v", err)
 		time.Sleep(timeoutLoopSleep)
 	}
 

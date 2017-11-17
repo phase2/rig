@@ -62,7 +62,7 @@ func (cmd *Upgrade) Run(c *cli.Context) error {
 		return cmd.Success(fmt.Sprintf("Machine '%s' has the same Docker version (%s) as your local Docker binary (%s). There is nothing to upgrade. If you wish to upgrade you'll need to install a newer version of the Docker binary before running the upgrade command.", cmd.machine.Name, machineDockerVersion, currentDockerVersion))
 	}
 
-	cmd.out.Channel.Info.Printf("Backing up to prepare for upgrade...")
+	cmd.out.Info("Backing up to prepare for upgrade...")
 	backup := &DataBackup{cmd.BaseCommand}
 	if err := backup.Run(c); err != nil {
 		return err

@@ -40,7 +40,7 @@ func (cmd *Kill) Run(c *cli.Context) error {
 		return err
 	}
 
-	cmd.out.Channel.Info.Printf("Killing machine '%s'", cmd.machine.Name)
+	cmd.out.Info("Killing machine '%s'", cmd.machine.Name)
 	util.StreamCommand("docker-machine", "kill", cmd.machine.Name)
 
 	// Ensure the underlying virtualization has stopped
@@ -53,7 +53,7 @@ func (cmd *Kill) Run(c *cli.Context) error {
 	case util.Xhyve:
 		cmd.out.Warning("Add equivalent xhyve kill command.")
 	default:
-		cmd.out.Channel.Warning.Printf("Driver not recognized: %s\n", driver)
+		cmd.out.Warning("Driver not recognized: %s\n", driver)
 	}
 
 	return cmd.Success(fmt.Sprintf("Machine '%s' killed", cmd.machine.Name))
