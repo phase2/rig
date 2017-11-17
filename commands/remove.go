@@ -47,7 +47,8 @@ func (cmd *Remove) Run(c *cli.Context) error {
 		cmd.out.Warning("Run 'rig data-backup' if you want to save your /data volume.")
 
 		if !util.AskYesNo("Are you sure you want to remove '" + cmd.machine.Name + "'") {
-			return cmd.Success("Remove was aborted")
+			cmd.out.Info("Remove was aborted")
+			return cmd.Success("")
 		}
 	}
 
@@ -63,6 +64,6 @@ func (cmd *Remove) Run(c *cli.Context) error {
 		return cmd.Failure(err.Error(), "MACHINE-REMOVE-FAILED", 12)
 	}
 
-	cmd.out.Info("Failed to remove the docker Virtual Machine")
+	cmd.out.Info("Removed the Docker Virtual Machine")
 	return cmd.Success(fmt.Sprintf("Machine '%s' removed", cmd.machine.Name))
 }

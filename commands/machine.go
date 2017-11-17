@@ -22,7 +22,7 @@ type Machine struct {
 
 // Create will generate a new Docker Machine configured according to user specification
 func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) error {
-	m.out.Channel.Info.Printf("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
+	m.out.Info("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
 	boot2dockerURL := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
 
@@ -72,7 +72,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 		return fmt.Errorf("error creating machine '%s': %s", m.Name, err)
 	}
 
-	m.out.Channel.Info.Printf("Created docker-machine named '%s'...", m.Name)
+	m.out.Info("Created docker-machine named '%s'...", m.Name)
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (m Machine) CheckXhyveRequirements() error {
 // Start boots the Docker Machine
 func (m Machine) Start() error {
 	if !m.IsRunning() {
-		m.out.Channel.Verbose.Printf("The machine '%s' is not running, starting...", m.Name)
+		m.out.Verbose("The machine '%s' is not running, starting...", m.Name)
 
 		if err := util.StreamCommand("docker-machine", "start", m.Name); err != nil {
 			return fmt.Errorf("error starting machine '%s': %s", m.Name, err)
@@ -127,10 +127,10 @@ func (m Machine) WaitForDev() error {
 	for i := 1; i <= maxTries; i++ {
 		m.SetEnv()
 		if err := util.Command("docker", "ps").Run(); err == nil {
-			m.out.Channel.Verbose.Printf("Machine '%s' has started", m.Name)
+			m.out.Verbose("Machine '%s' has started", m.Name)
 			return nil
 		}
-		m.out.Channel.Warning.Printf("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
+		m.out.Warning("Docker daemon not running! Trying again in %d seconds.  Try %d of %d. \n", sleepSecs, i, maxTries)
 		time.Sleep(time.Duration(sleepSecs) * time.Second)
 	}
 

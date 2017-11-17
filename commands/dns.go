@@ -37,8 +37,6 @@ func (cmd *DNS) Commands() []cli.Command {
 
 // Run executes the `rig dns` command
 func (cmd *DNS) Run(c *cli.Context) error {
-	cmd.out.Info("Configuring DNS")
-
 	if !util.SupportsNativeDocker() && !cmd.machine.IsRunning() {
 		return cmd.Failure(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
@@ -51,6 +49,7 @@ func (cmd *DNS) Run(c *cli.Context) error {
 	if !util.SupportsNativeDocker() {
 		cmd.ConfigureRoutes(cmd.machine)
 	}
+
 	return cmd.Success("DNS Services have been started")
 }
 
@@ -153,7 +152,7 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 		args = append(args, "--nameserver="+server)
 	}
 
-	util.ForceStreamCommand("docker", args...)
+	util.StreamCommand("docker", args...)
 	// Configure the resolvers based on platform
 	var resolverReturn error
 	if util.IsMac() {

@@ -83,7 +83,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 		if e := util.StreamCommand("docker", "pull", image); e != nil {
 			cmd.out.Error("Project generator docker image failed to update. Using local cache if available: %s", image)
 		} else {
-			cmd.out.Warning("Project generator docker image is up-to-date: %s", image)
+			cmd.out.Info("Project generator docker image is up-to-date: %s", image)
 		}
 	} else if err == nil && ctx.Bool("no-update") {
 		cmd.out.Verbose("Automatic generator image update suppressed by --no-update option.")

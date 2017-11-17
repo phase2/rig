@@ -65,6 +65,5 @@ func (cmd *DataRestore) Run(c *cli.Context) error {
 		return cmd.Failure("Data restore failed", "COMMAND-ERROR", 13)
 	}
 
-	cmd.out.Info("Data restore complete")
-	return cmd.Success("Data Restore was successful")
+	return cmd.Success("Data Restore completed")
 }

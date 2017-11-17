@@ -45,7 +45,8 @@ func (cmd *BaseCommand) Success(message string) error {
 		util.NotifySuccess(cmd.context, message)
 	}
 
-	// If there is an active spinner wrap it up.
+	// If there is an active spinner wrap it up. This is not placed before the logging above so commands can rely on
+	// cmd.Success to set the last spinner status in lieu of an extraneous log entry.
 	cmd.out.NoSpin()
 
 	return nil
