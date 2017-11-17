@@ -69,7 +69,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	if err := util.Command("grep", "-qE", "'^\"?/Users/'", "/etc/exports").Run(); err == nil {
 		cmd.out.Error("Docker could not be started")
-		return cmd.Error("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
+		return cmd.Failure("Vagrant NFS mount found. Please remove any non-Outrigger mounts that begin with /Users from your /etc/exports file", "NFS-MOUNT-CONFLICT", 12)
 	}
 
 	cmd.out.Verbose("Resetting Docker environment variables...")
@@ -87,9 +87,9 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	if err := cmd.machine.Start(); err != nil {
 		cmd.out.Error("Docker could not be started")
-		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
+		return cmd.Failure(err.Error(), "MACHINE-START-FAILED", 12)
 	}
-	cmd.out.Info(fmt.Sprintf("Docker Machine (%s) Created", cmd.machine.Name))
+	cmd.out.Info("Docker Machine (%s) Created", cmd.machine.Name)
 
 	cmd.out.Verbose("Configuring the local Docker environment")
 	cmd.machine.SetEnv()
@@ -102,7 +102,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	if util.IsMac() {
 		cmd.out.Spin("Enabling NFS file sharing...")
 		if nfsErr := util.StreamCommand("docker-machine-nfs", cmd.machine.Name); nfsErr != nil {
-			cmd.out.Warning(fmt.Sprintf("Error enabling NFS: %s", nfsErr))
+			cmd.out.Warning("Failure enabling NFS: %s", nfsErr.Error())
 		} else {
 			cmd.out.Info("NFS is ready")
 		}
@@ -111,7 +111,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Spin("Preparing /data filesystem...")
 	// NFS enabling may have caused a machine restart, wait for it to be available before proceeding
 	if err := cmd.machine.WaitForDev(); err != nil {
-		return cmd.Error(err.Error(), "MACHINE-START-FAILED", 12)
+		return cmd.Failure(err.Error(), "MACHINE-START-FAILED", 12)
 	}
 
 	cmd.out.Verbose("Setting up persistent /data volume...")
@@ -130,7 +130,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 		sudo ln -s /mnt/sda1/data /data;
 	fi;`
 	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, dataMountSetup); err != nil {
-		return cmd.Error(err.Error(), "DATA-MOUNT-FAILED", 13)
+		return cmd.Failure(err.Error(), "DATA-MOUNT-FAILED", 13)
 	}
 	cmd.out.Info("/data filesystem is ready")
 
@@ -139,7 +139,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	dns.ConfigureRoutes(cmd.machine)
 
 	cmd.out.Verbose("Use docker-machine to interact with your virtual machine.")
-	cmd.out.Verbose(fmt.Sprintf("For example, to SSH into it: docker-machine ssh %s", cmd.machine.Name))
+	cmd.out.Verbose("For example, to SSH into it: docker-machine ssh %s", cmd.machine.Name)
 
 	cmd.out.Spin("Launching Dashboard...")
 	dash := Dashboard{cmd.BaseCommand}

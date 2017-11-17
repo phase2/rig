@@ -46,7 +46,7 @@ Here are a few conventions:
 * **Command failed:**
   ```
   message := "Cooking sauce is hard, we failed"
-  cmd.out.Error(fmt.Sprintf("%s: %s", message, err.Error()))
+  cmd.out.Error("%s: %s", message, err.Error())
   return cmd.Error(message)
   ```
 

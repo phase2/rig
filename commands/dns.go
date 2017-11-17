@@ -40,12 +40,12 @@ func (cmd *DNS) Run(c *cli.Context) error {
 	cmd.out.Info("Configuring DNS")
 
 	if !util.SupportsNativeDocker() && !cmd.machine.IsRunning() {
-		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
+		return cmd.Failure(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
 	if err := cmd.StartDNS(cmd.machine, c.String("nameservers")); err != nil {
 		cmd.out.Error("DNS is ready")
-		return cmd.Error(err.Error(), "DNS-SETUP-FAILED", 13)
+		return cmd.Failure(err.Error(), "DNS-SETUP-FAILED", 13)
 	}
 
 	if !util.SupportsNativeDocker() {

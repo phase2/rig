@@ -54,9 +54,9 @@ func (cmd *Stop) StopMinimal() error {
 func (cmd *Stop) StopOutrigger() error {
 	cmd.out.Spin(fmt.Sprintf("Stopping machine '%s'...", cmd.machine.Name))
 	if err := cmd.machine.Stop(); err != nil {
-		return cmd.Error(err.Error(), "MACHINE-STOP-FAILED", 12)
+		return cmd.Failure(err.Error(), "MACHINE-STOP-FAILED", 12)
 	}
-	cmd.out.Info(fmt.Sprintf("Stopped machine '%s'", cmd.machine.Name))
+	cmd.out.Info("Stopped machine '%s'", cmd.machine.Name)
 
 	cmd.out.Spin("Cleaning up local networking (may require your admin password)")
 	if util.IsWindows() {

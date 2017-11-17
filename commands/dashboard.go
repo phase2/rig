@@ -41,7 +41,7 @@ func (cmd *Dashboard) Run(ctx *cli.Context) error {
 		}
 	}
 
-	return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
+	return cmd.Failure(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 }
 
 // LaunchDashboard launches the dashboard, stopping it first for a clean automatic update
@@ -54,12 +54,12 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	// except to indicate the age of the image before update in the next section.
 	_, seconds, err := util.ImageOlderThan(dashboardImageName, 86400*30)
 	if err == nil {
-		cmd.out.Verbose(fmt.Sprintf("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400))
+		cmd.out.Verbose("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400)
 	}
 
 	// Updating the dashboard is rarely of interest to users so uses verbose logging.
 	// Per our user interaction practices, we would normally use a spinner here.
-	cmd.out.Verbose(fmt.Sprintf("Attempting to update %s", dashboardImageName))
+	cmd.out.Verbose("Attempting to update %s", dashboardImageName)
 	if err := util.StreamCommand("docker", "pull", dashboardImageName); err != nil {
 		cmd.out.Verbose("Failed to update dashboard image. Will use local cache if available.")
 	} else {

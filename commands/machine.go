@@ -273,7 +273,7 @@ func (m Machine) GetSysctl(setting string) (string, error) {
 // SetSysctl sets the sysctl setting on the Docker Machine
 func (m Machine) SetSysctl(key string, val string) error {
 	cmd := fmt.Sprintf("sudo sysctl -w %s=%s", key, val)
-	m.out.Channel.Verbose.Printf("Modifying Docker Machine kernel settings: %s", cmd)
+	m.out.Verbose("Modifying Docker Machine kernel settings: %s", cmd)
 	_, err := util.Command("docker-machine", "ssh", m.Name, cmd).CombinedOutput()
 	return err
 }

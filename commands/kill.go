@@ -31,7 +31,7 @@ func (cmd *Kill) Run(c *cli.Context) error {
 	}
 
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	// First stop it (and cleanup)

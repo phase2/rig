@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	spun "github.com/slok/gospinner"
+	"fmt"
 )
 
 // logger is the global logger data structure. Retrieve via Logger().
@@ -80,42 +81,42 @@ func (log *RigLogger) NoSpin() {
 }
 
 // Success indicates success behavior of the spinner-associated task.
-func (log *RigLogger) Info(message string) {
+func (log *RigLogger) Info(format string, a ...interface{}) {
 	if log.IsVerbose || !log.Spinning {
-		log.Channel.Info.Println(message)
+		log.Channel.Info.Println(fmt.Sprintf(format, a...))
 	} else {
-		log.Progress.Spins.SetMessage(message)
+		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Succeed()
 	}
 }
 
 // Warn indicates a warning in the resolution of the spinner-associated task.
-func (log *RigLogger) Warning(message string) {
+func (log *RigLogger) Warning(format string, a ...interface{}) {
 	if log.IsVerbose || !log.Spinning {
-		log.Channel.Warning.Println(message)
+		log.Channel.Warning.Println(fmt.Sprintf(format, a...))
 	} else {
-		log.Progress.Spins.SetMessage(message)
+		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Warn()
 	}
 }
 
 // Error indicates an error in the spinner-associated task.
-func (log *RigLogger) Error(message string) {
+func (log *RigLogger) Error(format string, a ...interface{}) {
 	if log.IsVerbose || !log.Spinning {
-		log.Channel.Error.Println(message)
+		log.Channel.Error.Println(fmt.Sprintf(format, a...))
 	} else {
-		log.Progress.Spins.SetMessage(message)
+		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Fail()
 	}
 }
 
 // Details allows Verbose logging of more advanced activities/information.
 // In practice, if the spinner can be in use verbose is a no-op.
-func (log *RigLogger) Verbose(message string) {
-	log.Channel.Verbose.Println(message)
+func (log *RigLogger) Verbose(format string, a ...interface{}) {
+	log.Channel.Verbose.Println(fmt.Sprintf(format, a...))
 }
 
 // Note allows output of an info log, bypassing the spinner if in use.
-func (log *RigLogger) Note(message string) {
-	log.Channel.Info.Println(message)
+func (log *RigLogger) Note(format string, a ...interface{}) {
+	log.Channel.Info.Println(fmt.Sprintf(format, a...))
 }

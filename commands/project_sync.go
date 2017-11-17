@@ -94,13 +94,13 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 	cmd.Config = NewProjectConfig()
 	if cmd.Config.NotEmpty() {
-		cmd.out.Verbose(fmt.Sprintf("Loaded project configuration from %s", cmd.Config.Path))
+		cmd.out.Verbose("Loaded project configuration from %s", cmd.Config.Path)
 	}
 
 	// Determine the working directory for CWD-sensitive operations.
 	var workingDir, err = cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir"))
 	if err != nil {
-		return cmd.Error(err.Error(), "SYNC-PATH-ERROR", 12)
+		return cmd.Failure(err.Error(), "SYNC-PATH-ERROR", 12)
 	}
 
 	// Determine the volume name to be used across all operating systems.
@@ -109,10 +109,10 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 	switch platform := runtime.GOOS; platform {
 	case "linux":
-		cmd.out.Verbose(fmt.Sprintf("Setting up local volume: %s", volumeName))
+		cmd.out.Verbose("Setting up local volume: %s", volumeName)
 		return cmd.SetupBindVolume(volumeName, workingDir)
 	default:
-		cmd.out.Verbose(fmt.Sprintf("Starting sync with volume: %s", volumeName))
+		cmd.out.Verbose("Starting sync with volume: %s", volumeName)
 		return cmd.StartUnisonSync(ctx, volumeName, cmd.Config, workingDir)
 	}
 }
@@ -121,12 +121,12 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, config *ProjectConfig, workingDir string) error {
 	// Ensure the processes can handle a large number of watches
 	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", maxWatches); err != nil {
-		cmd.Error(fmt.Sprintf("Error configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12)
+		cmd.Failure(fmt.Sprintf("Failure configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12)
 	}
 
 	cmd.out.Channel.Info.Printf("Starting sync volume: %s", volumeName)
 	if err := util.Command("docker", "volume", "create", volumeName).Run(); err != nil {
-		return cmd.Error(fmt.Sprintf("Failed to create sync volume: %s", volumeName), "VOLUME-CREATE-FAILED", 13)
+		return cmd.Failure(fmt.Sprintf("Failed to create sync volume: %s", volumeName), "VOLUME-CREATE-FAILED", 13)
 	}
 
 	cmd.out.Info("Starting Unison container")
@@ -144,12 +144,12 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 		fmt.Sprintf("outrigger/unison:%s", unisonMinorVersion),
 	}
 	if err := util.Command("docker", containerArgs...).Run(); err != nil {
-		cmd.Error(fmt.Sprintf("Error starting sync container %s: %v", volumeName, err), "SYNC-CONTAINER-START-FAILED", 13)
+		cmd.Failure(fmt.Sprintf("Failure starting sync container %s: %v", volumeName, err), "SYNC-CONTAINER-START-FAILED", 13)
 	}
 
 	ip, err := cmd.WaitForUnisonContainer(volumeName, ctx.Int("initial-sync-timeout"))
 	if err != nil {
-		return cmd.Error(err.Error(), "SYNC-INIT-FAILED", 13)
+		return cmd.Failure(err.Error(), "SYNC-INIT-FAILED", 13)
 	}
 
 	cmd.out.Info("Initializing sync")
@@ -184,11 +184,11 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	command.Dir = workingDir
 	cmd.out.Channel.Verbose.Printf("Sync execution - Working Directory: %s", workingDir)
 	if err = util.Convert(command).Start(); err != nil {
-		return cmd.Error(fmt.Sprintf("Failure starting local Unison process: %v", err), "UNISON-START-FAILED", 13)
+		return cmd.Failure(fmt.Sprintf("Failure starting local Unison process: %v", err), "UNISON-START-FAILED", 13)
 	}
 
 	if err := cmd.WaitForSyncInit(logFile, workingDir, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait")); err != nil {
-		return cmd.Error(err.Error(), "UNISON-SYNC-FAILED", 13)
+		return cmd.Failure(err.Error(), "UNISON-SYNC-FAILED", 13)
 	}
 
 	return cmd.Success("Unison sync started successfully")
@@ -208,7 +208,7 @@ func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) er
 	}
 
 	if err := util.Command("docker", volumeArgs...).Run(); err != nil {
-		return cmd.Error(err.Error(), "BIND-VOLUME-FAILURE", 13)
+		return cmd.Failure(err.Error(), "BIND-VOLUME-FAILURE", 13)
 	}
 
 	return cmd.Success("Bind volume created")
@@ -227,14 +227,14 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	// Determine the working directory for CWD-sensitive operations.
 	var workingDir, err = cmd.DeriveLocalSyncPath(cmd.Config, ctx.String("dir"))
 	if err != nil {
-		return cmd.Error(err.Error(), "SYNC-PATH-ERROR", 12)
+		return cmd.Failure(err.Error(), "SYNC-PATH-ERROR", 12)
 	}
 
 	volumeName := cmd.GetVolumeName(cmd.Config, workingDir)
 	cmd.out.Channel.Verbose.Printf("Stopping sync with volume: %s", volumeName)
 	cmd.out.Info("Stopping Unison container")
 	if err := util.Command("docker", "container", "stop", volumeName).Run(); err != nil {
-		return cmd.Error(err.Error(), "SYNC-CONTAINER-FAILURE", 13)
+		return cmd.Failure(err.Error(), "SYNC-CONTAINER-FAILURE", 13)
 	}
 
 	return cmd.Success("Unison container stopped")
@@ -268,7 +268,7 @@ func (cmd *ProjectSync) LoadComposeFile() (*ComposeFile, error) {
 	if err == nil {
 		var config ComposeFile
 		if e := yaml.Unmarshal(yamlFile, &config); e != nil {
-			cmd.out.Channel.Error.Fatalf("YAML Parsing Error: %s", e)
+			cmd.out.Channel.Error.Fatalf("YAML Parsing Failure: %s", e)
 		}
 		return &config, nil
 	}
@@ -302,7 +302,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 			return ip, nil
 		}
 
-		cmd.out.Channel.Info.Printf("Error: %v", err)
+		cmd.out.Channel.Info.Printf("Failure: %v", err)
 		time.Sleep(timeoutLoopSleep)
 	}
 
@@ -325,7 +325,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		if err := util.TouchFile(tempFile, workingDir); err != nil {
 			cmd.out.Channel.Error.Fatal("Could not create file used to detect initial sync: %s", err.Error())
 		}
-		cmd.out.Verbose(fmt.Sprintf("Creating temporary file so we can watch for Unison initialization: %s", tempFile))
+		cmd.out.Verbose("Creating temporary file so we can watch for Unison initialization: %s", tempFile)
 
 		var timeoutLoopSleep = time.Duration(100) * time.Millisecond
 		// * 10 here because we loop once every 100 ms and we want to get to seconds
@@ -356,7 +356,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 				// Remove the temp file, waiting until after sync so spurious
 				// failure message doesn't show in log
 				if err := util.RemoveFile(tempFile, workingDir); err != nil {
-					cmd.out.Warning(fmt.Sprintf("Could not remove the temporary file: %s: %s", tempFile, err.Error()))
+					cmd.out.Warning("Could not remove the temporary file: %s: %s", tempFile, err.Error())
 				}
 				return nil
 			}
@@ -368,7 +368,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		if err := util.RemoveFile(tempFile, workingDir); err != nil {
 			// While the removal of the tempFile is not significant, if something
 			// prevents removal there may be a bigger problem.
-			cmd.out.Channel.Warning.Printf("Could not remove the temporary file: %s", err.Error())
+			cmd.out.Warning("Could not remove the temporary file: %s", err.Error())
 		}
 	}
 

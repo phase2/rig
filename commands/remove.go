@@ -37,10 +37,10 @@ func (cmd *Remove) Run(c *cli.Context) error {
 	}
 
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
-	cmd.out.Info(fmt.Sprintf("Removing '%s'", cmd.machine.Name))
+	cmd.out.Info("Removing '%s'", cmd.machine.Name)
 	force := c.Bool("force")
 	if !force {
 		cmd.out.Warning("!!!!! This operation is destructive. You may lose important data. !!!!!!!")
@@ -60,7 +60,7 @@ func (cmd *Remove) Run(c *cli.Context) error {
 	cmd.out.Spin("Removing the docker Virtual Machine")
 	if err := cmd.machine.Remove(); err != nil {
 		cmd.out.Error("Failed to remove the docker Virtual Machine")
-		return cmd.Error(err.Error(), "MACHINE-REMOVE-FAILED", 12)
+		return cmd.Failure(err.Error(), "MACHINE-REMOVE-FAILED", 12)
 	}
 
 	cmd.out.Info("Failed to remove the docker Virtual Machine")

@@ -89,16 +89,16 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 
 	yamlFile, err := ioutil.ReadFile(config.File)
 	if err != nil {
-		logger.Channel.Verbose.Printf("No project configuration file could be read at: %s", config.File)
+		logger.Verbose("No project configuration file could be read at: %s", config.File)
 		return config, err
 	}
 
 	if err := yaml.Unmarshal(yamlFile, config); err != nil {
-		logger.Channel.Error.Fatalf("Error parsing YAML config: %v", err)
+		logger.Channel.Error.Fatalf("Failure parsing YAML config: %v", err)
 	}
 
 	if err := config.ValidateConfigVersion(); err != nil {
-		logger.Channel.Error.Fatalf("Error in %s: %s", filename, err)
+		logger.Channel.Error.Fatalf("Failure in %s: %s", filename, err)
 	}
 
 	if len(config.Bin) == 0 {
@@ -172,7 +172,7 @@ func (c *ProjectConfig) ValidateProjectScripts(subcommands []cli.Command) {
 				logger.Channel.Error.Fatalf("Project script '%s' does not have any run commands.", id)
 			} else if len(script.Run) > 10 {
 				// Check for scripts with more than 10 run commands
-				logger.Warning(fmt.Sprintf("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run)))
+				logger.Warning("Project script '%s' has more than 10 run items (%d). You should create a shell script to contain those.", id, len(script.Run))
 			}
 		}
 	}

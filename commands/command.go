@@ -51,8 +51,8 @@ func (cmd *BaseCommand) Success(message string) error {
 	return nil
 }
 
-// Error encapsulates the functionality for reporting command failure
-func (cmd *BaseCommand) Error(message string, errorName string, exitCode int) error {
+// Failure encapsulates the functionality for reporting command failure
+func (cmd *BaseCommand) Failure(message string, errorName string, exitCode int) error {
 	// Make sure any running spinner halts.
 	cmd.out.NoSpin()
 	// Handle error messaging.

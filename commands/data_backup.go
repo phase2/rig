@@ -44,21 +44,21 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	}
 
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	dataDir := c.String("data-dir")
 	backupDir := c.String("backup-dir")
 	backupFile := fmt.Sprintf("%s%c%s.tgz", backupDir, os.PathSeparator, cmd.machine.Name)
 	if _, err := os.Stat(backupDir); err != nil {
-		cmd.out.Info(fmt.Sprintf("Creating backup directory: %s...", backupDir))
+		cmd.out.Info("Creating backup directory: %s...", backupDir)
 		if mkdirErr := util.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
 			cmd.out.Error(mkdirErr.Error())
-			return cmd.Error(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
+			return cmd.Failure(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
 		}
 	} else if _, err := os.Stat(backupFile); err == nil {
 		// If the backup dir already exists, make sure the backup file does not exist.
-		return cmd.Error(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
+		return cmd.Failure(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
 	}
 
 	// Stream the archive to stdout and capture it in a local file so we don't waste
@@ -66,10 +66,10 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	cmd.out.Spin(fmt.Sprintf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile))
 	archiveCmd := fmt.Sprintf("sudo tar czf - -C %s .", dataDir)
 	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, archiveCmd, ">", backupFile); err != nil {
-		cmd.out.Error(fmt.Sprintf("Backup failed: %s", err.Error()))
-		return cmd.Error("Backup failed", "COMMAND-ERROR", 13)
+		cmd.out.Error("Backup failed: %s", err.Error())
+		return cmd.Failure("Backup failed", "COMMAND-ERROR", 13)
 	}
 
-	cmd.out.Info(fmt.Sprintf("Backup complete: %s", backupFile))
+	cmd.out.Info("Backup complete: %s", backupFile)
 	return cmd.Success("Data Backup completed")
 }
