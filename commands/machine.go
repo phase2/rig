@@ -178,17 +178,14 @@ func (m *Machine) IsRunning() bool {
 // GetData will inspect the Docker Machine and return the parsed JSON describing the machine
 func (m *Machine) GetData() *simplejson.Json {
 	if m.inspectData != nil {
-		m.out.Warn("m.inspectData is NOT nil")
 		return m.inspectData
 	}
 
-	m.out.Warn("m.inspectData was nil, retrieving")
 	if inspect, inspectErr := util.Command("docker-machine", "inspect", m.Name).Output(); inspectErr == nil {
 		if js, jsonErr := simplejson.NewJson(inspect); jsonErr != nil {
 			m.out.Channel.Error.Fatalf("Failed to parse '%s' JSON: %s", m.Name, jsonErr)
 		} else {
 			m.inspectData = js
-			m.out.Warn("m.inspectData was set to: %s", m.inspectData)
 			return m.inspectData
 		}
 	}
