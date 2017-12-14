@@ -34,6 +34,7 @@ func (cmd *Doctor) Commands() []cli.Command {
 func (cmd *Doctor) Run(c *cli.Context) error {
 	// 0. Ensure all of rig's dependencies are available in the PATH.
 	cmd.out.Spin("Checking Docker installation...")
+	/* #nosec */
 	if err := exec.Command("docker", "-h").Start(); err == nil {
 		cmd.out.Info("Docker is installed.")
 	} else {
@@ -41,6 +42,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	}
 	if !util.SupportsNativeDocker() {
 		cmd.out.Spin("Checking Docker Machine installation...")
+		/* #nosec */
 		if err := exec.Command("docker-machine", "-h").Start(); err == nil {
 			cmd.out.Info("Docker Machine is installed.")
 		} else {
@@ -48,6 +50,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 		}
 	}
 	cmd.out.Spin("Checking Docker Compose installation...")
+	/* #nosec */
 	if err := exec.Command("docker-compose", "-h").Start(); err == nil {
 		cmd.out.Info("Docker Compose is installed.")
 	} else {
@@ -67,6 +70,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 			} else {
 				cmd.out.Info("Docker Machine (%s) name matches your environment configuration.", cmd.machine.Name)
 			}
+			/* #nosec */
 			if output, err := exec.Command("docker-machine", "url", cmd.machine.Name).Output(); err == nil {
 				hostURL := strings.TrimSpace(string(output))
 				if hostURL != os.Getenv("DOCKER_HOST") {
@@ -148,6 +152,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	// 4. Ensure that docker-machine-nfs script is available for our NFS mounts (Mac ONLY)
 	if util.IsMac() {
 		cmd.out.Spin("Checking NFS configuration...")
+		/* #nosec */
 		if err := exec.Command("which", "docker-machine-nfs").Run(); err != nil {
 			cmd.out.Error("Docker Machine NFS is not installed.")
 		} else {
@@ -158,6 +163,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	// 5. Check for storage on VM volume
 	if !util.SupportsNativeDocker() {
 		cmd.out.Spin("Checking Data (/data) volume capacity...")
+		/* #nosec */
 		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /dev/sda1 | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			dataUsage := strings.TrimSpace(string(output))
@@ -180,6 +186,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	// 6. Check for storage on /Users
 	if !util.SupportsNativeDocker() {
 		cmd.out.Spin("Checking Root (/Users) drive capacity...")
+		/* #nosec */
 		output, err := exec.Command("docker-machine", "ssh", cmd.machine.Name, "df -h 2> /dev/null | grep /Users | head -1 | awk '{print $5}' | sed 's/%//'").Output()
 		if err == nil {
 			userUsage := strings.TrimSpace(string(output))

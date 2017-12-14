@@ -106,7 +106,7 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 	}
 
 	args = append(args, ctx.Args()...)
-
+	/* #nosec */
 	shellCmd := exec.Command("docker", args...)
 	if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
 		return cmd.Failure(fmt.Sprintf("Failure running generator %s %s", image, strings.Join(ctx.Args(), " ")), "COMMAND-ERROR", exitCode)

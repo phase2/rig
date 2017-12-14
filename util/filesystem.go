@@ -42,7 +42,7 @@ func TouchFile(pathToFile string, workingDir string) error {
 	}
 
 	// If the file already exists there will be no error.
-	f, err := os.OpenFile(absoluteFilePath, os.O_RDONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(absoluteFilePath, os.O_RDONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return fmt.Errorf("Could not touch file: %s: %s", absoluteFilePath, err.Error())
 	}

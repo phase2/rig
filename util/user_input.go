@@ -11,7 +11,10 @@ func AskYesNo(question string) bool {
 	fmt.Printf("%s? [y/N]: ", question)
 
 	var response string
-	fmt.Scanln(&response)
+	var _, err = fmt.Scanln(&response)
+	if err != nil {
+		return false
+	}
 
 	yesResponses := []string{"y", "Y", "yes", "Yes", "YES"}
 	for _, elem := range yesResponses {
