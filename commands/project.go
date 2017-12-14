@@ -111,9 +111,11 @@ func (cmd *Project) Run(c *cli.Context) error {
 // @see https://github.com/medhoover/gom/blob/staging/config/command.go
 func (cmd *Project) GetCommand(val string) *exec.Cmd {
 	if util.IsWindows() {
+		/* #nosec */
 		return exec.Command("cmd", "/c", val)
 	}
 
+	/* #nosec */
 	return exec.Command("sh", "-c", val)
 }
 

@@ -1,6 +1,7 @@
 dist
 build
 vendor
+vendor.orig
 .idea
 .outrigger.yml
 .DS_Store
