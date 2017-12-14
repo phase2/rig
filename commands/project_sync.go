@@ -180,6 +180,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 		}
 	}
 	cmd.out.Verbose("Unison Args: %s", strings.Join(unisonArgs[:], " "))
+	/* #nosec */
 	command := exec.Command("unison", unisonArgs...)
 	command.Dir = workingDir
 	cmd.out.Verbose("Sync execution - Working Directory: %s", workingDir)

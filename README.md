@@ -22,19 +22,31 @@ We make use of a few key libraries to do all the fancy stuff that the `rig` CLI 
  * https://github.com/martinlindhe/notify
      * Cross-platform desktop notifications
 
-## Release Intructions
+## Release Instructions
 
 We use [GoReleaser](https://goreleaser.com) to handle nearly all of our release concerns.  GoReleaser will handle
 
 * Building for all target platforms
-* Create a GitHub release on our project page based on tag
-* Create archive file for each target platform and attach it to the GitHub release
-* Update the Homebrew formula and publish it
-* Create .deb and .rpm packages for linux installations
+* Creating a GitHub release on our project page based on tag
+* Creating archive files for each target platform and attach it to the GitHub release
+* Creating .deb and .rpm packages for linux installations and attaching those to the GitHub release
+* Updating the Homebrew formula and publish it
 
-To create a new release of rig:
+### To create a new release of rig:
+
 * Get all the code committed to `master`
-* Tag master with the new version number
+* Tag master with the new version number `git tag 2.1.0 && git push --tags`
 * Run `docker-compose run --rm goreleaser`
+* ...
+* Profit!
+
+### To create a new release candidate (RC) of rig:
+
+If we want to roll out an RC to GitHub for folks to test, we simply need to run with a different GoReleaser
+configuration that does not publish to homebrew, just to a GitHub release that is marked preproduction.
+
+* Get all the code committed to `develop`
+* Tag develop with the new version number `git tag 2.1.0-rc1 && git push --tags`
+* Run `docker-compose run --rm goreleaser --config .goreleaser.rc.yml`
 * ...
 * Profit!

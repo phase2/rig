@@ -30,6 +30,7 @@ func ForceStreamCommand(path string, arg ...string) error {
 
 // Command creates a new Executor instance from the execution arguments.
 func Command(path string, arg ...string) Executor {
+	/* #nosec */
 	return Executor{exec.Command(path, arg...)}
 }
 
