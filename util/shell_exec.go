@@ -30,6 +30,7 @@ func ForceStreamCommand(path string, arg ...string) error {
 
 // Command creates a new Executor instance from the execution arguments.
 func Command(path string, arg ...string) Executor {
+	/* #nosec */
 	return Executor{exec.Command(path, arg...)}
 }
 
@@ -115,7 +116,7 @@ func (x Executor) Start() error {
 // Log verbosely logs the command.
 func (x Executor) Log(tag string) {
 	color.Set(color.FgMagenta)
-	Logger().Verbose.Printf("%s: %s", tag, x.ToString())
+	Logger().Verbose("%s: %s", tag, x.ToString())
 	color.Unset()
 }
 

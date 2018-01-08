@@ -37,32 +37,34 @@ func (cmd *DNS) Commands() []cli.Command {
 
 // Run executes the `rig dns` command
 func (cmd *DNS) Run(c *cli.Context) error {
-	cmd.out.Info.Println("Configuring DNS")
-
 	if !util.SupportsNativeDocker() && !cmd.machine.IsRunning() {
-		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
+		return cmd.Failure(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
 	if err := cmd.StartDNS(cmd.machine, c.String("nameservers")); err != nil {
-		return cmd.Error(err.Error(), "DNS-SETUP-FAILED", 13)
+		cmd.out.Error("DNS is ready")
+		return cmd.Failure(err.Error(), "DNS-SETUP-FAILED", 13)
 	}
 
 	if !util.SupportsNativeDocker() {
 		cmd.ConfigureRoutes(cmd.machine)
 	}
+
 	return cmd.Success("DNS Services have been started")
 }
 
 // ConfigureRoutes will configure routing to allow access to containers on IP addresses
 // within the Docker Machine bridge network
 func (cmd *DNS) ConfigureRoutes(machine Machine) {
-	cmd.out.Info.Println("Setting up local networking (may require your admin password)")
+	cmd.out.Spin("Setting up local networking (may require your admin password)")
 
 	if util.IsMac() {
 		cmd.configureMacRoutes(machine)
 	} else if util.IsWindows() {
 		cmd.configureWindowsRoutes(machine)
 	}
+
+	cmd.out.Info("Local networking is ready")
 }
 
 // ConfigureMac configures DNS resolution and network routing
@@ -76,12 +78,12 @@ func (cmd *DNS) configureMacRoutes(machine Machine) {
 	util.StreamCommand("sudo", "route", "-n", "add", "172.17.0.0/16", machineIP)
 	if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
-		cmd.out.Verbose.Println("Restarting discoveryutil to flush DNS caches")
+		cmd.out.Verbose("Restarting discoveryutil to flush DNS caches")
 		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
-		cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
+		cmd.out.Verbose("Restarting mDNSResponder to flush DNS caches")
 		util.StreamCommand("sudo", "killall", "-HUP", "mDNSResponder")
 	}
 }
@@ -91,7 +93,7 @@ func (cmd *DNS) removeHostFilter(ipAddr string) {
 	// #1: route -n get <machineIP> to find the interface name
 	routeData, err := util.Command("route", "-n", "get", ipAddr).CombinedOutput()
 	if err != nil {
-		cmd.out.Warning.Println("Unable to determine bridge interface to remove hostfilter")
+		cmd.out.Warning("Unable to determine bridge interface to remove hostfilter")
 		return
 	}
 	ifaceRegexp := regexp.MustCompile(`interface:\s(\w+)`)
@@ -100,7 +102,7 @@ func (cmd *DNS) removeHostFilter(ipAddr string) {
 	// #2: ifconfig <interface name> to get the details
 	ifaceData, err := util.Command("ifconfig", iface).CombinedOutput()
 	if err != nil {
-		cmd.out.Warning.Println("Unable to determine member to remove hostfilter")
+		cmd.out.Warning("Unable to determine member to remove hostfilter")
 		return
 	}
 	memberRegexp := regexp.MustCompile(`member:\s(\w+)\s`)
@@ -118,6 +120,7 @@ func (cmd *DNS) configureWindowsRoutes(machine Machine) {
 
 // StartDNS will start the dnsdock service
 func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
+	cmd.out.Spin("Setting up DNS resolver...")
 	dnsServers := strings.Split(nameservers, ",")
 
 	bridgeIP, err := util.GetBridgeIP()
@@ -148,8 +151,8 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	for _, server := range dnsServers {
 		args = append(args, "--nameserver="+server)
 	}
-	util.ForceStreamCommand("docker", args...)
 
+	util.StreamCommand("docker", args...)
 	// Configure the resolvers based on platform
 	var resolverReturn error
 	if util.IsMac() {
@@ -159,12 +162,14 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 	} else if util.IsWindows() {
 		resolverReturn = cmd.configureWindowsResolver(machine)
 	}
+	cmd.out.Info("DNS resolution is ready")
+
 	return resolverReturn
 }
 
 // configureMacResolver configures DNS resolution and network routing
 func (cmd *DNS) configureMacResolver(machine Machine) error {
-	cmd.out.Verbose.Print("Configuring DNS resolution for macOS")
+	cmd.out.Verbose("Configuring DNS resolution for macOS")
 	bridgeIP := machine.GetBridgeIP()
 
 	if err := util.Command("sudo", "mkdir", "-p", "/etc/resolver").Run(); err != nil {
@@ -175,12 +180,12 @@ func (cmd *DNS) configureMacResolver(machine Machine) error {
 	}
 	if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
-		cmd.out.Verbose.Println("Restarting discoveryutil to flush DNS caches")
+		cmd.out.Verbose("Restarting discoveryutil to flush DNS caches")
 		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
-		cmd.out.Verbose.Println("Restarting mDNSResponder to flush DNS caches")
+		cmd.out.Verbose("Restarting mDNSResponder to flush DNS caches")
 		util.StreamCommand("sudo", "killall", "-HUP", "mDNSResponder")
 	}
 	return nil
@@ -188,7 +193,7 @@ func (cmd *DNS) configureMacResolver(machine Machine) error {
 
 // configureLinuxResolver configures DNS resolution
 func (cmd *DNS) configureLinuxResolver() error {
-	cmd.out.Verbose.Print("Configuring DNS resolution for linux")
+	cmd.out.Verbose("Configuring DNS resolution for linux")
 	bridgeIP, err := util.GetBridgeIP()
 	if err != nil {
 		return err
@@ -217,7 +222,7 @@ func (cmd *DNS) configureLinuxResolver() error {
 // configureWindowsResolver configures DNS resolution and network routing
 func (cmd *DNS) configureWindowsResolver(machine Machine) error {
 	// TODO: Figure out Windows resolver configuration
-	cmd.out.Verbose.Print("TODO: Configuring DNS resolution for windows")
+	cmd.out.Verbose("TODO: Configuring DNS resolution for windows")
 	return nil
 }
 

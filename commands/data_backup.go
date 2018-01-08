@@ -44,31 +44,36 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 	}
 
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	dataDir := c.String("data-dir")
 	backupDir := c.String("backup-dir")
 	backupFile := fmt.Sprintf("%s%c%s.tgz", backupDir, os.PathSeparator, cmd.machine.Name)
 	if _, err := os.Stat(backupDir); err != nil {
-		cmd.out.Info.Printf("Creating backup directory: %s...", backupDir)
+		cmd.out.Info("Creating backup directory: %s...", backupDir)
 		if mkdirErr := util.Command("mkdir", "-p", backupDir).Run(); mkdirErr != nil {
-			cmd.out.Error.Println(mkdirErr)
-			return cmd.Error(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
+			cmd.out.Error(mkdirErr.Error())
+			return cmd.Failure(fmt.Sprintf("Could not create backup directory %s", backupDir), "BACKUP-DIR-CREATE-FAILED", 12)
 		}
 	} else if _, err := os.Stat(backupFile); err == nil {
 		// If the backup dir already exists, make sure the backup file does not exist.
-		return cmd.Error(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
+		return cmd.Failure(fmt.Sprintf("Backup archive %s already exists.", backupFile), "BACKUP-ARCHIVE-EXISTS", 12)
 	}
-
-	cmd.out.Info.Printf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile)
 
 	// Stream the archive to stdout and capture it in a local file so we don't waste
 	// space storing an archive on the VM filesystem. There may not be enough space.
+	cmd.out.Spin(fmt.Sprintf("Backing up %s on '%s' to %s...", dataDir, cmd.machine.Name, backupFile))
 	archiveCmd := fmt.Sprintf("sudo tar czf - -C %s .", dataDir)
 	if err := util.StreamCommand("docker-machine", "ssh", cmd.machine.Name, archiveCmd, ">", backupFile); err != nil {
-		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
+		cmd.out.Error("Backup failed: %s", err.Error())
+		return cmd.Failure("Backup failed", "COMMAND-ERROR", 13)
 	}
 
-	return cmd.Success("Data Backup completed with no errors")
+	cmd.out.Info("Data backup saved to %s", backupFile)
+	// Our final success message provides details on where to find the backup file.
+	// The success notifcation is kept simple by not passing back the filepath.
+	cmd.out.NoSpin()
+
+	return cmd.Success("Data Backup completed")
 }

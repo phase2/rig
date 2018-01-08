@@ -55,12 +55,12 @@ func (cmd *ProjectCreate) Create(ctx *cli.Context) error {
 	}
 
 	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
-		cmd.out.Verbose.Printf("Executing container %s%s", image, argsMessage)
+		cmd.out.Error("Executing container %s%s", image, argsMessage)
 		if err := cmd.RunGenerator(ctx, cmd.machine, image); err != nil {
 			return err
 		}
 	} else {
-		return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
+		return cmd.Failure(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 	}
 
 	return cmd.Success("")
@@ -73,23 +73,25 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 	// The check for whether the image is older than 30 days is not currently used.
 	_, seconds, err := util.ImageOlderThan(image, 86400*30)
 	if err == nil {
-		cmd.out.Verbose.Printf("Local copy of the image '%s' was originally published %0.2f days ago.", image, seconds/86400)
+		cmd.out.Verbose("Local copy of the image '%s' was originally published %0.2f days ago.", image, seconds/86400)
 	}
 
 	// If there was an error it implies no previous instance of the image is available
 	// or that docker operations failed and things will likely go wrong anyway.
 	if err == nil && !ctx.Bool("no-update") {
-		cmd.out.Verbose.Printf("Attempting to update %s", image)
+		cmd.out.Spin(fmt.Sprintf("Attempting to update project generator docker image: %s", image))
 		if e := util.StreamCommand("docker", "pull", image); e != nil {
-			cmd.out.Verbose.Println("Failed to update generator image. Will use local cache if available.")
+			cmd.out.Error("Project generator docker image failed to update. Using local cache if available: %s", image)
+		} else {
+			cmd.out.Info("Project generator docker image is up-to-date: %s", image)
 		}
 	} else if err == nil && ctx.Bool("no-update") {
-		cmd.out.Verbose.Printf("Automatic generator image update suppressed by --no-update option.")
+		cmd.out.Verbose("Automatic generator image update suppressed by --no-update option.")
 	}
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return cmd.Error(fmt.Sprintf("Couldn't determine current working directory: %s", err), "WORKING-DIR-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("Couldn't determine current working directory: %s", err), "WORKING-DIR-NOT-FOUND", 12)
 	}
 
 	// Keep passed in args as distinct elements or they will be treated as
@@ -104,10 +106,10 @@ func (cmd *ProjectCreate) RunGenerator(ctx *cli.Context, machine Machine, image 
 	}
 
 	args = append(args, ctx.Args()...)
-
+	/* #nosec */
 	shellCmd := exec.Command("docker", args...)
 	if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-		return cmd.Error(fmt.Sprintf("Error running generator %s %s", image, strings.Join(ctx.Args(), " ")), "COMMAND-ERROR", exitCode)
+		return cmd.Failure(fmt.Sprintf("Failure running generator %s %s", image, strings.Join(ctx.Args(), " ")), "COMMAND-ERROR", exitCode)
 	}
 
 	return nil

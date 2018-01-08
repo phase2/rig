@@ -29,9 +29,9 @@ func (cmd *Restart) Commands() []cli.Command {
 func (cmd *Restart) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() || cmd.machine.Exists() {
 		if util.SupportsNativeDocker() {
-			cmd.out.Info.Println("Restarting Outrigger services")
+			cmd.out.Spin("Restarting Outrigger services")
 		} else {
-			cmd.out.Info.Printf("Restarting Outrigger machine '%s' and services", cmd.machine.Name)
+			cmd.out.Spin(fmt.Sprintf("Restarting Outrigger machine '%s' and services", cmd.machine.Name))
 		}
 
 		stop := Stop{cmd.BaseCommand}
@@ -46,7 +46,7 @@ func (cmd *Restart) Run(c *cli.Context) error {
 			return err
 		}
 	} else {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	return cmd.Success("Restart successful")

@@ -28,11 +28,12 @@ func (cmd *Status) Commands() []cli.Command {
 // Run executes the `rig status` command
 func (cmd *Status) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
-		return cmd.Success("Status is not needed on Linux")
+		cmd.out.Info("Status is not needed on Linux")
+		return cmd.Success("")
 	}
 
 	if !cmd.machine.Exists() {
-		return cmd.Error(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	if cmd.out.IsVerbose {

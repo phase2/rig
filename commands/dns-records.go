@@ -34,7 +34,7 @@ func (cmd *DNSRecords) Run(c *cli.Context) error {
 
 	records, err := cmd.LoadRecords()
 	if err != nil {
-		return cmd.Error(err.Error(), "COMMAND-ERROR", 13)
+		return cmd.Failure(err.Error(), "COMMAND-ERROR", 13)
 	}
 
 	for _, record := range records {

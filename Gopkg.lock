@@ -56,6 +56,12 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
+  name = "github.com/slok/gospinner"
+  packages = ["."]
+  revision = "9ad9fd160041ce6bfb531a55930573fe4c24042d"
+  version = "v0.1.0"
+
+[[projects]]
   name = "github.com/urfave/cli"
   packages = ["."]
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
@@ -85,3 +91,4 @@
   inputs-digest = "86055c933d04a9f46045c437c0e163af6622e85cf0ea6625c54c4222b52e62ab"
   solver-name = "gps-cdcl"
   solver-version = 1
+

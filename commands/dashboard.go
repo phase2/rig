@@ -32,11 +32,16 @@ func (cmd *Dashboard) Commands() []cli.Command {
 // Run executes the `rig dashboard` command
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
-		cmd.out.Info.Println("Launching Dashboard")
-		return cmd.LaunchDashboard(cmd.machine)
+		cmd.out.Info("Launching Dashboard")
+		err := cmd.LaunchDashboard(cmd.machine)
+		if err != nil {
+			// Success may be presumed to only execute once per command execution.
+			// This allows calling LaunchDashboard() from start.go without success.
+			return cmd.Success("")
+		}
 	}
 
-	return cmd.Error(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
+	return cmd.Failure(fmt.Sprintf("Machine '%s' is not running.", cmd.machine.Name), "MACHINE-STOPPED", 12)
 }
 
 // LaunchDashboard launches the dashboard, stopping it first for a clean automatic update
@@ -49,12 +54,16 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	// except to indicate the age of the image before update in the next section.
 	_, seconds, err := util.ImageOlderThan(dashboardImageName, 86400*30)
 	if err == nil {
-		cmd.out.Verbose.Printf("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400)
+		cmd.out.Verbose("Local copy of the dashboardImageName '%s' was originally published %0.2f days ago.", dashboardImageName, seconds/86400)
 	}
 
-	cmd.out.Verbose.Printf("Attempting to update %s", dashboardImageName)
+	// Updating the dashboard is rarely of interest to users so uses verbose logging.
+	// Per our user interaction practices, we would normally use a spinner here.
+	cmd.out.Verbose("Attempting to update %s", dashboardImageName)
 	if err := util.StreamCommand("docker", "pull", dashboardImageName); err != nil {
-		cmd.out.Verbose.Println("Failed to update dashboard image. Will use local cache if available.")
+		cmd.out.Verbose("Failed to update dashboard image. Will use local cache if available.")
+	} else {
+		cmd.out.Verbose("Successfully updated dashboard.")
 	}
 
 	dockerAPIVersion, _ := util.GetDockerServerAPIVersion()
@@ -71,16 +80,15 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 	}
 
 	util.ForceStreamCommand("docker", args...)
-
 	if util.IsMac() {
 		util.Command("open", "http://dashboard.outrigger.vm").Run()
 	} else if util.IsWindows() {
 		util.Command("start", "http://dashboard.outrigger.vm").Run()
 	} else {
-		cmd.out.Info.Println("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
+		cmd.out.Info("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
 
-	return cmd.Success("")
+	return nil
 }
 
 // StopDashboard stops and removes the dashboard container
