@@ -33,8 +33,7 @@ func (cmd *Dashboard) Commands() []cli.Command {
 func (cmd *Dashboard) Run(ctx *cli.Context) error {
 	if cmd.machine.IsRunning() || util.SupportsNativeDocker() {
 		cmd.out.Info("Launching Dashboard")
-		err := cmd.LaunchDashboard(cmd.machine)
-		if err != nil {
+		if err := cmd.LaunchDashboard(cmd.machine); err == nil {
 			// Success may be presumed to only execute once per command execution.
 			// This allows calling LaunchDashboard() from start.go without success.
 			return cmd.Success("")
