@@ -150,6 +150,6 @@ func (log *RigLogger) PrivilegeEscallationPrompt() {
 	// Hacking timing workarounds to force spinner processing sequencing help.
 	time.Sleep(10 * time.Millisecond)
 	log.Spin("Evaluating administrative action...")
-	log.Warning("Administrative privileges needed, please enter your password:")
+	log.Warning("Administrative privileges needed...")
 	time.Sleep(30 * time.Millisecond)
 }
