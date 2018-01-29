@@ -98,7 +98,7 @@ func (x Executor) CombinedOutput() ([]byte, error) {
 // Run runs a command via exec.Run() without modification or output of the underlying command.
 func (x Executor) Run() error {
 	x.Log("Executing")
-	if out := Logger(); x.cmd.Args[0] == "sudo" && out != nil  {
+	if out := Logger(); out != nil && x.IsPrivileged() {
 		out.PrivilegeEscallationPrompt()
 		defer out.Spin("")
 	}
@@ -140,4 +140,11 @@ func (x Executor) ToString() string {
 	}
 
 	return fmt.Sprintf("%s %s %s", x.cmd.Path, strings.Join(x.cmd.Args[1:], " "), context)
+}
+
+// IsPrivileged evaluates the command to determine if administrative privilege
+// is required.
+func (x Executor) IsPrivileged() bool {
+	_, privileged := IndexOfString(x.cmd.Args, "sudo")
+	return privileged
 }

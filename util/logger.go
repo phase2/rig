@@ -25,10 +25,10 @@ type logChannels struct {
 
 // RigLogger is the global logger object
 type RigLogger struct {
-	Channel   logChannels
-	Progress  *RigSpinner
-	IsVerbose bool
-	Spinning  bool
+	Channel    logChannels
+	Progress   *RigSpinner
+	IsVerbose  bool
+	Spinning   bool
 	Privileged bool
 }
 
@@ -53,9 +53,9 @@ func LoggerInit(verbose bool) {
 			Error:   log.New(os.Stderr, color.RedString("[ERROR] "), 0),
 			Verbose: log.New(verboseWriter, "[VERBOSE] ", 0),
 		},
-		IsVerbose: verbose,
-		Progress:  &RigSpinner{s},
-		Spinning:  false,
+		IsVerbose:  verbose,
+		Progress:   &RigSpinner{s},
+		Spinning:   false,
 		Privileged: false,
 	}
 }
