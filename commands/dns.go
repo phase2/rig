@@ -145,7 +145,7 @@ func (cmd *DNS) StartDNS(machine Machine, nameservers string) error {
 		"-l", "com.dnsdock.image=outrigger",
 		"--name", "dnsdock",
 		"-p", fmt.Sprintf("%s:53:53/udp", bridgeIP),
-		"aacebedo/dnsdock:v1.16.1-amd64",
+		"aacebedo/dnsdock:v1.16.4-amd64",
 		"--domain=vm",
 	}
 	for _, server := range dnsServers {
