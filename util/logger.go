@@ -1,11 +1,12 @@
 package util
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
-	"fmt"
 	"github.com/fatih/color"
 	spun "github.com/slok/gospinner"
 )
@@ -28,6 +29,7 @@ type RigLogger struct {
 	Progress  *RigSpinner
 	IsVerbose bool
 	Spinning  bool
+	Privileged bool
 }
 
 // RigSpinner object wrapper to facilitate our spinner service
@@ -54,6 +56,7 @@ func LoggerInit(verbose bool) {
 		IsVerbose: verbose,
 		Progress:  &RigSpinner{s},
 		Spinning:  false,
+		Privileged: false,
 	}
 }
 
@@ -124,4 +127,29 @@ func (log *RigLogger) Verbose(format string, a ...interface{}) {
 // Note allows output of an info log, bypassing the spinner if in use.
 func (log *RigLogger) Note(format string, a ...interface{}) {
 	log.Channel.Info.Println(fmt.Sprintf(format, a...))
+}
+
+// PrivilegeEscallationPrompt interrupts a running spinner to ensure clear
+// prompting to the user for sudo password entry. It is up to the caller to know
+// that privilege is needed, but this method will track state to determine if
+// a privilege escallation previously happened, and assume the user successfully
+// entered their password.
+func (log *RigLogger) PrivilegeEscallationPrompt() {
+	defer func() { log.Privileged = true }()
+
+	if log.Privileged {
+		return
+	}
+
+	log.NoSpin()
+	fmt.Println()
+
+	// After some time exploring the various options with the Spinner library,
+	// this kind of rapid manipulation of the spinner without other operations
+	// seems to be confounding the go routines, breaking the intended "UI".
+	// Hacking timing workarounds to force spinner processing sequencing help.
+	time.Sleep(10 * time.Millisecond)
+	log.Spin("Evaluating administrative action...")
+	log.Warning("Administrative privileges needed, please enter your password:")
+	time.Sleep(30 * time.Millisecond)
 }

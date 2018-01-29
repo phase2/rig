@@ -98,6 +98,10 @@ func (x Executor) CombinedOutput() ([]byte, error) {
 // Run runs a command via exec.Run() without modification or output of the underlying command.
 func (x Executor) Run() error {
 	x.Log("Executing")
+	if out := Logger(); x.cmd.Args[0] == "sudo" && out != nil  {
+		out.PrivilegeEscallationPrompt()
+		defer out.Spin("")
+	}
 	return x.cmd.Run()
 }
 
