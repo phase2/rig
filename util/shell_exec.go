@@ -144,6 +144,8 @@ func (x Executor) ToString() string {
 
 // IsPrivileged evaluates the command to determine if administrative privilege
 // is required.
+// @todo identify administrative escallation on Windows.
+// E.g., "runas", "/noprofile", "/user:Administrator
 func (x Executor) IsPrivileged() bool {
 	_, privileged := IndexOfString(x.cmd.Args, "sudo")
 	return privileged
