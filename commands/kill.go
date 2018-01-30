@@ -17,7 +17,7 @@ func (cmd *Kill) Commands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "kill",
-			Usage:  "Kill the docker-machine",
+			Usage:  "Kill the docker-machine. Useful when stop does not appear to be working",
 			Before: cmd.Before,
 			Action: cmd.Run,
 		},
