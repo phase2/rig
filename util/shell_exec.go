@@ -92,6 +92,10 @@ func (x Executor) Execute(forceOutput bool) error {
 // CombinedOutput runs a command via exec.CombinedOutput() without modification or output of the underlying command.
 func (x Executor) CombinedOutput() ([]byte, error) {
 	x.Log("Executing")
+	if out := Logger(); out != nil && x.IsPrivileged() {
+		out.PrivilegeEscallationPrompt()
+		defer out.Spin("Resuming operation...")
+	}
 	return x.cmd.CombinedOutput()
 }
 
@@ -100,7 +104,7 @@ func (x Executor) Run() error {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
 		out.PrivilegeEscallationPrompt()
-		defer out.Spin("")
+		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Run()
 }
@@ -108,24 +112,33 @@ func (x Executor) Run() error {
 // Output runs a command via exec.Output() without modification or output of the underlying command.
 func (x Executor) Output() ([]byte, error) {
 	x.Log("Executing")
+	if out := Logger(); out != nil && x.IsPrivileged() {
+		out.PrivilegeEscallationPrompt()
+		defer out.Spin("Resuming operation...")
+	}
 	return x.cmd.Output()
 }
 
 // Start runs a command via exec.Start() without modification or output of the underlying command.
 func (x Executor) Start() error {
 	x.Log("Executing")
+	if out := Logger(); out != nil && x.IsPrivileged() {
+		out.PrivilegeEscallationPrompt()
+		defer out.Spin("Resuming operation...")
+	}
 	return x.cmd.Start()
 }
 
 // Log verbosely logs the command.
 func (x Executor) Log(tag string) {
 	color.Set(color.FgMagenta)
-	Logger().Verbose("%s: %s", tag, x.ToString())
+	Logger().Verbose("%s: %s", tag, x)
 	color.Unset()
 }
 
-// ToString converts a Command to a human-readable string with key context details.
-func (x Executor) ToString() string {
+// String converts a Command to a human-readable string with key context details.
+// It is automatically applied in contexts such as fmt functions.
+func (x Executor) String() string {
 	context := ""
 	if x.cmd.Dir != "" {
 		context = fmt.Sprintf("(WD: %s", x.cmd.Dir)
@@ -147,6 +160,6 @@ func (x Executor) ToString() string {
 // @todo identify administrative escallation on Windows.
 // E.g., "runas", "/noprofile", "/user:Administrator
 func (x Executor) IsPrivileged() bool {
-	_, privileged := IndexOfString(x.cmd.Args, "sudo")
+	_, privileged := IndexOfSubstring(x.cmd.Args, "sudo")
 	return privileged
 }

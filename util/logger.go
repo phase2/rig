@@ -140,11 +140,11 @@ func (log *RigLogger) PrivilegeEscallationPrompt() {
 	}
 
 	// This newline ensures the last status before escallation is preserved
-        // on-screen. It creates extraneous space in verbose mode.
-        if !log.IsVerbose {
-                fmt.Println()
-        }
-        message := "Administrative privileges needed..."
-        log.Spin(message)
-        log.Warning(message)
+	// on-screen. It creates extraneous space in verbose mode.
+	if !log.IsVerbose {
+		fmt.Println()
+	}
+	message := "Administrative privileges needed..."
+	log.Spin(message)
+	log.Warning(message)
 }
