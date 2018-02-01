@@ -74,6 +74,14 @@ func (log *RigLogger) Spin(message string) {
 	}
 }
 
+// SpinWithVerbose operates the spinner but also writes to the verbose log.
+// This is used in cases where the spinner's initial context is needed for
+// detailed verbose logging purposes.
+func (log *RigLogger) SpinWithVerbose(message string, a ...interface{}) {
+	log.Spin(fmt.Sprintf(message, a...))
+	log.Verbose(message, a...)
+}
+
 // NoSpin stops the Progress spinner.
 func (log *RigLogger) NoSpin() {
 	log.Progress.Spins.Stop()
