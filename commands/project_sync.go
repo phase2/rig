@@ -373,7 +373,8 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		}
 	}
 
-	return fmt.Errorf("Failed to detect start of initial sync, this could indicate a need to increase the initial-sync-timeout. See rig project sync --help")
+	cmd.out.Error("Initial sync detection failed, this could indicate a need to increase the initial-sync-timeout. See rig project sync --help")
+	return fmt.Errorf("Failed to detect start of initial sync")
 }
 
 // GetUnisonMinorVersion will return the local Unison version to try to load a compatible unison image
