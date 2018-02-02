@@ -49,8 +49,8 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
-				Value:  60,
-				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. (not needed on linux)",
+				Value:  120,
+				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. If you encounter failures detecting initial sync increasing this value may help. Search for sync on http://docs.outrigger.sh/faq/troubleshooting/ (not needed on linux)",
 				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
 			// Arbitrary sleep length but anything less than 3 wasn't catching
@@ -373,7 +373,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		}
 	}
 
-	return fmt.Errorf("Failed to detect start of initial sync")
+	return fmt.Errorf("Failed to detect start of initial sync, this could indicate a need to increase the initial-sync-timeout. See rig project sync --help")
 }
 
 // GetUnisonMinorVersion will return the local Unison version to try to load a compatible unison image
