@@ -17,7 +17,7 @@ func (cmd *Kill) Commands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "kill",
-			Usage:  "Kill the docker-machine",
+			Usage:  "Kill the docker-machine. Useful when stop does not appear to be working",
 			Before: cmd.Before,
 			Action: cmd.Run,
 		},
@@ -40,7 +40,7 @@ func (cmd *Kill) Run(c *cli.Context) error {
 		return err
 	}
 
-	cmd.out.Info("Killing machine '%s'", cmd.machine.Name)
+	cmd.out.Spin(fmt.Sprintf("Killing machine '%s'...", cmd.machine.Name))
 	util.StreamCommand("docker-machine", "kill", cmd.machine.Name)
 
 	// Ensure the underlying virtualization has stopped
