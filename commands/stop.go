@@ -58,7 +58,7 @@ func (cmd *Stop) StopOutrigger() error {
 	}
 	cmd.out.Info("Stopped machine '%s'", cmd.machine.Name)
 
-	cmd.out.Spin("Cleaning up local networking (may require your admin password)")
+	cmd.out.Spin("Cleaning up local networking...")
 	if util.IsWindows() {
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
