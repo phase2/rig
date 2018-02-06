@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 
-	"github.com/fatih/color"
 	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
@@ -58,15 +57,14 @@ func (cmd *Stop) StopOutrigger() error {
 	}
 	cmd.out.Info("Stopped machine '%s'", cmd.machine.Name)
 
-	cmd.out.Spin("Cleaning up local networking (may require your admin password)")
+	cmd.out.Spin("Cleaning up local networking...")
 	if util.IsWindows() {
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
 	} else {
-		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
-		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
+		util.Command("sudo", "-s", "--", "'", "cat", "/dev/null", ";", "route", "-n", "delete", "-net", "172.17.0.0", "'").Run()
+		util.Command("sudo", "-s", "--", "'", "cat", "/dev/null", ";", "route", "-n", "delete", "-net", "172.17.42.1", "'").Run()
 	}
-	color.Unset()
 	cmd.out.Info("Networking cleanup completed")
 
 	return cmd.Success(fmt.Sprintf("Machine '%s' stopped", cmd.machine.Name))

@@ -1,11 +1,11 @@
 package util
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 
-	"fmt"
 	"github.com/fatih/color"
 	spun "github.com/slok/gospinner"
 )
@@ -24,10 +24,11 @@ type logChannels struct {
 
 // RigLogger is the global logger object
 type RigLogger struct {
-	Channel   logChannels
-	Progress  *RigSpinner
-	IsVerbose bool
-	Spinning  bool
+	Channel    logChannels
+	Progress   *RigSpinner
+	IsVerbose  bool
+	Spinning   bool
+	Privileged bool
 }
 
 // RigSpinner object wrapper to facilitate our spinner service
@@ -51,9 +52,10 @@ func LoggerInit(verbose bool) {
 			Error:   log.New(os.Stderr, color.RedString("[ERROR] "), 0),
 			Verbose: log.New(verboseWriter, "[VERBOSE] ", 0),
 		},
-		IsVerbose: verbose,
-		Progress:  &RigSpinner{s},
-		Spinning:  false,
+		IsVerbose:  verbose,
+		Progress:   &RigSpinner{s},
+		Spinning:   false,
+		Privileged: false,
 	}
 }
 
@@ -124,4 +126,25 @@ func (log *RigLogger) Verbose(format string, a ...interface{}) {
 // Note allows output of an info log, bypassing the spinner if in use.
 func (log *RigLogger) Note(format string, a ...interface{}) {
 	log.Channel.Info.Println(fmt.Sprintf(format, a...))
+}
+
+// PrivilegeEscallationPrompt interrupts a running spinner to ensure clear
+// prompting to the user for sudo password entry. It is up to the caller to know
+// that privilege is needed. This prompt is only displayed on the first privilege
+// escallation of a given rig process.
+func (log *RigLogger) PrivilegeEscallationPrompt() {
+	defer func() { log.Privileged = true }()
+
+	if log.Privileged {
+		return
+	}
+
+	// This newline ensures the last status before escallation is preserved
+	// on-screen. It creates extraneous space in verbose mode.
+	if !log.IsVerbose {
+		fmt.Println()
+	}
+	message := "Administrative privileges needed..."
+	log.Spin(message)
+	log.Warning(message)
 }
