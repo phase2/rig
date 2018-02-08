@@ -62,8 +62,9 @@ func (cmd *Stop) StopOutrigger() error {
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run()
 	} else {
-		util.Command("sudo", "-s", "--", "'", "cat", "/dev/null", ";", "route", "-n", "delete", "-net", "172.17.0.0", "'").Run()
-		util.Command("sudo", "-s", "--", "'", "cat", "/dev/null", ";", "route", "-n", "delete", "-net", "172.17.42.1", "'").Run()
+		util.EscalatePrivilege()
+		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()
+		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run()
 	}
 	cmd.out.Info("Networking cleanup completed")
 

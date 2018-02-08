@@ -39,6 +39,13 @@ func Convert(cmd *exec.Cmd) Executor {
 	return Executor{cmd}
 }
 
+// EscalatePrivilege attempts to gain administrative privilege
+// @todo identify administrative escallation on Windows.
+// E.g., "runas", "/noprofile", "/user:Administrator
+func EscalatePrivilege() error {
+	return Command("sudo", "-v").Run()
+}
+
 // PassthruCommand is similar to ForceStreamCommand in that it will issue all output
 // regardless of verbose mode. Further, this version of the command captures the
 // exit status of any executed command. This function is intended to simulate
