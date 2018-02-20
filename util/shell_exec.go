@@ -13,6 +13,8 @@ import (
 
 const defaultFailedCode = 1
 
+var noOpMode = false
+
 // Executor wraps exec.Cmd to allow consistent manipulation of executed commands.
 type Executor struct {
 	cmd *exec.Cmd
@@ -74,6 +76,13 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	return
 }
 
+// ToggleNoOpMode allows switching no-op on or off.
+// When enabled, shell execution operates in "simulation" mode and does not
+// really execute.
+func ToggleNoOpMode(status bool) {
+	noOpMode = status
+}
+
 // Execute executes the provided command, it also can sspecify if the output should be forced to print to the console
 func (x Executor) Execute(forceOutput bool) error {
 	x.cmd.Stderr = os.Stderr
@@ -96,6 +105,9 @@ func (x Executor) CombinedOutput() ([]byte, error) {
 		out.PrivilegeEscallationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
+	if noOpMode {
+		return nil, fmt.Errorf("Shell execution in no-op mode.")
+	}
 	return x.cmd.CombinedOutput()
 }
 
@@ -105,6 +117,9 @@ func (x Executor) Run() error {
 	if out := Logger(); out != nil && x.IsPrivileged() {
 		out.PrivilegeEscallationPrompt()
 		defer out.Spin("Resuming operation...")
+	}
+	if noOpMode {
+		return fmt.Errorf("Shell execution in no-op mode.")
 	}
 	return x.cmd.Run()
 }
@@ -116,6 +131,9 @@ func (x Executor) Output() ([]byte, error) {
 		out.PrivilegeEscallationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
+	if noOpMode {
+		return nil, fmt.Errorf("Shell execution in no-op mode.")
+	}
 	return x.cmd.Output()
 }
 
@@ -125,6 +143,9 @@ func (x Executor) Start() error {
 	if out := Logger(); out != nil && x.IsPrivileged() {
 		out.PrivilegeEscallationPrompt()
 		defer out.Spin("Resuming operation...")
+	}
+	if noOpMode {
+		return fmt.Errorf("Shell execution in no-op mode.")
 	}
 	return x.cmd.Start()
 }

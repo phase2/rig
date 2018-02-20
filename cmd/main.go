@@ -36,6 +36,11 @@ func main() {
 			Usage:  "Disable all desktop notifications",
 			EnvVar: "RIG_NOTIFY_QUIET",
 		},
+		cli.BoolFlag{
+			Name:   "simulate",
+			Usage:  "Use no-op mode -- shell executables are skipped. WARNING: May be unstable.",
+			EnvVar: "RIG_SIMULATE_EXEC",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {

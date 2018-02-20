@@ -26,6 +26,7 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	// Re-initialize logger in case Commands() call led to logger usage which
 	// initialized the logger without the verbose flag if present.
 	util.LoggerInit(c.GlobalBool("verbose"))
+	util.ToggleNoOpMode(c.GlobalBool("simulate"))
 	cmd.out = util.Logger()
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
 
