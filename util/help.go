@@ -47,7 +47,7 @@ func PrintDebugHelp(message, errorName string, exitCode int) {
 		fmt.Println()
 		code("\t %s", StringPad("", " ", len(line)+1))
 		fmt.Println()
-    fmt.Println()
+		fmt.Println()
 	}
 	fmt.Println("Ask the doctor for a general health check:")
 	fmt.Println()
