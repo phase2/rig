@@ -39,18 +39,13 @@ type RigSpinner struct {
 
 // LoggerInit initializes the global logger
 func LoggerInit(verbose bool) {
-	var verboseWriter = ioutil.Discard
-	if verbose {
-		verboseWriter = os.Stdout
-	}
-
 	s, _ := spun.NewSpinner(spun.Dots)
 	logger = &RigLogger{
 		Channel: logChannels{
 			Info:    log.New(os.Stdout, color.BlueString("[INFO] "), 0),
 			Warning: log.New(os.Stdout, color.YellowString("[WARN] "), 0),
 			Error:   log.New(os.Stderr, color.RedString("[ERROR] "), 0),
-			Verbose: log.New(verboseWriter, "[VERBOSE] ", 0),
+			Verbose: deriveVerboseLogChannel(verbose),
 		},
 		IsVerbose:  verbose,
 		Progress:   &RigSpinner{s},
@@ -66,6 +61,27 @@ func Logger() *RigLogger {
 	}
 
 	return logger
+}
+
+// deriveVerboseLogChannel determines if and how verbose logs are used by
+// creating the log channel they are routed through. This must be attached to
+// a RigLogger as the value for Channel.Verbose. It is extracted into a function
+// to support SetVerbose().
+func deriveVerboseLogChannel(verbose bool) *log.Logger {
+	verboseWriter := ioutil.Discard
+	if verbose {
+		verboseWriter = os.Stdout
+	}
+	return log.New(verboseWriter, "[VERBOSE] ", 0)
+}
+
+// SetVerbose allows toggling verbose mode mid-execution of the program.
+func (log *RigLogger) SetVerbose(verbose bool) {
+	if log.IsVerbose == verbose {
+		return
+	}
+
+	log.Channel.Verbose = deriveVerboseLogChannel(verbose)
 }
 
 // Spin restarts the spinner for a new task.

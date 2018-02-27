@@ -58,7 +58,10 @@ func (cmd *BaseCommand) Failure(message string, errorName string, exitCode int) 
 	cmd.out.NoSpin()
 	// Handle error messaging.
 	util.NotifyError(cmd.context, message)
-
+	// Print expanded troubleshooting guidance.
+	if !cmd.context.GlobalBool("power-user") {
+		util.PrintDebugHelp(message, errorName, exitCode)
+	}
 	return cli.NewExitError(fmt.Sprintf("ERROR: %s [%s] (%d)", message, errorName, exitCode), exitCode)
 }
 

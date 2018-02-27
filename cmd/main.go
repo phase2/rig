@@ -36,6 +36,11 @@ func main() {
 			Usage:  "Disable all desktop notifications",
 			EnvVar: "RIG_NOTIFY_QUIET",
 		},
+		cli.BoolFlag{
+			Name:   "power-user",
+			Usage:  "Switch power-user mode on for quieter help output.",
+			EnvVar: "RIG_POWER_USER_MODE",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
