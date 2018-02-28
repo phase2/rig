@@ -28,7 +28,7 @@ func (cmd *Prune) Commands() []cli.Command {
 func (cmd *Prune) Run(c *cli.Context) error {
 
 	if util.AskYesNo("Are you sure you want to remove all unused containers, networks, images, caches, and volumes?") {
-		cmd.out.Spin("Cleaning up unused Docker resources...")
+		cmd.out.Info("Cleaning up unused Docker resources. This may take a while...")
 		/* #nosec */
 		if exitCode := util.PassthruCommand(exec.Command("docker", "system", "prune", "--all", "--volumes", "--force")); exitCode != 0 {
 			return cmd.Failure("Failure pruning Docker resources.", "COMMAND-ERROR", 13)
