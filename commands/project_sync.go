@@ -49,8 +49,8 @@ func (cmd *ProjectSync) Commands() []cli.Command {
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:   "initial-sync-timeout",
-				Value:  60,
-				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. (not needed on linux)",
+				Value:  120,
+				Usage:  "Maximum amount of time in seconds to allow for detecting each of start of the Unison container and start of initial sync. If you encounter failures detecting initial sync increasing this value may help. Search for sync on http://docs.outrigger.sh/faq/troubleshooting/ (not needed on linux)",
 				EnvVar: "RIG_PROJECT_SYNC_TIMEOUT",
 			},
 			// Arbitrary sleep length but anything less than 3 wasn't catching
@@ -119,20 +119,22 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 // StartUnisonSync will create and launch the volumes and containers on systems that need/support Unison
 func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, config *ProjectConfig, workingDir string) error {
+	cmd.out.Spin("Starting Outrigger Filesync (unison)...")
+
 	// Ensure the processes can handle a large number of watches
 	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", maxWatches); err != nil {
 		cmd.Failure(fmt.Sprintf("Failure configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12)
 	}
 
-	cmd.out.Channel.Info.Printf("Starting sync volume: %s", volumeName)
+	cmd.out.Info("Starting sync volume: %s", volumeName)
 	if err := util.Command("docker", "volume", "create", volumeName).Run(); err != nil {
 		return cmd.Failure(fmt.Sprintf("Failed to create sync volume: %s", volumeName), "VOLUME-CREATE-FAILED", 13)
 	}
-
-	cmd.out.Info("Starting Unison container")
+	cmd.out.Info("Sync volume '%s' created", volumeName)
+	cmd.out.SpinWithVerbose(fmt.Sprintf("Starting sync container: %s (same name)", volumeName))
 	unisonMinorVersion := cmd.GetUnisonMinorVersion()
 
-	cmd.out.Channel.Verbose.Printf("Local Unison version for compatibilty: %s", unisonMinorVersion)
+	cmd.out.Verbose("Local Unison version for compatibilty: %s", unisonMinorVersion)
 	util.Command("docker", "container", "stop", volumeName).Run()
 	containerArgs := []string{
 		"container", "run", "--detach", "--rm",
@@ -151,8 +153,8 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	if err != nil {
 		return cmd.Failure(err.Error(), "SYNC-INIT-FAILED", 13)
 	}
-
-	cmd.out.Info("Initializing sync")
+	cmd.out.Info("Sync container '%s' started", volumeName)
+	cmd.out.SpinWithVerbose("Initializing file sync...")
 
 	// Determine the location of the local Unison log file.
 	var logFile = fmt.Sprintf("%s.log", volumeName)
@@ -179,7 +181,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 			unisonArgs = append(unisonArgs, "-ignore", ignore)
 		}
 	}
-	cmd.out.Verbose("Unison Args: %s", strings.Join(unisonArgs[:], " "))
+
 	/* #nosec */
 	command := exec.Command("unison", unisonArgs...)
 	command.Dir = workingDir
@@ -197,7 +199,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 
 // SetupBindVolume will create minimal Docker Volumes for systems that have native container/volume support
 func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) error {
-	cmd.out.Info("Starting local bind volume: %s", volumeName)
+	cmd.out.SpinWithVerbose("Starting local bind volume: %s", volumeName)
 	util.Command("docker", "volume", "rm", volumeName).Run()
 
 	volumeArgs := []string{
@@ -220,6 +222,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	if runtime.GOOS == "linux" {
 		return cmd.Success("No Unison container to stop, using local bind volume")
 	}
+	cmd.out.Spin(fmt.Sprintf("Stopping Unison container"))
 
 	cmd.Config = NewProjectConfig()
 	if cmd.Config.NotEmpty() {
@@ -238,7 +241,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 		return cmd.Failure(err.Error(), "SYNC-CONTAINER-FAILURE", 13)
 	}
 
-	return cmd.Success(fmt.Sprintf("Unison container %s stopped", volumeName))
+	return cmd.Success(fmt.Sprintf("Unison container '%s' stopped", volumeName))
 }
 
 // GetVolumeName will find the volume name through a variety of fall backs
@@ -283,7 +286,7 @@ func (cmd *ProjectSync) LoadComposeFile() (*ComposeFile, error) {
 // when compiled without -cgo this executable will not use the native mac dns resolution
 // which is how we have configured dnsdock to provide names for containers.
 func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeconds int) (string, error) {
-	cmd.out.Info("Waiting for container to start")
+	cmd.out.SpinWithVerbose("Sync container '%s' started , waiting for unison server process...", containerName)
 
 	var timeoutLoopSleep = time.Duration(100) * time.Millisecond
 	// * 10 here because we loop once every 100 ms and we want to get to seconds
@@ -303,7 +306,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 			return ip, nil
 		}
 
-		cmd.out.Info("Failure: %v", err)
+		cmd.out.SpinWithVerbose("Failure: %v", err)
 		time.Sleep(timeoutLoopSleep)
 	}
 
@@ -313,12 +316,12 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 // WaitForSyncInit will wait for the local unison process to finish initializing
 // when the log file exists and has stopped growing in size
 func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeoutSeconds int, syncWaitSeconds int) error {
-	cmd.out.Info("Waiting for initial sync detection")
+	cmd.out.SpinWithVerbose("Waiting for initial sync detection...")
 
 	// The use of os.Stat below is not subject to our working directory configuration,
 	// so to ensure we can stat the log file we convert it to an absolute path.
 	if logFilePath, err := util.AbsJoin(workingDir, logFile); err != nil {
-		cmd.out.Info(err.Error())
+		cmd.out.Error(err.Error())
 	} else {
 		// Create a temp file to cause a sync action
 		var tempFile = ".rig-check-sync-start"
@@ -333,32 +336,29 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		var timeoutLoops = timeoutSeconds * 10
 		var statSleep = time.Duration(syncWaitSeconds) * time.Second
 		for i := 1; i <= timeoutLoops; i++ {
-			if i%10 == 0 {
-				os.Stdout.WriteString(".")
-			}
-
 			statInfo, err := os.Stat(logFilePath)
 			if err == nil {
-				os.Stdout.WriteString(" initial sync detected\n")
+				cmd.out.Info("Initial sync detected")
 
-				cmd.out.Info("Waiting for initial sync to finish")
+				cmd.out.SpinWithVerbose("Waiting for initial sync to finish")
 				// Initialize at -2 to force at least one loop
 				var lastSize = int64(-2)
 				for lastSize != statInfo.Size() {
-					os.Stdout.WriteString(".")
 					time.Sleep(statSleep)
 					lastSize = statInfo.Size()
 					if statInfo, err = os.Stat(logFilePath); err != nil {
-						cmd.out.Info(err.Error())
+						cmd.out.Error(err.Error())
 						lastSize = -1
 					}
 				}
-				os.Stdout.WriteString(" done\n")
+
 				// Remove the temp file, waiting until after sync so spurious
 				// failure message doesn't show in log
 				if err := util.RemoveFile(tempFile, workingDir); err != nil {
 					cmd.out.Warning("Could not remove the temporary file: %s: %s", tempFile, err.Error())
 				}
+
+				cmd.out.Info("File sync completed")
 				return nil
 			}
 
@@ -373,6 +373,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		}
 	}
 
+	cmd.out.Error("Initial sync detection failed, this could indicate a need to increase the initial-sync-timeout. See rig project sync --help")
 	return fmt.Errorf("Failed to detect start of initial sync")
 }
 
