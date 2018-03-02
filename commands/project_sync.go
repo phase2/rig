@@ -126,7 +126,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 		cmd.Failure(fmt.Sprintf("Failure configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12)
 	}
 
-	cmd.out.Info("Starting sync volume: %s", volumeName)
+	cmd.out.SpinWithVerbose("Starting sync volume: %s", volumeName)
 	if err := util.Command("docker", "volume", "create", volumeName).Run(); err != nil {
 		return cmd.Failure(fmt.Sprintf("Failed to create sync volume: %s", volumeName), "VOLUME-CREATE-FAILED", 13)
 	}
@@ -193,6 +193,8 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	if err := cmd.WaitForSyncInit(logFile, workingDir, ctx.Int("initial-sync-timeout"), ctx.Int("initial-sync-wait")); err != nil {
 		return cmd.Failure(err.Error(), "UNISON-SYNC-FAILED", 13)
 	}
+
+	cmd.out.Info("Watch unison process activities in the sync log: %s", logFile)
 
 	return cmd.Success("Unison sync started successfully")
 }
