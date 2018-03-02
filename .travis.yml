@@ -4,7 +4,7 @@ os: linux
 
 language: go
 go:
-  - 1.9
+  - 1.10
   - tip
 
 matrix:
@@ -20,7 +20,7 @@ install:
 
 script:
   - "scripts/test-go-fmt.sh"
-  - "gometalinter --vendor --config=gometalinter.json ./..."
+  - "gometalinter --vendor --deadline=60s --config=gometalinter.json ./..."
   - "go run cmd/main.go"
 
 notifications:
