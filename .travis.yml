@@ -13,7 +13,7 @@ matrix:
     - go: tip
 
 install:
-  - "go get -u github.com/golang/dep/..."
+  - "curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh"
   - "go get -u github.com/alecthomas/gometalinter"
   - "gometalinter --install --update"
   - "dep ensure"
