@@ -39,23 +39,24 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 
 // Success encapsulates the functionality for reporting command success
 func (cmd *BaseCommand) Success(message string) error {
-	// Handle success messaging.
+	// Handle success messaging. If the spinner is running or not, this will
+	// output accordingly and issue a notification.
 	if message != "" {
 		cmd.out.Info(message)
 		util.NotifySuccess(cmd.context, message)
 	}
-
-	// If there is an active spinner wrap it up. This is not placed before the logging above so commands can rely on
-	// cmd.Success to set the last spinner status in lieu of an extraneous log entry.
-	cmd.out.NoSpin()
 
 	return nil
 }
 
 // Failure encapsulates the functionality for reporting command failure
 func (cmd *BaseCommand) Failure(message string, errorName string, exitCode int) error {
-	// Make sure any running spinner halts.
-	cmd.out.NoSpin()
+	// If the spinner is running, output something to get closure and shut it down.
+	if cmd.out.Spinning {
+		cmd.out.Error(message)
+		fmt.Println()
+	}
+
 	// Handle error messaging.
 	util.NotifyError(cmd.context, message)
 	// Print expanded troubleshooting guidance.

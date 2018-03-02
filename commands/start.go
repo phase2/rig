@@ -89,11 +89,10 @@ func (cmd *Start) Run(c *cli.Context) error {
 		cmd.out.Error("Docker could not be started")
 		return cmd.Failure(err.Error(), "MACHINE-START-FAILED", 12)
 	}
-	cmd.out.Info("Docker Machine (%s) Created", cmd.machine.Name)
 
 	cmd.out.Verbose("Configuring the local Docker environment")
 	cmd.machine.SetEnv()
-	cmd.out.Info("Docker Machine is ready")
+	cmd.out.Info("Docker Machine (%s) Created", cmd.machine.Name)
 
 	dns := DNS{cmd.BaseCommand}
 	dns.StartDNS(cmd.machine, c.String("nameservers"))
@@ -148,7 +147,6 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	cmd.out.Info("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
 	return cmd.Success("Outrigger is ready to use")
-
 }
 
 // StartMinimal will start "minimal" Outrigger operations, which refers to environments where
