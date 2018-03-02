@@ -113,6 +113,7 @@ func (log *RigLogger) Info(format string, a ...interface{}) {
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Succeed()
+		log.Spinning = false
 	}
 }
 
@@ -123,6 +124,7 @@ func (log *RigLogger) Warning(format string, a ...interface{}) {
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Warn()
+		log.Spinning = false
 	}
 }
 
@@ -138,6 +140,7 @@ func (log *RigLogger) Error(format string, a ...interface{}) {
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Fail()
+		log.Spinning = false
 	}
 }
 
