@@ -28,6 +28,8 @@ func PrintDebugHelp(message, errorName string, exitCode int) {
 		codeMessage = "environmental"
 	case 13:
 		codeMessage = "external/upstream command"
+	case 418:
+		codeMessage = "rig developer test command"
 	default:
 		codeMessage = "general"
 	}
