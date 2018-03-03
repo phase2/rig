@@ -49,6 +49,12 @@ Here are a few conventions:
   return cmd.Failure(message)
   ```
 
+## Developer Testing Commands
+
+You can use `rig dev:win` or `rig dev:fail` as no-op commands to observe the
+effects of a success or failure without external dependencies on the local
+environment or side effects from "real" commands doing their job.
+
 ## Development Environment Setup
 
 ### Developing with Docker

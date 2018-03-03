@@ -39,18 +39,13 @@ type RigSpinner struct {
 
 // LoggerInit initializes the global logger
 func LoggerInit(verbose bool) {
-	var verboseWriter = ioutil.Discard
-	if verbose {
-		verboseWriter = os.Stdout
-	}
-
 	s, _ := spun.NewSpinner(spun.Dots)
 	logger = &RigLogger{
 		Channel: logChannels{
 			Info:    log.New(os.Stdout, color.BlueString("[INFO] "), 0),
 			Warning: log.New(os.Stdout, color.YellowString("[WARN] "), 0),
 			Error:   log.New(os.Stderr, color.RedString("[ERROR] "), 0),
-			Verbose: log.New(verboseWriter, "[VERBOSE] ", 0),
+			Verbose: deriveVerboseLogChannel(verbose),
 		},
 		IsVerbose:  verbose,
 		Progress:   &RigSpinner{s},
@@ -68,12 +63,41 @@ func Logger() *RigLogger {
 	return logger
 }
 
+// deriveVerboseLogChannel determines if and how verbose logs are used by
+// creating the log channel they are routed through. This must be attached to
+// a RigLogger as the value for Channel.Verbose. It is extracted into a function
+// to support SetVerbose().
+func deriveVerboseLogChannel(verbose bool) *log.Logger {
+	verboseWriter := ioutil.Discard
+	if verbose {
+		verboseWriter = os.Stdout
+	}
+	return log.New(verboseWriter, "[VERBOSE] ", 0)
+}
+
+// SetVerbose allows toggling verbose mode mid-execution of the program.
+func (log *RigLogger) SetVerbose(verbose bool) {
+	if log.IsVerbose == verbose {
+		return
+	}
+
+	log.Channel.Verbose = deriveVerboseLogChannel(verbose)
+}
+
 // Spin restarts the spinner for a new task.
 func (log *RigLogger) Spin(message string) {
 	if !log.IsVerbose {
 		log.Progress.Spins.Start(message)
 		log.Spinning = true
 	}
+}
+
+// SpinWithVerbose operates the spinner but also writes to the verbose log.
+// This is used in cases where the spinner's initial context is needed for
+// detailed verbose logging purposes.
+func (log *RigLogger) SpinWithVerbose(message string, a ...interface{}) {
+	log.Spin(fmt.Sprintf(message, a...))
+	log.Verbose(message, a...)
 }
 
 // NoSpin stops the Progress spinner.
@@ -89,6 +113,7 @@ func (log *RigLogger) Info(format string, a ...interface{}) {
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Succeed()
+		log.Spinning = false
 	}
 }
 
@@ -99,6 +124,7 @@ func (log *RigLogger) Warning(format string, a ...interface{}) {
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Warn()
+		log.Spinning = false
 	}
 }
 
@@ -114,6 +140,7 @@ func (log *RigLogger) Error(format string, a ...interface{}) {
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
 		log.Progress.Spins.Fail()
+		log.Spinning = false
 	}
 }
 

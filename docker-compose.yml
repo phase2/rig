@@ -13,7 +13,7 @@ services:
   # Lint the codebase
   lint:
     extends: base
-    entrypoint: [ "gometalinter", "--vendor", "--config=gometalinter.json"]
+    entrypoint: [ "gometalinter", "--vendor", "--config=gometalinter.json", "--deadline=60s"]
     command: "./..."
 
   # Build rig, dropping off a working binary in build/darwin/rig.

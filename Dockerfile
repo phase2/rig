@@ -1,7 +1,8 @@
-FROM golang:1.9-alpine
+FROM golang:1.10-alpine
 
 RUN apk add --no-cache \
 	ca-certificates \
+	curl \
 	git \
 	gcc \
 	libffi-dev \
@@ -12,8 +13,8 @@ RUN apk add --no-cache \
 	ruby-dev \
 	tar
 
-RUN go get -u github.com/golang/dep/... \
-  && go get -u github.com/alecthomas/gometalinter \
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+RUN go get -u github.com/alecthomas/gometalinter \
   && go get -u github.com/goreleaser/goreleaser
 
 RUN gometalinter --install --update

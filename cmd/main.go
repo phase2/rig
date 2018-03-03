@@ -36,6 +36,11 @@ func main() {
 			Usage:  "Disable all desktop notifications",
 			EnvVar: "RIG_NOTIFY_QUIET",
 		},
+		cli.BoolFlag{
+			Name:   "power-user",
+			Usage:  "Switch power-user mode on for quieter help output.",
+			EnvVar: "RIG_POWER_USER_MODE",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -60,6 +65,7 @@ func main() {
 	app.Commands = append(app.Commands, (&commands.Remove{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Project{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.Dev{}).Commands()...)
 
 	app.Run(os.Args)
 }
