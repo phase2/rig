@@ -2,12 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
-	"github.com/phase2/rig/util"
 	"github.com/urfave/cli"
 )
 
@@ -84,59 +80,16 @@ func (cmd *Project) Run(c *cli.Context) error {
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
-	if script, ok := cmd.Config.Scripts[key]; ok {
-		cmd.out.Verbose("Initializing project script '%s': %s", key, script.Description)
-		cmd.addCommandPath()
-		dir := filepath.Dir(cmd.Config.Path)
-
-		// Concat the commands together adding the args to this command as args to the last step
-		scriptCommands := strings.Join(script.Run, cmd.GetCommandSeparator()) + " " + strings.Join(c.Args(), " ")
-
-		shellCmd := cmd.GetCommand(scriptCommands)
-		shellCmd.Dir = dir
-		cmd.out.Verbose("Script execution - Working Directory: %s", dir)
-
-		cmd.out.Verbose("Executing '%s' as '%s'", key, scriptCommands)
-		if exitCode := util.PassthruCommand(shellCmd); exitCode != 0 {
-			return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
-		}
-	} else {
+        if script, ok := cmd.Config.Scripts[key]; !ok {
 		return cmd.Failure(fmt.Sprintf("Unrecognized script '%s'", key), "SCRIPT-NOT-FOUND", 12)
+        } else {
+                eval := ProjectEval{cmd.out, cmd.Config}
+                if exitCode := eval.ProjectScriptRun(script, c.Args()); exitCode != 0 {
+                        return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
+                }
 	}
 
 	return cmd.Success("")
-}
-
-// GetCommand constructs a command to execute a configured script.
-// @see https://github.com/medhoover/gom/blob/staging/config/command.go
-func (cmd *Project) GetCommand(val string) *exec.Cmd {
-	if util.IsWindows() {
-		/* #nosec */
-		return exec.Command("cmd", "/c", val)
-	}
-
-	/* #nosec */
-	return exec.Command("sh", "-c", val)
-}
-
-// GetCommandSeparator returns the command separator based on platform.
-func (cmd *Project) GetCommandSeparator() string {
-	if util.IsWindows() {
-		return " & "
-	}
-
-	return " && "
-}
-
-// addCommandPath overrides the PATH environment variable for further shell executions.
-// This is used on POSIX systems for lookup of scripts.
-func (cmd *Project) addCommandPath() {
-	binDir := cmd.Config.Bin
-	if binDir != "" {
-		cmd.out.Verbose("Script execution - Adding to $PATH: %s", binDir)
-		path := os.Getenv("PATH")
-		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path))
-	}
 }
 
 // ScriptRunHelp generates help details based on script configuration.
