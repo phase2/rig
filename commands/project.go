@@ -32,6 +32,9 @@ func (cmd *Project) Commands() []cli.Command {
 	sync := ProjectSync{}
 	command.Subcommands = append(command.Subcommands, sync.Commands()...)
 
+	doctor := ProjectDoctor{}
+	command.Subcommands = append(command.Subcommands, doctor.Commands()...)
+
 	if subcommands := cmd.GetScriptsAsSubcommands(command.Subcommands); subcommands != nil {
 		command.Subcommands = append(command.Subcommands, subcommands...)
 	}
@@ -80,13 +83,13 @@ func (cmd *Project) Run(c *cli.Context) error {
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
-        if script, ok := cmd.Config.Scripts[key]; !ok {
+	if script, ok := cmd.Config.Scripts[key]; !ok {
 		return cmd.Failure(fmt.Sprintf("Unrecognized script '%s'", key), "SCRIPT-NOT-FOUND", 12)
-        } else {
-                eval := ProjectEval{cmd.out, cmd.Config}
-                if exitCode := eval.ProjectScriptRun(script, c.Args()); exitCode != 0 {
-                        return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
-                }
+	} else {
+		eval := ProjectEval{cmd.out, cmd.Config}
+		if exitCode := eval.ProjectScriptRun(script, c.Args()); exitCode != 0 {
+			return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
+		}
 	}
 
 	return cmd.Success("")
