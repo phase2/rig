@@ -8,13 +8,13 @@ import (
 	"github.com/urfave/cli"
 )
 
-// Start is the command for creating and starting a Docker Machine and other core Outrigger services
-type Ssh struct {
+// SSH is the command for staring an SSH session inside the docker machine vm
+type SSH struct {
 	BaseCommand
 }
 
 // Commands returns the operations supported by this command
-func (cmd *Ssh) Commands() []cli.Command {
+func (cmd *SSH) Commands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "ssh",
@@ -26,15 +26,15 @@ func (cmd *Ssh) Commands() []cli.Command {
 }
 
 // Run executes the `rig ssh` command
-func (cmd *Ssh) Run(c *cli.Context) error {
+func (cmd *SSH) Run(c *cli.Context) error {
 	// Does the docker-machine exist
 	if !cmd.machine.Exists() {
 		return fmt.Errorf("docker machine %s not found", cmd.machine.Name)
 	}
 
-	if exitCode := util.PassthruCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name)); exitCode == 0 {
-		return cmd.Success("")
-	} else {
-		return cmd.Failure(fmt.Sprint("Failure running 'docker-machine ssh %s'", cmd.machine.Name), "COMMAND-ERROR", exitCode)
+	/* #nosec */
+	if exitCode := util.PassthruCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name)); exitCode != 0 {
+		return cmd.Failure(fmt.Sprintf("Failure running 'docker-machine ssh %s'", cmd.machine.Name), "COMMAND-ERROR", exitCode)
 	}
+	return cmd.Success("")
 }
