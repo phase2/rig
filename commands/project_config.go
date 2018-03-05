@@ -14,7 +14,7 @@ import (
 
 // ProjectScript is the struct for project defined commands
 type ProjectScript struct {
-        Id          string
+	ID          string
 	Alias       string
 	Description string
 	Run         []string
@@ -108,9 +108,11 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	}
 
 	for id, script := range config.Scripts {
-		if script != nil && script.Description == "" {
-			config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
-                        config.Scripts[id].Id = id
+		if script != nil {
+			if script.Description == "" {
+				config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
+			}
+			config.Scripts[id].ID = id
 		}
 	}
 

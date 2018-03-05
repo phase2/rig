@@ -80,13 +80,14 @@ func (cmd *Project) Run(c *cli.Context) error {
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
-        if script, ok := cmd.Config.Scripts[key]; !ok {
+	script, ok := cmd.Config.Scripts[key]
+	if !ok {
 		return cmd.Failure(fmt.Sprintf("Unrecognized script '%s'", key), "SCRIPT-NOT-FOUND", 12)
-        } else {
-                eval := ProjectEval{cmd.out, cmd.Config}
-                if exitCode := eval.ProjectScriptRun(script, c.Args()); exitCode != 0 {
-                        return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
-                }
+	}
+
+	eval := ProjectEval{cmd.out, cmd.Config}
+	if exitCode := eval.ProjectScriptRun(script, c.Args()); exitCode != 0 {
+		return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
 	}
 
 	return cmd.Success("")

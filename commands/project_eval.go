@@ -10,6 +10,8 @@ import (
 	"github.com/phase2/rig/util"
 )
 
+// ProjectEval wrapps the evaluation of project scripts.
+// It mimics command struct except with unexported values.
 type ProjectEval struct {
 	out    *util.RigLogger
 	config *ProjectConfig
@@ -20,22 +22,22 @@ type ProjectEval struct {
 // Commands are run from the directory context of the project if available.
 // Use ProjectScriptRun to run a comman for potential user interaction.
 func (p *ProjectEval) ProjectScriptRun(script *ProjectScript, extra []string) int {
-	p.out.Verbose("Initializing project script '%s': %s", script.Id, script.Description)
+	p.out.Verbose("Initializing project script '%s': %s", script.ID, script.Description)
 	p.addCommandPath()
 	dir := p.GetWorkingDirectory()
 	shellCmd := p.GetCommand(script.Run, extra, dir)
-	p.out.Verbose("Evaluating Script '%s'", script.Id)
+	p.out.Verbose("Evaluating Script '%s'", script.ID)
 	return util.PassthruCommand(shellCmd)
 }
 
 // ProjectScriptResult matches ProjectScriptRun, but returns the data from the
 // command execution instead of "streaming" the result to the terminal.
 func (p *ProjectEval) ProjectScriptResult(script *ProjectScript, extra []string) (string, int, error) {
-	p.out.Verbose("Initializing project script '%s': %s", script.Id, script.Description)
+	p.out.Verbose("Initializing project script '%s': %s", script.ID, script.Description)
 	p.addCommandPath()
 	dir := p.GetWorkingDirectory()
 	shellCmd := p.GetCommand(script.Run, extra, dir)
-	p.out.Verbose("Evaluating Script '%s'", script.Id)
+	p.out.Verbose("Evaluating Script '%s'", script.ID)
 	return util.CaptureCommand(shellCmd)
 }
 
@@ -47,8 +49,10 @@ func (p *ProjectEval) GetCommand(steps, extra []string, workingDirectory string)
 
 	var command *exec.Cmd
 	if util.IsWindows() {
+		/* #nosec */
 		command = exec.Command("cmd", "/c", scriptCommands)
 	} else {
+		/* #nosec */
 		command = exec.Command("sh", "-c", scriptCommands)
 	}
 	command.Dir = workingDirectory
