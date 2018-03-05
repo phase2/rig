@@ -3,7 +3,6 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
@@ -15,7 +14,6 @@ type ProjectDoctor struct {
 	Config *ProjectConfig
 }
 
-// @TODO add an error tier for fatal, wherein analysis should be halted.
 const (
 	ConditionSeverityINFO    string = "info"
 	ConditionSeverityWARNING string = "warning"
@@ -59,6 +57,10 @@ func (cmd *ProjectDoctor) Commands() []cli.Command {
 
 // RunAnalysis controls the doctor/diagnosis process.
 func (cmd *ProjectDoctor) RunAnalysis(ctx *cli.Context) error {
+	fmt.Println("Project doctor evaluates project-specific environment issues.")
+	fmt.Println("You will find most of the checks defined in your Outrigger Project configuration (e.g., outrigger.yml)")
+	fmt.Println("These checks are not comprehensive, this is intended to automate common environment troubleshooting steps.")
+	fmt.Println()
 	compendium, _ := cmd.GetConditionCollection()
 	if err := cmd.AnalyzeConditionList(compendium); err != nil {
 		// Directly returning the framework error to skip the expanded help.
@@ -118,38 +120,34 @@ func (cmd *ProjectDoctor) AnalyzeConditionList(conditions ConditionCollection) e
 func (cmd *ProjectDoctor) GetConditionCollection() (ConditionCollection, error) {
 	conditions := cmd.Config.Doctor
 
-	// @TODO instead of defining these here, we need a macro language (go template?)
-	// that understands how to get the sync name, check if containers exist (maybe)
-	// and so on. That should be in a separate file.
-	if runtime.GOOS != "linux" {
-		eval := ProjectEval{cmd.out, cmd.Config}
-		sync := ProjectSync{}
-		syncName := sync.GetVolumeName(cmd.Config, eval.GetWorkingDirectory())
+	// @TODO move these to outrigger.yml once we have pure shell facilities.
+	eval := ProjectEval{cmd.out, cmd.Config}
+	sync := ProjectSync{}
+	syncName := sync.GetVolumeName(cmd.Config, eval.GetWorkingDirectory())
 
-		// @todo we should have a way to determine if the project wants to use sync.
-		item1 := &Condition{
-			Id:           "sync-container-not-running",
-			Name:         "Sync Container Not Working",
-			Test:         []string{fmt.Sprintf("$(id=$(docker container ps -q --filter 'name=%s'); docker top $id &>/dev/null)", syncName)},
-			Diagnosis:    "The Sync container for this project is not available.",
-			Prescription: "Run 'rig project sync:start' before beginning work. This command may be included in other project-specific tasks.",
-			Severity:     ConditionSeverityWARNING,
-		}
-		if _, ok := conditions["sync-container-not-running"]; !ok {
-			conditions["sync-container-not-running"] = item1
-		}
+	// @todo we should have a way to determine if the project wants to use sync.
+	item1 := &Condition{
+		Id:           "sync-container-not-running",
+		Name:         "Sync Container Not Working",
+		Test:         []string{fmt.Sprintf("$(id=$(docker container ps -aq --filter 'name=^/%s$'); docker top $id &>/dev/null)", syncName)},
+		Diagnosis:    "The Sync container for this project is not available.",
+		Prescription: "Run 'rig project sync:start' before beginning work. This command may be included in other project-specific tasks.",
+		Severity:     ConditionSeverityWARNING,
+	}
+	if _, ok := conditions["sync-container-not-running"]; !ok {
+		conditions["sync-container-not-running"] = item1
+	}
 
-		item2 := &Condition{
-			Id:           "sync-volume-missing",
-			Name:         "Sync Volume is Missing",
-			Test:         []string{fmt.Sprintf("$(id=$(docker container ps -q --filter 'name=%s'); docker top $id &>/dev/null)", syncName)},
-			Diagnosis:    "The Sync volume for this project is missing.",
-			Prescription: "Run 'rig project sync:start' before beginning work. This command may be included in other project-specific tasks.",
-			Severity:     ConditionSeverityWARNING,
-		}
-		if _, ok := conditions["sync-volume-missing"]; !ok {
-			conditions["sync-volume-missing"] = item2
-		}
+	item2 := &Condition{
+		Id:           "sync-volume-missing",
+		Name:         "Sync Volume is Missing",
+		Test:         []string{fmt.Sprintf("$(id=$(docker container ps -aq --filter 'name=^/%s$'); docker top $id &>/dev/null)", syncName)},
+		Diagnosis:    "The Sync volume for this project is missing.",
+		Prescription: "Run 'rig project sync:start' before beginning work. This command may be included in other project-specific tasks.",
+		Severity:     ConditionSeverityWARNING,
+	}
+	if _, ok := conditions["sync-volume-missing"]; !ok {
+		conditions["sync-volume-missing"] = item2
 	}
 
 	return conditions, nil

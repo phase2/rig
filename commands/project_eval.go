@@ -47,8 +47,10 @@ func (p *ProjectEval) GetCommand(steps, extra []string, workingDirectory string)
 
 	var command *exec.Cmd
 	if util.IsWindows() {
+		/* #nosec */
 		command = exec.Command("cmd", "/c", scriptCommands)
 	} else {
+		/* #nosec */
 		command = exec.Command("sh", "-c", scriptCommands)
 	}
 	command.Dir = workingDirectory
