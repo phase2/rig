@@ -32,10 +32,9 @@ func (cmd *Ssh) Run(c *cli.Context) error {
 		return fmt.Errorf("docker machine %s not found", cmd.machine.Name)
 	}
 
-	exitCode := util.PassthruCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name))
-	if exitCode == 0 {
-		return nil
+	if exitCode := util.PassthruCommand(exec.Command("docker-machine", "ssh", cmd.machine.Name)); exitCode == 0 {
+		return cmd.Success("")
 	} else {
-		return fmt.Errorf("Exit code was %d", exitCode)
+		return cmd.Failure(fmt.Sprint("Failure running 'docker-machine ssh %s'", cmd.machine.Name), "COMMAND-ERROR", exitCode)
 	}
 }
