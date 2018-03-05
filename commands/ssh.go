@@ -17,17 +17,15 @@ type Ssh struct {
 func (cmd *Ssh) Commands() []cli.Command {
 	return []cli.Command{
 		{
-			Name:  "ssh",
-			Usage: "Start an ssh session into the docker-machine vm",
-			Flags: []cli.Flag{
-			},
+			Name:   "ssh",
+			Usage:  "Start an ssh session into the docker-machine vm",
 			Before: cmd.Before,
 			Action: cmd.Run,
 		},
 	}
 }
 
-// Run executes the `rig start` command
+// Run executes the `rig ssh` command
 func (cmd *Ssh) Run(c *cli.Context) error {
 	// Does the docker-machine exist
 	if !cmd.machine.Exists() {
