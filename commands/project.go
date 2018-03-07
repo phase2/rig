@@ -94,6 +94,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 
 		shellCmd := cmd.GetCommand(scriptCommands)
 		shellCmd.Dir = dir
+		shellCmd.Env = append(os.Environ(), "RIG_POWER_USER_MODE=1")
 		cmd.out.Verbose("Script execution - Working Directory: %s", dir)
 
 		cmd.out.Verbose("Executing '%s' as '%s'", key, scriptCommands)
