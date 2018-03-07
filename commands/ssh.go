@@ -29,7 +29,7 @@ func (cmd *SSH) Commands() []cli.Command {
 func (cmd *SSH) Run(c *cli.Context) error {
 	// Does the docker-machine exist
 	if !cmd.machine.Exists() {
-		return fmt.Errorf("docker machine %s not found", cmd.machine.Name)
+		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
 	}
 
 	/* #nosec */
