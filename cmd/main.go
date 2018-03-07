@@ -66,6 +66,7 @@ func main() {
 	app.Commands = append(app.Commands, (&commands.Project{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Doctor{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Dev{}).Commands()...)
+	app.Commands = append(app.Commands, (&commands.SSH{}).Commands()...)
 
 	app.Run(os.Args)
 }
