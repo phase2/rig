@@ -57,7 +57,7 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 
-	bin := Executor{cmd}
+	bin := Convert(cmd)
 	err := bin.Run()
 
 	if err != nil {
@@ -79,6 +79,37 @@ func PassthruCommand(cmd *exec.Cmd) (exitCode int) {
 	}
 
 	return
+}
+
+// CaptureCommand is similar to PassthruCommand except it intercepts all output.
+// It is primarily used to evaluate shell commands for success/failure states.
+//
+// Derived from: http://stackoverflow.com/a/40770011/38408
+func CaptureCommand(cmd *exec.Cmd) (string, int, error) {
+	bin := Convert(cmd)
+
+	result, err := bin.Output()
+
+	var exitCode int
+	if err != nil {
+		// Try to get the exit code.
+		if exitError, ok := err.(*exec.ExitError); ok {
+			ws := exitError.Sys().(syscall.WaitStatus)
+			exitCode = ws.ExitStatus()
+		} else {
+			// This will happen (in OSX) if `name` is not available in $PATH,
+			// in this situation, exit code could not be get, and stderr will be
+			// empty string very likely, so we use the default fail code, and format err
+			// to string and set to stderr
+			exitCode = defaultFailedCode
+		}
+	} else {
+		// Success, exitCode should be 0.
+		ws := cmd.ProcessState.Sys().(syscall.WaitStatus)
+		exitCode = ws.ExitStatus()
+	}
+
+	return string(result), exitCode, err
 }
 
 // Execute executes the provided command, it also can sspecify if the output should be forced to print to the console
@@ -148,15 +179,17 @@ func (x Executor) Log(tag string) {
 func (x Executor) String() string {
 	context := ""
 	if x.cmd.Dir != "" {
-		context = fmt.Sprintf("(WD: %s", x.cmd.Dir)
+		context = fmt.Sprintf("WD: %s", x.cmd.Dir)
 	}
 	if x.cmd.Env != nil {
 		env := strings.Join(x.cmd.Env, " ")
 		if context == "" {
-			context = fmt.Sprintf("(Env: %s", env)
+			context = fmt.Sprintf("(Env: %s)", env)
 		} else {
-			context = fmt.Sprintf("%s, Env: %s)", context, env)
+			context = fmt.Sprintf("(%s, Env: %s)", context, env)
 		}
+	} else {
+		context = fmt.Sprintf("(%s)", context)
 	}
 
 	return fmt.Sprintf("%s %s %s", x.cmd.Path, strings.Join(x.cmd.Args[1:], " "), context)

@@ -89,3 +89,34 @@ sync:
     - "Path vendor/"
     - "Path build/logs"
     - "Regex build/backups/.*\\.sql"
+
+# Configuration of doctor behavior.
+doctor:
+  automatic-success:
+    name: Always Passing
+    diagnosis: Nothing will ever be wrong.
+    prescription: No action will need to be taken.
+    test:
+      - exit 0
+    severity: info
+  automatic-fyi:
+    name: FYI
+    diagnosis: We found a thing but it's ok.
+    prescription: No action needs to be taken.
+    test:
+      - exit 1
+    severity: info
+  automatic-warning:
+    name: Always Warning
+    diagnosis: This always concerns us.
+    prescription: Edit your outrigger.yml.
+    test:
+      - exit 1
+    severity: warning
+  automatic-failure:
+    name: Always Failing
+    diagnosis: Everything is always wrong.
+    prescription: Edit your outrigger.yml.
+    test:
+      - exit 1
+    severity: error

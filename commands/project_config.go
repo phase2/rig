@@ -14,6 +14,7 @@ import (
 
 // ProjectScript is the struct for project defined commands
 type ProjectScript struct {
+	Id          string
 	Alias       string
 	Description string
 	Run         []string
@@ -27,9 +28,9 @@ type Sync struct {
 
 // ProjectConfig is the struct for the outrigger.yml file
 type ProjectConfig struct {
-	File string
-	Path string
-
+	File      string
+	Path      string
+	Doctor    map[string]*Condition
 	Scripts   map[string]*ProjectScript
 	Sync      *Sync
 	Namespace string
@@ -79,6 +80,7 @@ func FindProjectConfigFilePath() (string, error) {
 // NewProjectConfigFromFile creates a new ProjectConfig from the specified file.
 // @todo do not use the logger here, instead return errors.
 // Use of the logger here initializes it in non-verbose mode.
+// nolint: gocyclo
 func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	logger := util.Logger()
 	filepath, _ := filepath.Abs(filename)
@@ -108,6 +110,20 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	for id, script := range config.Scripts {
 		if script != nil && script.Description == "" {
 			config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
+			config.Scripts[id].Id = id
+		}
+	}
+
+	for id, condition := range config.Doctor {
+		if condition != nil {
+			config.Doctor[id].Id = id
+			if config.Doctor[id].Severity != "" {
+				if _, ok := util.IndexOfString(SeverityList(), config.Doctor[id].Severity); !ok {
+					logger.Channel.Error.Fatalf("Invalid severity (%s) for doctor condition (%s) in %s", config.Doctor[id].Severity, id, filename)
+				}
+			} else {
+				config.Doctor[id].Severity = "info"
+			}
 		}
 	}
 
