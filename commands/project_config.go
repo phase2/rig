@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ProjectScript is the struct for project defined commands
+// Script is the struct for project-defined command configuration
 type Script struct {
 	ID          string
 	Alias       string

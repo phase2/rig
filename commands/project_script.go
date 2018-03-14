@@ -10,17 +10,17 @@ import (
 	"github.com/phase2/rig/util"
 )
 
-// ProjectEval wrapps the evaluation of project scripts.
+// ProjectScript wrapps the evaluation of project scripts.
 // It mimics command struct except with unexported values.
 type ProjectScript struct {
 	out    *util.RigLogger
 	config *ProjectConfig
 }
 
-// ProjectScriptRun takes a Script configuration and executes it per
-// the definition of the project script and bonus arguments from the extra parameter.
+// Run takes a Script configuration and executes it per the definition of
+// the project script and bonus arguments from the extra parameter.
 // Commands are run from the directory context of the project if available.
-// Use ProjectScriptRun to run a comman for potential user interaction.
+// This also supports follow-up user interaction.
 func (p *ProjectScript) Run(script *Script, extra []string) int {
 	p.out.Verbose("Initializing project script '%s': %s", script.ID, script.Description)
 	p.addCommandPath()
@@ -31,8 +31,8 @@ func (p *ProjectScript) Run(script *Script, extra []string) int {
 	return util.PassthruCommand(shellCmd)
 }
 
-// ProjectScriptResult matches ProjectScriptRun, but returns the data from the
-// command execution instead of "streaming" the result to the terminal.
+// Capture matches ProjectScriptRun, but returns the data from the command
+// execution instead of "streaming" the result to the terminal.
 func (p *ProjectScript) Capture(script *Script, extra []string) (string, int, error) {
 	p.out.Verbose("Initializing project script '%s': %s", script.ID, script.Description)
 	p.addCommandPath()
