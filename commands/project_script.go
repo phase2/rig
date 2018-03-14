@@ -22,30 +22,37 @@ type ProjectScript struct {
 // Commands are run from the directory context of the project if available.
 // This also supports follow-up user interaction.
 func (p *ProjectScript) Run(script *Script, extra []string) int {
-	p.out.Verbose("Initializing project script '%s': %s", script.ID, script.Description)
-	p.addCommandPath()
-	dir := p.GetWorkingDirectory()
-	shellCmd := p.GetCommand(script.Run, extra, dir)
-	shellCmd.Env = append(os.Environ(), "RIG_POWER_USER_MODE=1")
-	p.out.Verbose("Evaluating Script '%s'", script.ID)
-	return util.PassthruCommand(shellCmd)
+	return util.PassthruCommand(p.prepareToExecute(script, extra))
 }
 
-// Capture matches ProjectScriptRun, but returns the data from the command
+// Capture matches Run, but returns the data from the command
 // execution instead of "streaming" the result to the terminal.
 func (p *ProjectScript) Capture(script *Script, extra []string) (string, int, error) {
+	return util.CaptureCommand(p.prepareToExecute(script, extra))
+}
+
+// prepareToExecute is an internal method that handles standardized "preflight"
+// steps before executing the command, including logging.
+func (p *ProjectScript) prepareToExecute(script *Script, extra []string) *exec.Cmd {
 	p.out.Verbose("Initializing project script '%s': %s", script.ID, script.Description)
 	p.addCommandPath()
 	dir := p.GetWorkingDirectory()
-	shellCmd := p.GetCommand(script.Run, extra, dir)
+	shellCmd := p.CreateCommand(script.Run, extra, dir)
 	shellCmd.Env = append(os.Environ(), "RIG_POWER_USER_MODE=1")
 	p.out.Verbose("Evaluating Script '%s'", script.ID)
-	return util.CaptureCommand(shellCmd)
+	return shellCmd
 }
 
-// GetCommand constructs a command to execute a configured script.
-// @see https://github.com/medhoover/gom/blob/staging/config/command.go
+// GetCommand is a deprecation wrapper around NormalizeCommand.
+// It was renamed for improved clarity alongside other methods.
 func (p *ProjectScript) GetCommand(steps, extra []string, workingDirectory string) *exec.Cmd {
+	return p.CreateCommand(steps, extra, workingDirectory)
+}
+
+// CreateCommand is a factory method to assemble an executable command from
+// project-derived parameters.
+// @see https://github.com/medhoover/gom/blob/staging/config/command.go
+func (p *ProjectScript) CreateCommand(steps, extra []string, workingDirectory string) *exec.Cmd {
 	// Concat the commands together adding the args to this command as args to the last step
 	scriptCommands := strings.Join(steps, p.getCommandSeparator()) + " " + strings.Join(extra, " ")
 
