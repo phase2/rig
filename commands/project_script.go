@@ -26,6 +26,7 @@ func (p *ProjectScript) Run(script *Script, extra []string) int {
 	p.addCommandPath()
 	dir := p.GetWorkingDirectory()
 	shellCmd := p.GetCommand(script.Run, extra, dir)
+	shellCmd.Env = append(os.Environ(), "RIG_POWER_USER_MODE=1")
 	p.out.Verbose("Evaluating Script '%s'", script.ID)
 	return util.PassthruCommand(shellCmd)
 }
@@ -37,6 +38,7 @@ func (p *ProjectScript) Capture(script *Script, extra []string) (string, int, er
 	p.addCommandPath()
 	dir := p.GetWorkingDirectory()
 	shellCmd := p.GetCommand(script.Run, extra, dir)
+	shellCmd.Env = append(os.Environ(), "RIG_POWER_USER_MODE=1")
 	p.out.Verbose("Evaluating Script '%s'", script.ID)
 	return util.CaptureCommand(shellCmd)
 }
