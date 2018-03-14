@@ -85,8 +85,8 @@ func (cmd *Project) Run(c *cli.Context) error {
 		return cmd.Failure(fmt.Sprintf("Unrecognized script '%s'", key), "SCRIPT-NOT-FOUND", 12)
 	}
 
-	eval := ProjectEval{cmd.out, cmd.Config}
-	if exitCode := eval.ProjectScriptRun(script, c.Args()); exitCode != 0 {
+	scripts := ProjectScript{cmd.out, cmd.Config}
+	if exitCode := scripts.Run(script, c.Args()); exitCode != 0 {
 		return cmd.Failure(fmt.Sprintf("Failure running project script '%s'", key), "COMMAND-ERROR", exitCode)
 	}
 
@@ -94,7 +94,7 @@ func (cmd *Project) Run(c *cli.Context) error {
 }
 
 // ScriptRunHelp generates help details based on script configuration.
-func (cmd *Project) ScriptRunHelp(script *ProjectScript) string {
+func (cmd *Project) ScriptRunHelp(script *Script) string {
 	help := fmt.Sprintf("\n\nSCRIPT STEPS:\n\t- ")
 	help = help + strings.Join(script.Run, "\n\t- ") + " [args...]\n"
 

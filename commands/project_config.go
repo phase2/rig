@@ -13,7 +13,7 @@ import (
 )
 
 // ProjectScript is the struct for project defined commands
-type ProjectScript struct {
+type Script struct {
 	ID          string
 	Alias       string
 	Description string
@@ -31,7 +31,7 @@ type ProjectConfig struct {
 	File string
 	Path string
 
-	Scripts   map[string]*ProjectScript
+	Scripts   map[string]*Script
 	Sync      *Sync
 	Namespace string
 	Version   string
