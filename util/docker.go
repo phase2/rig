@@ -1,6 +1,8 @@
 package util
 
 import (
+	"fmt"
+	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -47,6 +49,19 @@ func GetDockerServerMinAPIVersion() (*version.Version, error) {
 		return nil, err
 	}
 	return version.Must(version.NewVersion(strings.TrimSpace(string(output)))), nil
+}
+
+// ContainerRunning determines if the named container is live.
+func ContainerRunning(name string) bool {
+	filter := fmt.Sprintf("name=^/%s", name)
+	if out, err := Command("docker", "ps", "-aq", "--filter", filter).Output(); err == nil {
+		id := strings.TrimSpace(string(out))
+		// @TODO Switch to CaptureCommand
+		code := PassthruCommand(exec.Command("docker", "top", id))
+		return code == 0
+	}
+
+	return false
 }
 
 // ImageOlderThan determines the age of the Docker Image and whether the image is older than the designated timestamp.
