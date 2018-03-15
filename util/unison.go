@@ -1,7 +1,7 @@
 package util
 
 import (
-  "fmt"
+	"fmt"
 	"regexp"
 
 	"github.com/hashicorp/go-version"

@@ -243,11 +243,16 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 		return cmd.Failure(err.Error(), "SYNC-PATH-ERROR", 12)
 	}
 
-	cmd.out.Spin(fmt.Sprintf("Stopping Unison container (%s)", volumeName))
-	if err := util.Command("docker", "container", "stop", volumeName).Run(); err != nil {
-	  cmd.out.Warn("Could not stop unison container (%s): Maybe it's already stopped?", volumeName)
+	cmd.out.Spin("Checking for unison container...")
+	if running := util.ContainerRunning(volumeName); running {
+		cmd.out.Spin(fmt.Sprintf("Stopping Unison container (%s)", volumeName))
+		if err := util.Command("docker", "container", "stop", volumeName).Run(); err != nil {
+			cmd.out.Warn("Could not stop unison container (%s): Maybe it's already stopped?", volumeName)
+		} else {
+			cmd.out.Info("Stopped unison container (%s)", volumeName)
+		}
 	} else {
-		cmd.out.Info("Stopped unison container (%s)", volumeName)
+		cmd.out.Info("No running unison container.")
 	}
 
 	logFile := cmd.LogFileName(volumeName)
@@ -263,7 +268,12 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 	}
 
 	// Remove sync fragment files.
-	util.RemoveFileGlob("*/.unison.*", workingDir, cmd.out)
+	cmd.out.Spin("Removing .unison directories")
+	if err := util.RemoveFileGlob("*.unison*", workingDir, cmd.out); err != nil {
+		cmd.out.Warning("Could not remove .unison directories")
+	} else {
+		cmd.out.Info("Removed all .unison directories")
+	}
 
 	cmd.out.Spin(fmt.Sprintf("Removing sync volume: %s", volumeName))
 	// @TODO capture the volume rm error text to display to user!

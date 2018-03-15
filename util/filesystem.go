@@ -27,7 +27,7 @@ func AbsJoin(baseDir, suffixPath string) (string, error) {
 func FileExists(pathToFile, workingDir string) bool {
 	absoluteFilePath, err := AbsJoin(workingDir, pathToFile)
 	if err == nil {
- 		_, statErr := os.Stat(absoluteFilePath)
+		_, statErr := os.Stat(absoluteFilePath)
 		return statErr == nil
 	}
 
@@ -48,29 +48,29 @@ func RemoveFile(pathToFile, workingDir string) error {
 // This recursively traverses all sub-directories. If a logger is passed the action
 // will be verbosely logged, otherwise pass nil to skip all output.
 func RemoveFileGlob(glob, targetDirectory string, logger *RigLogger) error {
-  return filepath.Walk(targetDirectory, func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk(targetDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-    if info.IsDir() {
-      globPath := filepath.Join(path, glob)
-      if files, globErr := filepath.Glob(globPath); globErr == nil {
-  		  for _, file := range files {
-          if logger != nil {
-            logger.Verbose("Removing file '%s'...", file)
-          }
+		if info.IsDir() {
+			globPath := filepath.Join(path, glob)
+			if files, globErr := filepath.Glob(globPath); globErr == nil {
+				for _, file := range files {
+					if logger != nil {
+						logger.Verbose("Removing file '%s'...", file)
+					}
 
-  		    //if removeErr := RemoveFile(file, ""); removeErr != nil {
-//  			    return removeErr
-//  		    }
-        }
-	    } else {
-        return globErr
-      }
-    }
+					if removeErr := RemoveFile(file, ""); removeErr != nil {
+						return removeErr
+					}
+				}
+			} else {
+				return globErr
+			}
+		}
 
-    return nil
-  })
+		return nil
+	})
 }
 
 // TouchFile creates an empty file, usually for temporary use.
