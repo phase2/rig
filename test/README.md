@@ -2,7 +2,7 @@
 
 The Dockerfiles in this directory are used for testing certain Linux commands. Some things don't work perfect, such as
 restarting systemd services (there is no systemd in the container) or connecting dnsdock to the Docker Bridge IP, but 
-other code that checks for platform, etc. should run fine.  
+other code that checks for platform, etc. should run fine.
 
 The way you use them is as follows.
 
@@ -13,11 +13,9 @@ The way you use them is as follows.
     * `docker build -t test-ubuntu -f Dockerfile.ubuntu .`
     * `docker build -t test-centos -f Dockerfile.centos .`
    
-   
 ## Build rig for Linux
 
 * `GOARCH=amd64 GOOS=linux go build -o build/linux/rig cmd/main.go`
-
 
 ## Run the images (and Docker in Docker)
 

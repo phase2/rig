@@ -40,7 +40,7 @@ func Convert(cmd *exec.Cmd) Executor {
 }
 
 // EscalatePrivilege attempts to gain administrative privilege
-// @todo identify administrative escallation on Windows.
+// @todo identify administrative escalation on Windows.
 // E.g., "runas", "/noprofile", "/user:Administrator
 func EscalatePrivilege() error {
 	return Command("sudo", "-v").Run()
@@ -112,7 +112,7 @@ func CaptureCommand(cmd *exec.Cmd) (string, int, error) {
 	return string(result), exitCode, err
 }
 
-// Execute executes the provided command, it also can sspecify if the output should be forced to print to the console
+// Execute executes the provided command, it also can specify if the output should be forced to print to the console
 func (x Executor) Execute(forceOutput bool) error {
 	x.cmd.Stderr = os.Stderr
 	if Logger().IsVerbose || forceOutput {
@@ -131,7 +131,7 @@ func (x Executor) Execute(forceOutput bool) error {
 func (x Executor) CombinedOutput() ([]byte, error) {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.CombinedOutput()
@@ -141,7 +141,7 @@ func (x Executor) CombinedOutput() ([]byte, error) {
 func (x Executor) Run() error {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Run()
@@ -151,7 +151,7 @@ func (x Executor) Run() error {
 func (x Executor) Output() ([]byte, error) {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Output()
@@ -161,7 +161,7 @@ func (x Executor) Output() ([]byte, error) {
 func (x Executor) Start() error {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Start()
@@ -197,7 +197,7 @@ func (x Executor) String() string {
 
 // IsPrivileged evaluates the command to determine if administrative privilege
 // is required.
-// @todo identify administrative escallation on Windows.
+// @todo identify administrative escalation on Windows.
 // E.g., "runas", "/noprofile", "/user:Administrator
 func (x Executor) IsPrivileged() bool {
 	_, privileged := IndexOfSubstring(x.cmd.Args, "sudo")
