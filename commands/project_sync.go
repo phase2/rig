@@ -170,7 +170,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 // RunStop executes the `rig project sync:stop` command to shut down and unison containers
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
-	if runtime.GOOS == "linux" {
+        if util.IsLinux() {
 		return cmd.Success("No Unison container to stop, using local bind volume")
 	}
 	cmd.out.Spin(fmt.Sprintf("Stopping Unison container"))
@@ -188,6 +188,7 @@ func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
 	return cmd.Success(fmt.Sprintf("Unison container '%s' stopped", volumeName))
 }
 
+// RunName provides the name of the sync volume and container. This is made available to facilitate scripting.
 func (cmd *ProjectSync) RunName(ctx *cli.Context) error {
 	name, _, err := cmd.initializeSettings(ctx.String("dir"))
 	if err != nil {
@@ -234,7 +235,7 @@ func (cmd *ProjectSync) RunCheck(ctx *cli.Context) error {
 
 // RunPurge cleans out the project sync state.
 func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
-	if runtime.GOOS == "linux" {
+        if util.IsLinux() {
 		return cmd.Success("No Unison process to clean up.")
 	}
 
@@ -277,13 +278,13 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 
 	cmd.out.Spin(fmt.Sprintf("Removing sync volume: %s", volumeName))
 	// @TODO capture the volume rm error text to display to user!
-	if out, err := util.Command("docker", "volume", "rm", volumeName, "1>&2").Output(); err != nil {
+        out, err := util.Command("docker", "volume", "rm", volumeName, "1>&2").Output()
+        if err != nil {
 		fmt.Println(string(out))
 		fmt.Println(err.Error())
 		return cmd.Failure(string(out), "SYNC-VOLUME-FAILURE", 13)
-	} else {
-		fmt.Println(string(out))
 	}
+        fmt.Println(string(out))
 
 	return nil
 }

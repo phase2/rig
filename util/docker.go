@@ -56,9 +56,9 @@ func ContainerRunning(name string) bool {
 	filter := fmt.Sprintf("name=^/%s", name)
 	if out, err := Command("docker", "ps", "-aq", "--filter", filter).Output(); err == nil {
 		id := strings.TrimSpace(string(out))
-		// @TODO Switch to CaptureCommand
-		code := PassthruCommand(exec.Command("docker", "top", id))
-		return code == 0
+                /* #nosec */
+                _, code, err := CaptureCommand(exec.Command("docker", "top", id))
+                return code == 0 && err == nil
 	}
 
 	return false
