@@ -170,7 +170,7 @@ func (cmd *ProjectSync) RunStart(ctx *cli.Context) error {
 
 // RunStop executes the `rig project sync:stop` command to shut down and unison containers
 func (cmd *ProjectSync) RunStop(ctx *cli.Context) error {
-        if util.IsLinux() {
+	if util.IsLinux() {
 		return cmd.Success("No Unison container to stop, using local bind volume")
 	}
 	cmd.out.Spin(fmt.Sprintf("Stopping Unison container"))
@@ -235,7 +235,7 @@ func (cmd *ProjectSync) RunCheck(ctx *cli.Context) error {
 
 // RunPurge cleans out the project sync state.
 func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
-        if util.IsLinux() {
+	if util.IsLinux() {
 		return cmd.Success("No Unison process to clean up.")
 	}
 
@@ -278,13 +278,13 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 
 	cmd.out.Spin(fmt.Sprintf("Removing sync volume: %s", volumeName))
 	// @TODO capture the volume rm error text to display to user!
-        out, err := util.Command("docker", "volume", "rm", volumeName, "1>&2").Output()
-        if err != nil {
+	out, err := util.Command("docker", "volume", "rm", volumeName, "1>&2").Output()
+	if err != nil {
 		fmt.Println(string(out))
 		fmt.Println(err.Error())
 		return cmd.Failure(string(out), "SYNC-VOLUME-FAILURE", 13)
 	}
-        fmt.Println(string(out))
+	fmt.Println(string(out))
 
 	return nil
 }
