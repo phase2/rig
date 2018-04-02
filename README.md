@@ -43,7 +43,7 @@ We use [GoReleaser](https://goreleaser.com) to handle nearly all of our release 
 ### To create a new release candidate (RC) of rig:
 
 If we want to roll out an RC to GitHub for folks to test, we simply need to run with a different GoReleaser
-configuration that does not publish to homebrew, just to a GitHub release that is marked preproduction.
+configuration that does not publish to homebrew, just to a GitHub release that is marked pre-production.
 
 * Get all the code committed to `develop`
 * Tag develop with the new version number `git tag 2.1.0-rc1 && git push --tags`
