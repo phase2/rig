@@ -209,8 +209,7 @@ func (cmd *ProjectSync) RunCheck(ctx *cli.Context) error {
 	cmd.out.Info("Ready to begin unison test")
 	cmd.out.Spin("Checking for unison container...")
 	if running := util.ContainerRunning(volumeName); !running {
-		cmd.out.Error("Unison container (%s) is not running", volumeName)
-		return cmd.Failure(err.Error(), "SYNC-CHECK-FAILED", 13)
+		return cmd.Failure(fmt.Sprintf("Unison container (%s) is not running", volumeName), "SYNC-CHECK-FAILED", 13)
 	}
 	cmd.out.Info("Unison container found: %s", volumeName)
 	cmd.out.Spin("Check unison container process is listening...")
