@@ -277,14 +277,13 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 
 	cmd.out.Spin(fmt.Sprintf("Removing sync volume: %s", volumeName))
 	// @TODO capture the volume rm error text to display to user!
-	out, err := util.Command("docker", "volume", "rm", volumeName, "1>&2").Output()
+	out, err := util.Command("docker", "volume", "rm", "--force", volumeName).CombinedOutput()
 	if err != nil {
-		fmt.Println(string(out))
 		fmt.Println(err.Error())
-		return cmd.Failure(string(out), "SYNC-VOLUME-FAILURE", 13)
+		return cmd.Failure(string(out), "SYNC-VOLUME-REMOVE-FAILURE", 13)
 	}
-	fmt.Println(string(out))
 
+	cmd.out.Info("Sync volume (%s) removed", volumeName)
 	return nil
 }
 
