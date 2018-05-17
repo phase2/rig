@@ -10,7 +10,7 @@ import (
 	"github.com/phase2/rig/util"
 )
 
-// ProjectScript wrapps the evaluation of project scripts.
+// ProjectScript wraps the evaluation of project scripts.
 // It mimics command struct except with unexported values.
 type ProjectScript struct {
 	out    *util.RigLogger

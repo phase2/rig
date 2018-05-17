@@ -270,7 +270,7 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 	// Remove sync fragment files.
 	cmd.out.Spin("Removing .unison directories")
 	if err := util.RemoveFileGlob("*.unison*", workingDir, cmd.out); err != nil {
-		cmd.out.Warning("Could not remove .unison directories")
+		cmd.out.Warning("Could not remove .unison directories: %s", err)
 	} else {
 		cmd.out.Info("Removed all .unison directories")
 	}

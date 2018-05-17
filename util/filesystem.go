@@ -15,6 +15,9 @@ func GetExecutableDir() (string, error) {
 
 // AbsJoin joins the two path segments, ensuring they form an absolute path.
 func AbsJoin(baseDir, suffixPath string) (string, error) {
+	if len(baseDir) == 0 {
+		baseDir = string(filepath.Separator)
+	}
 	absoluteBaseDir, err := filepath.Abs(baseDir)
 	if err != nil {
 		return "", fmt.Errorf("Unrecognized working directory: %s: %s", baseDir, err.Error())
@@ -50,6 +53,7 @@ func RemoveFile(pathToFile, workingDir string) error {
 func RemoveFileGlob(glob, targetDirectory string, logger *RigLogger) error {
 	return filepath.Walk(targetDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			logger.Verbose("This is where our lstat error is thrown: %s", err)
 			return err
 		}
 		if info.IsDir() {
@@ -59,8 +63,8 @@ func RemoveFileGlob(glob, targetDirectory string, logger *RigLogger) error {
 					if logger != nil {
 						logger.Verbose("Removing file '%s'...", file)
 					}
-
 					if removeErr := RemoveFile(file, ""); removeErr != nil {
+						logger.Verbose("Remove error '%s'", removeErr)
 						return removeErr
 					}
 				}
