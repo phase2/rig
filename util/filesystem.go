@@ -52,11 +52,7 @@ func RemoveFile(pathToFile, workingDir string) error {
 // will be verbosely logged, otherwise pass nil to skip all output.
 func RemoveFileGlob(glob, targetDirectory string, logger *RigLogger) error {
 	return filepath.Walk(targetDirectory, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			logger.Verbose("This is where our lstat error is thrown: %s", err)
-			return err
-		}
-		if info.IsDir() {
+		if err == nil && info.IsDir() {
 			globPath := filepath.Join(path, glob)
 			if files, globErr := filepath.Glob(globPath); globErr == nil {
 				for _, file := range files {
