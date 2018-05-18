@@ -246,7 +246,7 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 	cmd.out.Spin("Checking for unison container...")
 	if running := util.ContainerRunning(volumeName); running {
 		cmd.out.Spin(fmt.Sprintf("Stopping Unison container (%s)", volumeName))
-		if err := util.Command("docker", "container", "stop", volumeName).Run(); err != nil {
+		if stopErr := util.Command("docker", "container", "stop", volumeName).Run(); stopErr != nil {
 			cmd.out.Warn("Could not stop unison container (%s): Maybe it's already stopped?", volumeName)
 		} else {
 			cmd.out.Info("Stopped unison container (%s)", volumeName)
@@ -258,8 +258,8 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 	logFile := cmd.LogFileName(volumeName)
 	cmd.out.Spin(fmt.Sprintf("Removing unison log file: %s", logFile))
 	if util.FileExists(logFile, workingDir) {
-		if err := util.RemoveFile(logFile, workingDir); err != nil {
-			cmd.out.Error("Could not remove unison log file: %s: %s", logFile, err.Error())
+		if removeErr := util.RemoveFile(logFile, workingDir); removeErr != nil {
+			cmd.out.Error("Could not remove unison log file: %s: %s", logFile, removeErr.Error())
 		} else {
 			cmd.out.Info("Removed unison log file: %s", logFile)
 		}
@@ -269,17 +269,17 @@ func (cmd *ProjectSync) RunPurge(ctx *cli.Context) error {
 
 	// Remove sync fragment files.
 	cmd.out.Spin("Removing .unison directories")
-	if err := util.RemoveFileGlob("*.unison*", workingDir, cmd.out); err != nil {
-		cmd.out.Warning("Could not remove .unison directories: %s", err)
+	if removeGlobErr := util.RemoveFileGlob("*.unison*", workingDir, cmd.out); removeGlobErr != nil {
+		cmd.out.Warning("Could not remove .unison directories: %s", removeGlobErr)
 	} else {
 		cmd.out.Info("Removed all .unison directories")
 	}
 
 	cmd.out.Spin(fmt.Sprintf("Removing sync volume: %s", volumeName))
 	// @TODO capture the volume rm error text to display to user!
-	out, err := util.Command("docker", "volume", "rm", "--force", volumeName).CombinedOutput()
-	if err != nil {
-		fmt.Println(err.Error())
+	out, rmErr := util.Command("docker", "volume", "rm", "--force", volumeName).CombinedOutput()
+	if rmErr != nil {
+		fmt.Println(rmErr.Error())
 		return cmd.Failure(string(out), "SYNC-VOLUME-REMOVE-FAILURE", 13)
 	}
 
@@ -325,7 +325,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	cmd.out.SpinWithVerbose(fmt.Sprintf("Starting sync container: %s (same name)", volumeName))
 	unisonMinorVersion := util.GetUnisonMinorVersion()
 
-	cmd.out.Verbose("Local Unison version for compatibilty: %s", unisonMinorVersion)
+	cmd.out.Verbose("Local Unison version for compatibility: %s", unisonMinorVersion)
 	util.Command("docker", "container", "stop", volumeName).Run()
 	containerArgs := []string{
 		"container", "run", "--detach", "--rm",
@@ -352,8 +352,8 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	// Remove the log file, the existence of the log file will mean that sync is
 	// up and running. If the logfile does not exist, do not complain. If the
 	// filesystem cannot delete the file when it exists, it will lead to errors.
-	if err := util.RemoveFile(logFile, workingDir); err != nil {
-		cmd.out.Verbose("Could not remove Unison log file: %s: %s", logFile, err.Error())
+	if removeErr := util.RemoveFile(logFile, workingDir); removeErr != nil {
+		cmd.out.Verbose("Could not remove Unison log file: %s: %s", logFile, removeErr.Error())
 	}
 
 	// Initiate local Unison process.
@@ -502,7 +502,7 @@ func (cmd *ProjectSync) WaitForSyncInit(logFile string, workingDir string, timeo
 		var tempFile = ".rig-check-sync-start"
 
 		if err := util.TouchFile(tempFile, workingDir); err != nil {
-			cmd.out.Channel.Error.Fatal("Could not create file used to detect initial sync: %s", err.Error())
+			cmd.out.Channel.Error.Fatal(fmt.Sprintf("Could not create file used to detect initial sync: %s", err.Error()))
 		}
 		cmd.out.Verbose("Creating temporary file so we can watch for Unison initialization: %s", tempFile)
 

@@ -76,7 +76,7 @@ func (cmd *Project) GetScriptsAsSubcommands(otherSubcommands []cli.Command) []cl
 func (cmd *Project) Run(c *cli.Context) error {
 	cmd.out.Verbose("Loaded project configuration from %s", cmd.Config.Path)
 	if cmd.Config.Scripts == nil {
-		cmd.out.Channel.Error.Fatal("There are no scripts discovered in: %s", cmd.Config.File)
+		cmd.out.Channel.Error.Fatal(fmt.Sprintf("There are no scripts discovered in: %s", cmd.Config.File))
 	}
 
 	key := strings.TrimPrefix(c.Command.Name, "run:")
