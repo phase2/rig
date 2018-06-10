@@ -45,6 +45,7 @@ func currentRigReleaseTag() (string, error) {
 		return "", err
 	}
 	// Collect the response
+	defer response.Body.Close()
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		if Logger().IsVerbose {
