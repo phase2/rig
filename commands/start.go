@@ -152,7 +152,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	} else {
 		cmd.out.Info("rig is up-to-date")
 	}
-	
+
 	cmd.out.Info("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
 	return cmd.Success("Outrigger is ready to use")
 }
