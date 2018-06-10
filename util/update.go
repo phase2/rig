@@ -27,26 +27,12 @@ func CheckForRigUpdate(curRigVersion string) string {
 func currentRigReleaseTag() (string, error) {
 	// Fetch some json from github containing the latest release name
 	url := "https://api.github.com/repos/phase2/rig/releases/latest"
-	client := http.Client{
-		Timeout: time.Second * 2, // Maximum of 2 secs
-	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	response, err := getRigReleaseTagResponse(url)
 	if err != nil {
-		if Logger().IsVerbose {
-			Logger().Warning("NewRequest %s failed:\n%s", url, err)
-		}
 		return "", err
 	}
-	// Execute the request
-	response, err := client.Do(req)
-	if err != nil {
-		if Logger().IsVerbose {
-			Logger().Warning("GET %s failed:\n%s", url, err)
-		}
-		return "", err
-	}
-	// Collect the response
 	defer response.Body.Close()
+	// Collect the response
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		if Logger().IsVerbose {
@@ -72,4 +58,26 @@ func currentRigReleaseTag() (string, error) {
 		Logger().Info("rig current release tag: %s", decoder.Name)
 	}
 	return decoder.Name, nil
+}
+
+func getRigReleaseTagResponse(url string) (*http.Response, error) {
+	client := http.Client{
+		Timeout: time.Second * 2, // Maximum of 2 secs
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		if Logger().IsVerbose {
+			Logger().Warning("NewRequest %s failed:\n%s", url, err)
+		}
+		return nil, err
+	}
+	// Execute the request
+	response, err := client.Do(req)
+	if err != nil {
+		if Logger().IsVerbose {
+			Logger().Warning("GET %s failed:\n%s", url, err)
+		}
+		return nil, err
+	}
+	return response, nil
 }
