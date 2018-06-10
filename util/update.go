@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/go-version"
 )
 
 type githubResponse struct {
@@ -14,11 +16,18 @@ type githubResponse struct {
 
 // CheckForRigUpdate checks to see if an upgrdate to rig is available, if so, return a message
 func CheckForRigUpdate(curRigVersion string) string {
-	// Do we want to do sematic version checking?
-	if tag, err := currentRigReleaseTag(); err != nil {
-		return ""
-	} else if tag != curRigVersion {
-		return "An update for rig is available: " + tag
+	// Local dev, version == "master" which isn't going to parse.
+	curVer, verr := version.NewVersion(curRigVersion)
+	if tag, err := currentRigReleaseTag(); err == nil {
+		if tagVer, verr2 := version.NewVersion(tag); verr2 == nil {
+			if verr != nil || tagVer.Compare(curVer) > 0 {
+				return "An update for rig is available: " + tag
+			}
+		}
+	} else {
+		if Logger().IsVerbose {
+			Logger().Warning("Can't parse released tag version: " + err.Error())
+		}
 	}
 	return ""
 }

@@ -149,8 +149,6 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Spin("Checking for available rig updates...")
 	if msg := util.CheckForRigUpdate(c.App.Version); msg != "" {
 		cmd.out.Info(msg)
-	} else {
-		cmd.out.Info("rig is up-to-date")
 	}
 
 	cmd.out.Info("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
