@@ -100,7 +100,7 @@ func (x Executor) Execute(forceOutput bool) error {
 func (x Executor) CombinedOutput() ([]byte, error) {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.CombinedOutput()
@@ -110,7 +110,7 @@ func (x Executor) CombinedOutput() ([]byte, error) {
 func (x Executor) Run() error {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Run()
@@ -120,7 +120,7 @@ func (x Executor) Run() error {
 func (x Executor) Output() ([]byte, error) {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Output()
@@ -130,7 +130,7 @@ func (x Executor) Output() ([]byte, error) {
 func (x Executor) Start() error {
 	x.Log("Executing")
 	if out := Logger(); out != nil && x.IsPrivileged() {
-		out.PrivilegeEscallationPrompt()
+		out.PrivilegeEscalationPrompt()
 		defer out.Spin("Resuming operation...")
 	}
 	return x.cmd.Start()
