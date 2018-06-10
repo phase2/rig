@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -52,6 +53,12 @@ func currentRigReleaseTag() (string, error) {
 			Logger().Warning("ReadAll %s failed:\n%s", url, err)
 		}
 		return "", err
+	}
+	if response.StatusCode != 200 {
+		if Logger().IsVerbose {
+			Logger().Warning("ReadAll %s failed: %s", url, response.Status)
+		}
+		return "", errors.New(response.Status)
 	}
 	// Decode the json, pick off the name field
 	decoder := githubResponse{}
