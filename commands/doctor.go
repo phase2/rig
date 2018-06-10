@@ -135,9 +135,9 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	if records, err := dnsRecords.LoadRecords(); err == nil {
 		resolved := false
 		for _, record := range records {
-			if record["Name"] == "dnsdock" {
+			if record.Name == "dnsdock" {
 				resolved = true
-				cmd.out.Info("DNS and routing services are working. DNSDock resolves to %s", record["IPs"])
+				cmd.out.Info("DNS and routing services are working. DNSDock resolves to %s", record.IPs)
 				break
 			}
 		}

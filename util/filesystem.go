@@ -1,9 +1,12 @@
 package util
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kardianos/osext"
 )
@@ -50,4 +53,27 @@ func TouchFile(pathToFile string, workingDir string) error {
 	// with file descriptor leaks
 	f.Close()
 	return nil
+}
+
+// LoadFile loads a file into an array, without the newlines
+func LoadFile(filename string) []string {
+	lines := make([]string, 0, 1000)
+	f, err := os.Open(filename)
+	if err != nil {
+		return lines
+	}
+	defer f.Close()
+	r := bufio.NewReader(f)
+	for {
+		switch ln, err := r.ReadString('\n'); err {
+		case nil:
+			ln = strings.Replace(ln, "\r", "", -1)
+			ln = strings.Replace(ln, "\n", "", -1)
+			lines = append(lines, ln)
+		case io.EOF:
+			return lines
+		default:
+			fmt.Println(err)
+		}
+	}
 }
