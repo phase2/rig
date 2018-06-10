@@ -145,6 +145,14 @@ func (cmd *Start) Run(c *cli.Context) error {
 	dash.LaunchDashboard(cmd.machine)
 	cmd.out.Info("Dashboard is ready")
 
+	// Check for availability of a rig upgrade
+	cmd.out.Spin("Checking for available rig updates...")
+	if msg := util.CheckForRigUpdate(c.App.Version); msg != "" {
+		cmd.out.Info(msg)
+	} else {
+		cmd.out.Info("rig is up-to-date")
+	}
+	
 	cmd.out.Info("Run 'eval \"$(rig config)\"' to execute docker or docker-compose commands in your terminal.")
 	return cmd.Success("Outrigger is ready to use")
 }
