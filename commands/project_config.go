@@ -12,8 +12,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ProjectScript is the struct for project defined commands
-type ProjectScript struct {
+// Script is the struct for project-defined command configuration
+type Script struct {
+	ID          string
 	Alias       string
 	Description string
 	Run         []string
@@ -30,7 +31,7 @@ type ProjectConfig struct {
 	File string
 	Path string
 
-	Scripts   map[string]*ProjectScript
+	Scripts   map[string]*Script
 	Sync      *Sync
 	Namespace string
 	Version   string
@@ -79,6 +80,7 @@ func FindProjectConfigFilePath() (string, error) {
 // NewProjectConfigFromFile creates a new ProjectConfig from the specified file.
 // @todo do not use the logger here, instead return errors.
 // Use of the logger here initializes it in non-verbose mode.
+// nolint: gocyclo
 func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	logger := util.Logger()
 	filepath, _ := filepath.Abs(filename)
@@ -106,8 +108,11 @@ func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	}
 
 	for id, script := range config.Scripts {
-		if script != nil && script.Description == "" {
-			config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
+		if script != nil {
+			if script.Description == "" {
+				config.Scripts[id].Description = fmt.Sprintf("Configured operation for '%s'", id)
+			}
+			config.Scripts[id].ID = id
 		}
 	}
 
