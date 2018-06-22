@@ -25,9 +25,8 @@ func CheckForRigUpdate(curRigVersion string) string {
 			}
 		}
 	} else {
-		if Logger().IsVerbose {
-			Logger().Warning("Can't parse released tag version: " + err.Error())
-		}
+		// Local dev, this always appears, since version get set by the build.
+		Logger().Verbose("Can't parse released tag version: " + err.Error())
 	}
 	return ""
 }
@@ -44,28 +43,20 @@ func currentRigReleaseTag() (string, error) {
 	// Collect the response
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		if Logger().IsVerbose {
-			Logger().Warning("ReadAll %s failed:\n%s", url, err)
-		}
+		Logger().Verbose("ReadAll %s failed:\n%s", url, err)
 		return "", err
 	}
 	if response.StatusCode != 200 {
-		if Logger().IsVerbose {
-			Logger().Warning("ReadAll %s failed: %s", url, response.Status)
-		}
+		Logger().Verbose("ReadAll %s failed: %s", url, response.Status)
 		return "", errors.New(response.Status)
 	}
 	// Decode the json, pick off the name field
 	decoder := githubResponse{}
 	if err = json.Unmarshal(body, &decoder); err != nil {
-		if Logger().IsVerbose {
-			Logger().Warning("Unmarshal %s failed:\n%s", url, err)
-		}
+		Logger().Verbose("Unmarshal %s failed:\n%s", url, err)
 		return "", err
 	}
-	if Logger().IsVerbose {
-		Logger().Info("rig current release tag: %s", decoder.Name)
-	}
+	Logger().Verbose("rig current release tag: %s", decoder.Name)
 	return decoder.Name, nil
 }
 
@@ -75,17 +66,13 @@ func getRigReleaseTagResponse(url string) (*http.Response, error) {
 	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		if Logger().IsVerbose {
-			Logger().Warning("NewRequest %s failed:\n%s", url, err)
-		}
+		Logger().Verbose("NewRequest %s failed:\n%s", url, err)
 		return nil, err
 	}
 	// Execute the request
 	response, err := client.Do(req)
 	if err != nil {
-		if Logger().IsVerbose {
-			Logger().Warning("GET %s failed:\n%s", url, err)
-		}
+		Logger().Verbose("GET %s failed:\n%s", url, err)
 		return nil, err
 	}
 	return response, nil
