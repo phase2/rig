@@ -1,0 +1,78 @@
+# One release file to rule them all
+project_name: outrigger-cli
+
+# Platforms/architectures to target
+builds:
+  - binary: rig
+    main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+
+# Generating the archives
+archive:
+  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+  format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+  replacements:
+    darwin: macOS
+
+# Publishing releases to GitHub
+release:
+  github:
+    owner: phase2
+    name: rig
+#  draft: true  # This also prevents a homebrew release from getting generated
+
+# Publishing Homebrew Formula to the Tap repo
+brew:
+  github:
+    owner: phase2
+    name: homebrew-outrigger
+
+  # Git author used to commit to the repository.
+  # Defaults are shown.
+  commit_author:
+    name: Outrigger
+    email: outrigger@phase2technology.com
+
+  folder: Formula
+  homepage: "https://outrigger.sh/"
+  description: "Containerized development environment for projects. See https://docs.outrigger.sh for documentation."
+  dependencies:
+    - docker
+    - docker-machine
+    - docker-compose
+    - docker-machine-nfs
+    - unison
+    - eugenmayer/dockersync/unox
+
+  # So you can `brew test` your formula.
+  # Default is empty.
+  test: |
+    system "#{bin}/rig", "--version"
+
+  # Custom install script for brew.
+  # Default is 'bin.install "program"'.
+  install: |
+    bin.install "rig"
+
+# Build linux packages
+fpm:
+  vendor: Phase2
+  homepage: https://outrigger.sh/
+  maintainer: Outrigger <outrigger@phase2technology.com>
+  description: Containerized development environment for projects. See https://docs.outrigger.sh for documentation.
+  license: MIT
+  formats:
+    - deb
+    - rpm
+  dependencies:
+    - docker-ce

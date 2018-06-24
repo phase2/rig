@@ -1,0 +1,45 @@
+# One release file to rule them all
+project_name: outrigger-cli
+
+# Platforms/architectures to target
+builds:
+  - binary: rig
+    main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+
+# Generating the archives
+archive:
+  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+  format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+  replacements:
+    darwin: macOS
+
+# Publishing releases to GitHub
+release:
+  github:
+    owner: phase2
+    name: rig
+  prerelease: true
+
+# Build linux packages
+fpm:
+  vendor: Phase2
+  homepage: https://outrigger.sh/
+  maintainer: Outrigger <outrigger@phase2technology.com>
+  description: Containerized development environment for projects. See https://docs.outrigger.sh for documentation.
+  license: MIT
+  formats:
+    - deb
+    - rpm
+  dependencies:
+    - docker-ce
