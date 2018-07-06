@@ -20,13 +20,11 @@ func CheckForRigUpdate(curRigVersion string) string {
 	curVer, verr := version.NewVersion(curRigVersion)
 	if tag, err := currentRigReleaseTag(); err == nil {
 		if tagVer, verr2 := version.NewVersion(tag); verr2 == nil {
+			// Show the message if we're on master or there's an update.
 			if verr != nil || tagVer.Compare(curVer) > 0 {
 				return "An update for rig is available: " + tag
 			}
 		}
-	} else {
-		// Local dev, this always appears, since version get set by the build.
-		Logger().Verbose("Can't parse released tag version: " + err.Error())
 	}
 	return ""
 }
