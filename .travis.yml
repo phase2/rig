@@ -22,6 +22,7 @@ script:
   - "scripts/test-go-fmt.sh"
   - "gometalinter --vendor --deadline=60s --config=gometalinter.json ./..."
   - "go run cmd/main.go"
+  - "go test github.com/phase2/rig/util"
 
 notifications:
   flowdock:
