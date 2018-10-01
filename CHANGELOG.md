@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+
+- Added an update check on `rig start` which will notify if there is a new Outrigger version
+- Added `sync:check`, `sync:name` and `sync:purge` commands for `rig project`
+- Added `rig ssh` command which allows quick access to the docker host
+
 ## 2.0.0
 
 This was a big one
