@@ -1,6 +1,10 @@
 # Changelog
 
-## 2.2.0
+## 2.2.1
+
+- Actual released version for items listed in 2.2.0 tag. Updated build tooling from fpm to nfpm.
+
+## 2.2.0 (tagged but not released)
 
 - Added an update check on `rig start` which will notify if there is a new Outrigger version
 - Added `sync:check`, `sync:name` and `sync:purge` commands for `rig project`
