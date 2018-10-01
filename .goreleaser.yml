@@ -65,7 +65,7 @@ brew:
     bin.install "rig"
 
 # Build linux packages
-fpm:
+nfpm:
   vendor: Phase2
   homepage: https://outrigger.sh/
   maintainer: Outrigger <outrigger@phase2technology.com>
