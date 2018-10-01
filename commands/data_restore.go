@@ -40,7 +40,7 @@ func (cmd *DataRestore) Commands() []cli.Command {
 // Run executes the `rig data-restore` command
 func (cmd *DataRestore) Run(c *cli.Context) error {
 	if util.SupportsNativeDocker() {
-		return cmd.Success("Data Restore is not needed on Linux, please unarchive any data directly")
+		return cmd.Success("Data Restore is not needed on Linux, please un-archive any data directly")
 	}
 
 	if !cmd.machine.Exists() {

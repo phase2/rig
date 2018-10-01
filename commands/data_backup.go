@@ -72,7 +72,7 @@ func (cmd *DataBackup) Run(c *cli.Context) error {
 
 	cmd.out.Info("Data backup saved to %s", backupFile)
 	// Our final success message provides details on where to find the backup file.
-	// The success notifcation is kept simple by not passing back the filepath.
+	// The success notification is kept simple by not passing back the filepath.
 	cmd.out.NoSpin()
 
 	return cmd.Success("Data Backup completed")
