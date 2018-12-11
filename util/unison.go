@@ -10,7 +10,7 @@ import (
 // GetUnisonMinorVersion will return the local Unison version to try to load a compatible unison image
 // This function discovers a semver like 2.48.4 and return 2.48
 func GetUnisonMinorVersion() string {
-	output, _ := Command("unison", "-version").Output()
+	output, _ := Command("unison", "-version").Output() // nolint: gosec
 	re := regexp.MustCompile(`unison version (\d+\.\d+\.\d+)`)
 	rawVersion := re.FindAllStringSubmatch(string(output), -1)[0][1]
 	v := version.Must(version.NewVersion(rawVersion))

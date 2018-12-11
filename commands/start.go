@@ -41,6 +41,10 @@ func (cmd *Start) Commands() []cli.Command {
 					Usage: "Number of CPU to allocate to the VM. Defaults to 2. Only used if start needs to create a machine.",
 				},
 				cli.StringFlag{
+					Name:  "boot2docker-url",
+					Usage: "Fully qualified URL for a specific boot2docker ISO.",
+				},
+				cli.StringFlag{
 					Name:   "nameservers",
 					Value:  "8.8.8.8:53",
 					Usage:  "Comma separated list of fallback names servers for DNS resolution.",
@@ -82,7 +86,8 @@ func (cmd *Start) Run(c *cli.Context) error {
 		diskSize := strconv.Itoa(c.Int("disk-size") * 1000)
 		memSize := strconv.Itoa(c.Int("memory-size"))
 		cpuCount := strconv.Itoa(c.Int("cpu-count"))
-		cmd.machine.Create(driver, cpuCount, memSize, diskSize)
+		isoURL := c.String("boot2docker-url")
+		cmd.machine.Create(driver, cpuCount, memSize, diskSize, isoURL) // nolint: gosec
 	}
 
 	if err := cmd.machine.Start(); err != nil {
@@ -95,7 +100,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.out.Info("Docker Machine (%s) Created", cmd.machine.Name)
 
 	dns := DNS{cmd.BaseCommand}
-	dns.StartDNS(cmd.machine, c.String("nameservers"))
+	dns.StartDNS(cmd.machine, c.String("nameservers")) // nolint: gosec
 
 	// NFS mounts are Mac-only.
 	if util.IsMac() {
@@ -142,7 +147,7 @@ func (cmd *Start) Run(c *cli.Context) error {
 
 	cmd.out.Spin("Launching Dashboard...")
 	dash := Dashboard{cmd.BaseCommand}
-	dash.LaunchDashboard(cmd.machine)
+	dash.LaunchDashboard(cmd.machine) // nolint: gosec
 	cmd.out.Info("Dashboard is ready")
 
 	// Check for availability of a rig upgrade
@@ -159,10 +164,10 @@ func (cmd *Start) Run(c *cli.Context) error {
 // a virtual machine and networking is not required or managed by Outrigger.
 func (cmd *Start) StartMinimal(nameservers string) error {
 	dns := DNS{cmd.BaseCommand}
-	dns.StartDNS(cmd.machine, nameservers)
+	dns.StartDNS(cmd.machine, nameservers) // nolint: gosec
 
 	dash := Dashboard{cmd.BaseCommand}
-	dash.LaunchDashboard(cmd.machine)
+	dash.LaunchDashboard(cmd.machine) // nolint: gosec
 
 	return cmd.Success("Outrigger services started")
 }

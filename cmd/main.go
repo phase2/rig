@@ -68,5 +68,5 @@ func main() {
 	app.Commands = append(app.Commands, (&commands.Dev{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.SSH{}).Commands()...)
 
-	app.Run(os.Args)
+	app.Run(os.Args) // nolint: gosec
 }

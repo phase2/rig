@@ -36,7 +36,7 @@ func (cmd *Config) Run(c *cli.Context) error {
 	if !util.IsMac() {
 		// Add stuff to PATH only once
 		path := os.Getenv("PATH")
-		dir, _ := util.GetExecutableDir()
+		dir, _ := util.GetExecutableDir() // nolint: gosec
 		if !strings.Contains(path, dir) {
 			fmt.Printf("export PATH=%s%c$PATH\n", dir, os.PathListSeparator)
 		}
@@ -44,13 +44,13 @@ func (cmd *Config) Run(c *cli.Context) error {
 
 	// Clear out any previous environment variables
 	if output, err := util.Command("docker-machine", "env", "-u").Output(); err == nil {
-		os.Stdout.Write(output)
+		os.Stdout.Write(output) // nolint: gosec
 	}
 
 	if cmd.machine.Exists() {
 		// Setup new values if machine is running
 		if output, err := util.Command("docker-machine", "env", cmd.machine.Name).Output(); err == nil {
-			os.Stdout.Write(output)
+			os.Stdout.Write(output) // nolint: gosec
 		}
 	} else {
 		return cmd.Failure(fmt.Sprintf("No machine named '%s' exists.", cmd.machine.Name), "MACHINE-NOT-FOUND", 12)
