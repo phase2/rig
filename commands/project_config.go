@@ -44,7 +44,7 @@ func NewProjectConfig() *ProjectConfig {
 	projectConfigFile := os.Getenv("RIG_PROJECT_CONFIG_FILE")
 
 	if projectConfigFile == "" {
-		projectConfigFile, _ = FindProjectConfigFilePath()
+		projectConfigFile, _ = FindProjectConfigFilePath() // nolint: gosec
 	}
 
 	if projectConfigFile != "" {
@@ -83,7 +83,7 @@ func FindProjectConfigFilePath() (string, error) {
 // nolint: gocyclo
 func NewProjectConfigFromFile(filename string) (*ProjectConfig, error) {
 	logger := util.Logger()
-	filepath, _ := filepath.Abs(filename)
+	filepath, _ := filepath.Abs(filename) // nolint: gosec
 	config := &ProjectConfig{
 		File: filename,
 		Path: filepath,

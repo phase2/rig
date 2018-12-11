@@ -41,13 +41,13 @@ func (cmd *Kill) Run(c *cli.Context) error {
 	}
 
 	cmd.out.Spin(fmt.Sprintf("Killing machine '%s'...", cmd.machine.Name))
-	util.StreamCommand("docker-machine", "kill", cmd.machine.Name)
+	util.StreamCommand("docker-machine", "kill", cmd.machine.Name) // nolint: gosec
 
 	// Ensure the underlying virtualization has stopped
 	driver := cmd.machine.GetDriver()
 	switch driver {
 	case util.VirtualBox:
-		util.StreamCommand("controlvm", cmd.machine.Name, "poweroff")
+		util.StreamCommand("controlvm", cmd.machine.Name, "poweroff") // nolint: gosec
 	case util.VMWare:
 		cmd.out.Warning("Add vmrun suspend command.")
 	case util.Xhyve:

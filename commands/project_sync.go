@@ -314,7 +314,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 
 	// Ensure the processes can handle a large number of watches
 	if err := cmd.machine.SetSysctl("fs.inotify.max_user_watches", maxWatches); err != nil {
-		cmd.Failure(fmt.Sprintf("Failure configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12)
+		cmd.Failure(fmt.Sprintf("Failure configuring file watches on Docker Machine: %v", err), "INOTIFY-WATCH-FAILURE", 12) // nolint: gosec
 	}
 
 	cmd.out.SpinWithVerbose("Starting sync volume: %s", volumeName)
@@ -326,7 +326,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 	unisonMinorVersion := util.GetUnisonMinorVersion()
 
 	cmd.out.Verbose("Local Unison version for compatibility: %s", unisonMinorVersion)
-	util.Command("docker", "container", "stop", volumeName).Run()
+	util.Command("docker", "container", "stop", volumeName).Run() // nolint: gosec
 	containerArgs := []string{
 		"container", "run", "--detach", "--rm",
 		"-v", fmt.Sprintf("%s:/unison", volumeName),
@@ -337,7 +337,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 		fmt.Sprintf("outrigger/unison:%s", unisonMinorVersion),
 	}
 	if err := util.Command("docker", containerArgs...).Run(); err != nil {
-		cmd.Failure(fmt.Sprintf("Failure starting sync container %s: %v", volumeName, err), "SYNC-CONTAINER-START-FAILED", 13)
+		cmd.Failure(fmt.Sprintf("Failure starting sync container %s: %v", volumeName, err), "SYNC-CONTAINER-START-FAILED", 13) // nolint: gosec
 	}
 
 	ip, err := cmd.WaitForUnisonContainer(volumeName, ctx.Int("initial-sync-timeout"))
@@ -393,7 +393,7 @@ func (cmd *ProjectSync) StartUnisonSync(ctx *cli.Context, volumeName string, con
 // SetupBindVolume will create minimal Docker Volumes for systems that have native container/volume support
 func (cmd *ProjectSync) SetupBindVolume(volumeName string, workingDir string) error {
 	cmd.out.SpinWithVerbose("Starting local bind volume: %s", volumeName)
-	util.Command("docker", "volume", "rm", volumeName).Run()
+	util.Command("docker", "volume", "rm", volumeName).Run() // nolint: gosec
 
 	volumeArgs := []string{
 		"volume", "create",
@@ -476,7 +476,7 @@ func (cmd *ProjectSync) WaitForUnisonContainer(containerName string, timeoutSeco
 		cmd.out.Verbose("Attempt #%d...", i)
 		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, unisonPort))
 		if err == nil {
-			conn.Close()
+			conn.Close() // nolint: gosec
 			cmd.out.Verbose("Connected to unison on %s", containerName)
 			return ip, nil
 		}

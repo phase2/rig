@@ -12,7 +12,7 @@ import (
 
 // GetRawCurrentDockerVersion returns the entire semver string from the docker version cli
 func GetRawCurrentDockerVersion() string {
-	output, _ := Command("docker", "--version").Output()
+	output, _ := Command("docker", "--version").Output() // nolint: gosec
 	re := regexp.MustCompile("Docker version (.*),")
 	return re.FindAllStringSubmatch(string(output), -1)[0][1]
 }
@@ -25,7 +25,7 @@ func GetCurrentDockerVersion() *version.Version {
 
 // GetDockerClientAPIVersion returns a Version for the docker client API version
 func GetDockerClientAPIVersion() *version.Version {
-	output, _ := Command("docker", "version", "--format", "{{.Client.APIVersion}}").Output()
+	output, _ := Command("docker", "version", "--format", "{{.Client.APIVersion}}").Output() // nolint: gosec
 	re := regexp.MustCompile(`^([\d|\.]+)`)
 	versionNumber := re.FindAllStringSubmatch(string(output), -1)[0][1]
 	return version.Must(version.NewVersion(versionNumber))

@@ -88,6 +88,6 @@ func TouchFile(pathToFile string, workingDir string) error {
 	}
 	// Not checking for an error here because we are not very currently concerned
 	// with file descriptor leaks
-	f.Close()
+	f.Close() // nolint: gosec
 	return nil
 }

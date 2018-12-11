@@ -39,7 +39,7 @@ type RigSpinner struct {
 
 // LoggerInit initializes the global logger
 func LoggerInit(verbose bool) {
-	s, _ := spun.NewSpinner(spun.Dots)
+	s, _ := spun.NewSpinner(spun.Dots) // nolint: gosec
 	logger = &RigLogger{
 		Channel: logChannels{
 			Info:    log.New(os.Stdout, color.BlueString("[INFO] "), 0),
@@ -87,7 +87,7 @@ func (log *RigLogger) SetVerbose(verbose bool) {
 // Spin restarts the spinner for a new task.
 func (log *RigLogger) Spin(message string) {
 	if !log.IsVerbose {
-		log.Progress.Spins.Start(message)
+		log.Progress.Spins.Start(message) // nolint: gosec
 		log.Spinning = true
 	}
 }
@@ -102,7 +102,7 @@ func (log *RigLogger) SpinWithVerbose(message string, a ...interface{}) {
 
 // NoSpin stops the Progress spinner.
 func (log *RigLogger) NoSpin() {
-	log.Progress.Spins.Stop()
+	log.Progress.Spins.Stop() // nolint: gosec
 	log.Spinning = false
 }
 
@@ -112,7 +112,7 @@ func (log *RigLogger) Info(format string, a ...interface{}) {
 		log.Channel.Info.Println(fmt.Sprintf(format, a...))
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
-		log.Progress.Spins.Succeed()
+		log.Progress.Spins.Succeed() // nolint: gosec
 		log.Spinning = false
 	}
 }
@@ -123,7 +123,7 @@ func (log *RigLogger) Warning(format string, a ...interface{}) {
 		log.Channel.Warning.Println(fmt.Sprintf(format, a...))
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
-		log.Progress.Spins.Warn()
+		log.Progress.Spins.Warn() // nolint: gosec
 		log.Spinning = false
 	}
 }
@@ -139,7 +139,7 @@ func (log *RigLogger) Error(format string, a ...interface{}) {
 		log.Channel.Error.Println(fmt.Sprintf(format, a...))
 	} else {
 		log.Progress.Spins.SetMessage(fmt.Sprintf(format, a...))
-		log.Progress.Spins.Fail()
+		log.Progress.Spins.Fail() // nolint: gosec
 		log.Spinning = false
 	}
 }

@@ -65,7 +65,7 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		cmd.out.Verbose("Successfully updated dashboard.")
 	}
 
-	dockerAPIVersion, _ := util.GetDockerServerAPIVersion()
+	dockerAPIVersion, _ := util.GetDockerServerAPIVersion() // nolint: gosec
 	args := []string{
 		"run",
 		"-d",
@@ -78,11 +78,11 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 		dashboardImageName,
 	}
 
-	util.ForceStreamCommand("docker", args...)
+	util.ForceStreamCommand("docker", args...) // nolint: gosec
 	if util.IsMac() {
-		util.Command("open", "http://dashboard.outrigger.vm").Run()
+		util.Command("open", "http://dashboard.outrigger.vm").Run() // nolint: gosec
 	} else if util.IsWindows() {
-		util.Command("start", "http://dashboard.outrigger.vm").Run()
+		util.Command("start", "http://dashboard.outrigger.vm").Run() // nolint: gosec
 	} else {
 		cmd.out.Info("Outrigger Dashboard is now available at http://dashboard.outrigger.vm")
 	}
@@ -92,6 +92,6 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 
 // StopDashboard stops and removes the dashboard container
 func (cmd *Dashboard) StopDashboard() {
-	util.Command("docker", "stop", dashboardContainerName).Run()
-	util.Command("docker", "rm", dashboardContainerName).Run()
+	util.Command("docker", "stop", dashboardContainerName).Run() // nolint: gosec
+	util.Command("docker", "rm", dashboardContainerName).Run()   // nolint: gosec
 }

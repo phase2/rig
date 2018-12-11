@@ -29,7 +29,7 @@ func (cmd *BaseCommand) Before(c *cli.Context) error {
 	cmd.out = util.Logger()
 	cmd.machine = Machine{Name: c.GlobalString("name"), out: util.Logger()}
 
-	util.NotifyInit(fmt.Sprintf("Outrigger (rig) %s", c.App.Version))
+	util.NotifyInit(fmt.Sprintf("Outrigger (rig) %s", c.App.Version)) // nolint: gosec
 
 	// Hold onto Context so that we can use it later without having to pass it around everywhere
 	cmd.context = c
@@ -62,7 +62,7 @@ func (cmd *BaseCommand) Failure(message string, errorName string, exitCode int) 
 	}
 
 	// Handle error messaging.
-	util.NotifyError(cmd.context, message)
+	util.NotifyError(cmd.context, message) // nolint: gosec
 	// Print expanded troubleshooting guidance.
 	if !cmd.context.GlobalBool("power-user") {
 		util.PrintDebugHelp(message, errorName, exitCode)

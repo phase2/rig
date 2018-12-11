@@ -102,9 +102,9 @@ func StringPad(s string, pad string, size int) string {
 		delta := size - length
 		iterations := delta / padLength
 
-		buffer.WriteString(s)
+		buffer.WriteString(s) // nolint: gosec
 		for i := 0; i <= iterations; i += padLength {
-			buffer.WriteString(pad)
+			buffer.WriteString(pad) // nolint: gosec
 		}
 
 		return buffer.String()

@@ -73,7 +73,7 @@ func (cmd *DNSRecords) LoadRecords() ([]map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to parse dnsdock JSON: %s", err)
 	}
 
-	dnsdockMap, _ := js.Map()
+	dnsdockMap, _ := js.Map() // nolint: gosec
 	records := []map[string]interface{}{}
 	for id, value := range dnsdockMap {
 		record := value.(map[string]interface{})

@@ -105,7 +105,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	cmd.out.Spin("Checking Docker version...")
 	clientAPIVersion := util.GetDockerClientAPIVersion()
 	serverAPIVersion, err := util.GetDockerServerAPIVersion()
-	serverMinAPIVersion, _ := util.GetDockerServerMinAPIVersion()
+	serverMinAPIVersion, _ := util.GetDockerServerMinAPIVersion() // nolint: gosec
 
 	// Older clients can talk to newer servers, and when you ask a newer server
 	// it's version in the presence of an older server it will downgrade it's
@@ -116,7 +116,7 @@ func (cmd *Doctor) Run(c *cli.Context) error {
 	if serverMinAPIVersion != nil {
 		constraintString = fmt.Sprintf(">= %s", serverMinAPIVersion)
 	}
-	apiConstraint, _ := version.NewConstraint(constraintString)
+	apiConstraint, _ := version.NewConstraint(constraintString) // nolint: gosec
 
 	if err != nil {
 		cmd.out.Error("Could not determine Docker Machine Docker versions: ", err)
