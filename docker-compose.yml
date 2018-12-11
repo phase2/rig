@@ -9,6 +9,7 @@ services:
       - GOPATH=/go
       - GITHUB_TOKEN
     entrypoint: [ "goreleaser" ]
+    command: ""
 
   # Lint the codebase
   lint:
