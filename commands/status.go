@@ -40,7 +40,7 @@ func (cmd *Status) Run(c *cli.Context) error {
 		util.StreamCommand("docker-machine", "ls", "--filter", "name="+cmd.machine.Name) // nolint: gosec
 	} else {
 		output, _ := util.Command("docker-machine", "status", cmd.machine.Name).CombinedOutput() // nolint: gosec
-		os.Stdout.Write(output) // nolint: gosec
+		os.Stdout.Write(output)                                                                  // nolint: gosec
 	}
 
 	return cmd.Success("")

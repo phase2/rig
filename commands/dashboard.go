@@ -93,5 +93,5 @@ func (cmd *Dashboard) LaunchDashboard(machine Machine) error {
 // StopDashboard stops and removes the dashboard container
 func (cmd *Dashboard) StopDashboard() {
 	util.Command("docker", "stop", dashboardContainerName).Run() // nolint: gosec
-	util.Command("docker", "rm", dashboardContainerName).Run() // nolint: gosec
+	util.Command("docker", "rm", dashboardContainerName).Run()   // nolint: gosec
 }

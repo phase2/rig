@@ -147,18 +147,18 @@ func (m *Machine) SetEnv() {
 		if js.Get("HostOptions").Get("EngineOptions").Get("TlsVerify").MustBool() {
 			tlsVerify = 1
 		}
-		os.Setenv("DOCKER_TLS_VERIFY", fmt.Sprintf("%d", tlsVerify)) // nolint: gosec
+		os.Setenv("DOCKER_TLS_VERIFY", fmt.Sprintf("%d", tlsVerify))                                           // nolint: gosec
 		os.Setenv("DOCKER_HOST", fmt.Sprintf("tcp://%s:2376", js.Get("Driver").Get("IPAddress").MustString())) // nolint: gosec
-		os.Setenv("DOCKER_MACHINE_NAME", js.Get("Driver").Get("MachineName").MustString()) // nolint: gosec
-		os.Setenv("DOCKER_CERT_PATH", js.Get("HostOptions").Get("AuthOptions").Get("StorePath").MustString()) // nolint: gosec
+		os.Setenv("DOCKER_MACHINE_NAME", js.Get("Driver").Get("MachineName").MustString())                     // nolint: gosec
+		os.Setenv("DOCKER_CERT_PATH", js.Get("HostOptions").Get("AuthOptions").Get("StorePath").MustString())  // nolint: gosec
 	}
 }
 
 // UnsetEnv will remove the Docker proxy variables
 func (m *Machine) UnsetEnv() {
-	os.Unsetenv("DOCKER_TLS_VERIFY") // nolint: gosec
-	os.Unsetenv("DOCKER_HOST") // nolint: gosec
-	os.Unsetenv("DOCKER_CERT_PATH") // nolint: gosec
+	os.Unsetenv("DOCKER_TLS_VERIFY")   // nolint: gosec
+	os.Unsetenv("DOCKER_HOST")         // nolint: gosec
+	os.Unsetenv("DOCKER_CERT_PATH")    // nolint: gosec
 	os.Unsetenv("DOCKER_MACHINE_NAME") // nolint: gosec
 }
 

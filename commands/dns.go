@@ -74,13 +74,13 @@ func (cmd *DNS) configureMacRoutes(machine Machine) {
 	if machine.IsXhyve() {
 		cmd.removeHostFilter(machineIP)
 	}
-	util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run() // nolint: gosec
+	util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()    // nolint: gosec
 	util.StreamCommand("sudo", "route", "-n", "add", "172.17.0.0/16", machineIP) // nolint: gosec
 	if _, err := os.Stat("/usr/sbin/discoveryutil"); err == nil {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
 		cmd.out.Verbose("Restarting discoveryutil to flush DNS caches")
 		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist") // nolint: gosec
-		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist") // nolint: gosec
+		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")   // nolint: gosec
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
 		cmd.out.Verbose("Restarting mDNSResponder to flush DNS caches")
@@ -114,7 +114,7 @@ func (cmd *DNS) removeHostFilter(ipAddr string) {
 
 // ConfigureWindowsRoutes configures network routing
 func (cmd *DNS) configureWindowsRoutes(machine Machine) {
-	util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run() // nolint: gosec
+	util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()                        // nolint: gosec
 	util.StreamCommand("runas", "/noprofile", "/user:Administrator", "route", "-p", "ADD", "172.17.0.0/16", machine.GetIP()) // nolint: gosec
 }
 
@@ -182,7 +182,7 @@ func (cmd *DNS) configureMacResolver(machine Machine) error {
 		// Put this here for people running OS X 10.10.0 to 10.10.3 (oy vey.)
 		cmd.out.Verbose("Restarting discoveryutil to flush DNS caches")
 		util.StreamCommand("sudo", "launchctl", "unload", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist") // nolint: gosec
-		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist") // nolint: gosec
+		util.StreamCommand("sudo", "launchctl", "load", "-w", "/System/Library/LaunchDaemons/com.apple.discoveryd.plist")   // nolint: gosec
 	} else {
 		// Reset DNS cache. We have seen this suddenly make /etc/resolver/vm work.
 		cmd.out.Verbose("Restarting mDNSResponder to flush DNS caches")
@@ -229,5 +229,5 @@ func (cmd *DNS) configureWindowsResolver(machine Machine) error {
 // StopDNS stops the dnsdock service and cleans up
 func (cmd *DNS) StopDNS() {
 	util.Command("docker", "stop", "dnsdock").Run() // nolint: gosec
-	util.Command("docker", "rm", "dnsdock").Run() // nolint: gosec
+	util.Command("docker", "rm", "dnsdock").Run()   // nolint: gosec
 }

@@ -59,11 +59,11 @@ func (cmd *Stop) StopOutrigger() error {
 
 	cmd.out.Spin("Cleaning up local networking...")
 	if util.IsWindows() {
-		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run() // nolint: gosec
+		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.0.0").Run()  // nolint: gosec
 		util.Command("runas", "/noprofile", "/user:Administrator", "route", "DELETE", "172.17.42.1").Run() // nolint: gosec
 	} else {
-		util.EscalatePrivilege() // nolint: gosec
-		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run() // nolint: gosec
+		util.EscalatePrivilege()                                                   // nolint: gosec
+		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.0.0").Run()  // nolint: gosec
 		util.Command("sudo", "route", "-n", "delete", "-net", "172.17.42.1").Run() // nolint: gosec
 	}
 	cmd.out.Info("Networking cleanup completed")
