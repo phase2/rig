@@ -83,7 +83,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 func (m *Machine) CheckXhyveRequirements() error {
 	// Is xhyve installed locally
 	if err := util.Command("which", "xhyve").Run(); err != nil {
-		return fmt.Errorf("xhyve is not installed. Install it with 'brew install xhyve'")./bui
+		return fmt.Errorf("xhyve is not installed. Install it with 'brew install xhyve'")
 	}
 
 	// Is docker-machine-driver-xhyve installed locally
