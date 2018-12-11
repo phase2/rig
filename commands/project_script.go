@@ -90,6 +90,6 @@ func (p *ProjectScript) addCommandPath() {
 	if binDir != "" {
 		p.out.Verbose("Adding project bin directory to $PATH: %s", binDir)
 		path := os.Getenv("PATH")
-		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path))
+		os.Setenv("PATH", fmt.Sprintf("%s%c%s", binDir, os.PathListSeparator, path)) // nolint: gosec
 	}
 }

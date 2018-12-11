@@ -37,10 +37,10 @@ func (cmd *Status) Run(c *cli.Context) error {
 	}
 
 	if cmd.out.IsVerbose {
-		util.StreamCommand("docker-machine", "ls", "--filter", "name="+cmd.machine.Name)
+		util.StreamCommand("docker-machine", "ls", "--filter", "name="+cmd.machine.Name) // nolint: gosec
 	} else {
-		output, _ := util.Command("docker-machine", "status", cmd.machine.Name).CombinedOutput()
-		os.Stdout.Write(output)
+		output, _ := util.Command("docker-machine", "status", cmd.machine.Name).CombinedOutput() // nolint: gosec
+		os.Stdout.Write(output) // nolint: gosec
 	}
 
 	return cmd.Success("")
