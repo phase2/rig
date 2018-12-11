@@ -21,10 +21,10 @@ type Machine struct {
 }
 
 // Create will generate a new Docker Machine configured according to user specification
-func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string, isoUrl string) error {
+func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string, isoURL string) error {
 	m.out.Info("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
-	boot2dockerURL := isoUrl
+	boot2dockerURL := isoURL
 	if boot2dockerURL == "" {
 		boot2dockerURL = "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
 	}

@@ -86,8 +86,8 @@ func (cmd *Start) Run(c *cli.Context) error {
 		diskSize := strconv.Itoa(c.Int("disk-size") * 1000)
 		memSize := strconv.Itoa(c.Int("memory-size"))
 		cpuCount := strconv.Itoa(c.Int("cpu-count"))
-		isoUrl := c.String("boot2docker-url")
-		cmd.machine.Create(driver, cpuCount, memSize, diskSize, isoUrl)
+		isoURL := c.String("boot2docker-url")
+		cmd.machine.Create(driver, cpuCount, memSize, diskSize, isoURL)
 	}
 
 	if err := cmd.machine.Start(); err != nil {
