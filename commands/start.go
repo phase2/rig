@@ -41,6 +41,10 @@ func (cmd *Start) Commands() []cli.Command {
 					Usage: "Number of CPU to allocate to the VM. Defaults to 2. Only used if start needs to create a machine.",
 				},
 				cli.StringFlag{
+					Name:   "boot2docker-url",
+					Usage:  "Fully qualified URL for a specific boot2docker ISO.",
+				},
+				cli.StringFlag{
 					Name:   "nameservers",
 					Value:  "8.8.8.8:53",
 					Usage:  "Comma separated list of fallback names servers for DNS resolution.",
@@ -82,7 +86,8 @@ func (cmd *Start) Run(c *cli.Context) error {
 		diskSize := strconv.Itoa(c.Int("disk-size") * 1000)
 		memSize := strconv.Itoa(c.Int("memory-size"))
 		cpuCount := strconv.Itoa(c.Int("cpu-count"))
-		cmd.machine.Create(driver, cpuCount, memSize, diskSize)
+		isoUrl := c.String("boot2docker-url")
+		cmd.machine.Create(driver, cpuCount, memSize, diskSize, isoUrl)
 	}
 
 	if err := cmd.machine.Start(); err != nil {

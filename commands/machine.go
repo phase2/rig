@@ -21,10 +21,13 @@ type Machine struct {
 }
 
 // Create will generate a new Docker Machine configured according to user specification
-func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string) error {
+func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSize string, isoUrl string) error {
 	m.out.Info("Creating a %s machine named '%s' with CPU(%s) MEM(%s) DISK(%s)...", driver, m.Name, cpuCount, memSize, diskSize)
 
-	boot2dockerURL := "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
+	boot2dockerURL := isoUrl
+	if boot2dockerURL == "" {
+		boot2dockerURL = "https://github.com/boot2docker/boot2docker/releases/download/v" + util.GetRawCurrentDockerVersion() + "/boot2docker.iso"
+	}
 
 	var create util.Executor
 
@@ -80,7 +83,7 @@ func (m *Machine) Create(driver string, cpuCount string, memSize string, diskSiz
 func (m *Machine) CheckXhyveRequirements() error {
 	// Is xhyve installed locally
 	if err := util.Command("which", "xhyve").Run(); err != nil {
-		return fmt.Errorf("xhyve is not installed. Install it with 'brew install xhyve'")
+		return fmt.Errorf("xhyve is not installed. Install it with 'brew install xhyve'")./bui
 	}
 
 	// Is docker-machine-driver-xhyve installed locally
