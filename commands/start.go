@@ -41,8 +41,8 @@ func (cmd *Start) Commands() []cli.Command {
 					Usage: "Number of CPU to allocate to the VM. Defaults to 2. Only used if start needs to create a machine.",
 				},
 				cli.StringFlag{
-					Name:   "boot2docker-url",
-					Usage:  "Fully qualified URL for a specific boot2docker ISO.",
+					Name:  "boot2docker-url",
+					Usage: "Fully qualified URL for a specific boot2docker ISO.",
 				},
 				cli.StringFlag{
 					Name:   "nameservers",
