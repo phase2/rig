@@ -51,7 +51,6 @@ func main() {
 	app.Commands = []cli.Command{}
 	app.Commands = append(app.Commands, (&commands.Start{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Stop{}).Commands()...)
-	app.Commands = append(app.Commands, (&commands.Restart{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Upgrade{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Status{}).Commands()...)
 	app.Commands = append(app.Commands, (&commands.Config{}).Commands()...)

@@ -99,9 +99,6 @@ func (cmd *Start) Run(c *cli.Context) error {
 	cmd.machine.SetEnv()
 	cmd.out.Info("Docker Machine (%s) Created", cmd.machine.Name)
 
-	dns := DNS{cmd.BaseCommand}
-	dns.StartDNS(cmd.machine, c.String("nameservers")) // nolint: gosec
-
 	// NFS mounts are Mac-only.
 	if util.IsMac() {
 		cmd.out.Spin("Enabling NFS file sharing...")
@@ -138,8 +135,15 @@ func (cmd *Start) Run(c *cli.Context) error {
 	}
 	cmd.out.Info("/data filesystem is ready")
 
-	// Route configuration needs to be finalized after NFS-triggered reboots.
+	// When the Docker daemon runs inside boot2docker, it disables packet forwarding to containers
+	// we need to turn this back on.
+	// Reference: https://github.com/boot2docker/boot2docker/issues/1364
+	util.Command("docker-machine", "ssh", cmd.machine.Name, "sudo iptables -P FORWARD ACCEPT").Run()
+
+	// DNS & Route configuration needs to be finalized after NFS-triggered reboots.
 	// This rebooting may change key details such as IP Address of the Dev machine.
+	dns := DNS{cmd.BaseCommand}
+	dns.StartDNS(cmd.machine, c.String("nameservers")) // nolint: gosec
 	dns.ConfigureRoutes(cmd.machine)
 
 	cmd.out.Verbose("Use docker-machine to interact with your virtual machine.")
