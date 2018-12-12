@@ -1,3 +1,6 @@
 {
-  "Disable": ["errcheck"]
+  "Disable": ["errcheck"],
+  "Linters": {
+    "gosec": { "Command": "gosec -exclude=G104" }
+  }
 }
